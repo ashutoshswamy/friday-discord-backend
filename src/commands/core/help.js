@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBui
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('help')
-        .setDescription('Displays a premium interactive help manual containing all 72 Friday bot protocols.'),
+        .setDescription('Displays a premium interactive help manual containing all 73 Friday bot protocols.'),
 
     /**
      * Executes the help command.
@@ -21,7 +21,7 @@ module.exports = {
                 description: `Welcome to the official manual for **Friday**, your premium cyberpunk administrative assistant.\n\n` +
                     `Friday is powered by a high-performance Express core, a hosted real-time Supabase cluster, and advanced Google Gemini AI model engines.\n\n` +
                     `⚙️ **System Specifications:**\n` +
-                    `• Loaded Protocols: \`72 slash commands\`\n` +
+                    `• Loaded Protocols: \`73 slash commands\`\n` +
                     `• Dynamic Systems: \`Leveling, Economy, Pets, Player Bazaar, AutoMod, Onboarding\`\n` +
                     `• UI Control Panel: [Web Dashboard](http://localhost:5173/)\n\n` +
                     `📍 Use the **select menu dropdown below** to load specialized protocol system lists in detail.`,
@@ -49,8 +49,9 @@ module.exports = {
                     { name: '`/friday status`', value: 'Monitors real-time server telemetry: uptime, memory heap maps, web-socket connection latency.' },
                     { name: '`/friday quote`', value: 'Returns a randomized witty administrative logs system quote.' },
                     { name: '`/friday protocol [name]`', value: 'Executes root automation slates (e.g. `cleanslate`) (Admin).' },
-                    { name: '`/customcmd create [name] [text]`', value: 'Configures custom text command server aliases (Admin).' },
-                    { name: '`/customcmd delete [name]`', value: 'Removes active custom text command server aliases (Admin).' },
+                    { name: '`/customcmd add [name] [text]`', value: 'Configures custom text command server aliases (Admin).' },
+                    { name: '`/customcmd embed [name]`', value: 'Creates a custom embed-based command via JSON builder (Admin).' },
+                    { name: '`/customcmd remove [name]`', value: 'Removes active custom text command server aliases (Admin).' },
                     { name: '`/customcmd list`', value: 'Displays all active custom commands registered on this server.' }
                 ]
             },
@@ -65,6 +66,7 @@ module.exports = {
                     { name: '`/pay [user] [amount]`', value: 'Atomically transfers wallet coins to another member.' },
                     { name: '`/gift coins [user] [amount]`', value: 'Securely transfers active wallet coin balances.' },
                     { name: '`/gift item [user] [item_name]`', value: 'Atomically shifts item ownership record entries in the inventory database.' },
+                    { name: '`/economy [action] [user] [amount]`', value: 'Spawns or deducts server coins from a member wallet (Admin).' },
                     { name: '`/daily`', value: 'Collects daily coin reward payouts.' },
                     { name: '`/work`', value: 'Performs hourly shift duties for a structured server wage.' },
                     { name: '`/beg`', value: 'Beg strangers for spare change. Grants coins (20 to 120) or rare scavenged junk items.' },
@@ -147,9 +149,9 @@ module.exports = {
                     { name: '`/welcome [channel] [msg]`', value: 'Configures visual cyberpunk join greeting canvas cards and text templates (Admin).' },
                     { name: '`/autorole [role/remove]`', value: 'Sets role automatically assigned to members on joining (Admin).' },
                     { name: '`/reactionrole`', value: 'Deploys interactive click button components role assignment menus (Admin).' },
-                    { name: '`/ticket create [reason]`', value: 'Creates personal support channel helpdesk portal thread.' },
-                    { name: '`/ticket close [reason]`', value: 'Closes support portal channel and archives interaction transcripts.' },
-                    { name: '`/ticket add/remove [user]`', value: 'Adds or removes specific members to support channel access overrides.' },
+                    { name: '`/ticket setup`', value: 'Deploys the persistent "Create Ticket" helpdesk dashboard panel (Admin).' },
+                    { name: '`/ticket close`', value: 'Generates conversation transcript and closes the support portal channel.' },
+                    { name: '`/ticket add/remove [user] [role]`', value: 'Grants or revokes member/role access overrides inside the ticket channel.' },
                     { name: '`/ping`', value: 'Calculates roundtrip and WebSocket API latency.' },
                     { name: '`/userinfo [user]` / `/serverinfo`', value: 'Displays rich statistics info of profiles or the server.' },
                     { name: '`/channelinfo [channel]` / `/roleinfo [role]`', value: 'Displays details and metadata of channels or roles.' },
@@ -180,14 +182,13 @@ module.exports = {
                 color: '#FF6F00',
                 description: 'Raffle draw integrations, schedule coordinates, auditing logs search queries, and voice room lockdowns.',
                 fields: [
-                    { name: '`/giveaway start [time] [winners] [prize] [channel]`', value: 'Deploys interactive raffle button drawings (Admin).' },
-                    { name: '`/giveaway end [msg_id]` / `/giveaway reroll [msg_id]`', value: 'Closes or rolls new winners from a giveaway drawer (Admin).' },
-                    { name: '`/event create [title] [desc] [date] [location] [channel]`', value: 'Spawns scheduled event coordination RSVP tracking panels (Admin).' },
+                    { name: '`/giveaway start [duration] [winners] [prize]`', value: 'Deploys interactive raffle button drawings in the current channel (Admin).' },
+                    { name: '`/giveaway end [id]` / `/giveaway reroll [id]`', value: 'Closes or rolls new winners from a giveaway using the message ID (Admin).' },
+                    { name: '`/event create [title] [desc] [date] [location]`', value: 'Spawns scheduled event coordination RSVP tracking panels (Admin).' },
                     { name: '`/vc lock/unlock`', value: 'Toggles room join connect permissions for active voice room owner.' },
                     { name: '`/vc claim`', value: 'Instantly claims voice channel ownership if the current temporary owner left.' },
-                    { name: '`/alerts yt [url] [channel]`', value: 'Subscribes stream alerts to text channel (Admin).' },
-                    { name: '`/alerts twitch [user] [channel]`', value: 'Wires streamer live online triggers to channel (Admin).' },
-                    { name: '`/alerts remove/list`', value: 'Removes or lists active platform alerts (Admin).' },
+                    { name: '`/alerts youtube [action] [url] [channel]`', value: 'Subscribes or removes YouTube upload notifications to a text channel (Admin).' },
+                    { name: '`/alerts twitch [action] [username] [channel]`', value: 'Subscribes or removes Twitch live stream triggers to a channel (Admin).' },
                     { name: '`/logs message` / `/logs voice`', value: 'Exposes audit logs lists tracking edits/deletions or voice connections (Admin).' },
                     { name: '`/modstats [moderator]`', value: 'Displays enforcement statistics counts (warns/timeouts/bans) (Admin).' },
                     { name: '`/serveractivity`', value: 'Provides visual telemetry stats overview links directing to the web control panel.' }
@@ -230,7 +231,7 @@ module.exports = {
                         .setEmoji('🌌'),
                     new StringSelectMenuOptionBuilder()
                         .setLabel('Core & AI Systems')
-                        .setDescription('/friday imagine, ask, rewrite, summarize, custom commands.')
+                        .setDescription('/friday imagine, ask, rewrite, summarize, customcmd add/remove.')
                         .setValue('help_core')
                         .setEmoji('⚡'),
                     new StringSelectMenuOptionBuilder()
