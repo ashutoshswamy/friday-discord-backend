@@ -1634,6 +1634,11 @@ module.exports = function(client) {
         }
     });
 
+    // Health check
+    app.get('/', (req, res) => {
+        res.json({ status: 'ok', bot: client.user?.tag || 'starting', uptime: Math.floor(process.uptime()) });
+    });
+
     // Global error handler — prevents stack traces leaking in API responses
     app.use((err, req, res, _next) => {
         console.error('[SERVER UNHANDLED ERROR]', err);
