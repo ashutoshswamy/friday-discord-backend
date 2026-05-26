@@ -81,7 +81,7 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setTitle('🐓 Cockfight Arena')
-                .setThumbnail('https://i.imgur.com/8N69F0z.png') // Generic cockfight emblem
+                .setThumbnail(user.displayAvatarURL({ forceStatic: true, size: 128 }))
                 .setColor(isWin ? '#00FF66' : '#FF3333')
                 .setDescription(
                     `### ⚔️ Battle in progress: **${playerBird}** vs **${opponentBird}** ⚔️\n\n` +
