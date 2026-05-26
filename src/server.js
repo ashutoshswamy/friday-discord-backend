@@ -90,6 +90,45 @@ module.exports = function(client) {
     }
 
     // ----------------------------------------------------------------
+    // Public Status Endpoint (no auth required)
+    // ----------------------------------------------------------------
+
+    app.get('/api/status', (req, res) => {
+        try {
+            const isReady = client.isReady();
+            const guilds = isReady ? client.guilds.cache : null;
+            const guildCount = guilds ? guilds.size : 0;
+            const memberCount = guilds ? guilds.reduce((sum, g) => sum + (g.memberCount || 0), 0) : 0;
+            const commandCount = client.commands ? client.commands.size : 0;
+            const uptimeMs = isReady ? (client.uptime || 0) : 0;
+            const latencyMs = isReady ? client.ws.ping : -1;
+
+            const botUser = isReady && client.user ? {
+                id: client.user.id,
+                username: client.user.username,
+                discriminator: client.user.discriminator,
+                avatar: client.user.displayAvatarURL({ size: 128 }),
+            } : null;
+
+            res.json({
+                online: isReady,
+                bot: botUser,
+                stats: {
+                    guildCount,
+                    memberCount,
+                    commandCount,
+                    uptimeMs,
+                    latencyMs,
+                },
+                checkedAt: Date.now(),
+            });
+        } catch (err) {
+            console.error('[STATUS API]', err);
+            res.status(500).json({ online: false, error: 'Failed to retrieve bot status' });
+        }
+    });
+
+    // ----------------------------------------------------------------
     // Auth Routes
     // ----------------------------------------------------------------
 
