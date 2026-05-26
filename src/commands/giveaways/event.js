@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const db = require('../../utils/db');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -69,12 +70,15 @@ module.exports = {
                 // Register event in client memory
                 client.events.set(msg.id, {
                     messageId: msg.id,
+                    guildId: guild.id,
                     title,
                     desc,
                     date,
                     location,
                     rsvps: new Set()
                 });
+
+                await db.saveEvent(guild.id, channel.id, msg.id, title, desc, date, location);
             }
         } catch (err) {
             console.error('[EVENT CREATE ERROR]', err);

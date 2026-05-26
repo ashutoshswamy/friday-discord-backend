@@ -1521,6 +1521,100 @@ module.exports = {
             .eq('twitch_username', twitchUsername.toLowerCase().trim());
     },
 
+    // ==========================================
+    // 7. Giveaway History
+    // ==========================================
+
+    async saveGiveaway(guildId, channelId, messageId, prize, winnersCount) {
+        if (!supabase) return;
+        await supabase.from('giveaways').upsert({
+            id: messageId,
+            guild_id: guildId,
+            channel_id: channelId,
+            prize,
+            winners_count: winnersCount,
+            status: 'active'
+        });
+    },
+
+    async endGiveaway(messageId, winnerIds, entrantsCount) {
+        if (!supabase) return;
+        await supabase.from('giveaways').update({
+            status: winnerIds.length > 0 ? 'ended' : 'cancelled',
+            winner_ids: winnerIds,
+            entrants_count: entrantsCount,
+            ended_at: new Date().toISOString()
+        }).eq('id', messageId);
+    },
+
+    async getGiveawayHistory(guildId) {
+        if (!supabase) return [];
+        const { data, error } = await supabase
+            .from('giveaways')
+            .select('*')
+            .eq('guild_id', guildId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error) return [];
+        return data.map(g => ({
+            id: g.id,
+            guildId: g.guild_id,
+            channelId: g.channel_id,
+            prize: g.prize,
+            winnersCount: g.winners_count,
+            entrantsCount: g.entrants_count,
+            winnerIds: g.winner_ids || [],
+            status: g.status,
+            createdAt: g.created_at,
+            endedAt: g.ended_at
+        }));
+    },
+
+    // ==========================================
+    // 8. Event History
+    // ==========================================
+
+    async saveEvent(guildId, channelId, messageId, title, description, date, location) {
+        if (!supabase) return;
+        await supabase.from('guild_events').upsert({
+            id: messageId,
+            guild_id: guildId,
+            channel_id: channelId,
+            title,
+            description,
+            date,
+            location,
+            rsvp_count: 0
+        });
+    },
+
+    async updateEventRsvpCount(messageId, rsvpCount) {
+        if (!supabase) return;
+        await supabase.from('guild_events').update({ rsvp_count: rsvpCount }).eq('id', messageId);
+    },
+
+    async getEventHistory(guildId) {
+        if (!supabase) return [];
+        const { data, error } = await supabase
+            .from('guild_events')
+            .select('*')
+            .eq('guild_id', guildId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error) return [];
+        return data.map(e => ({
+            id: e.id,
+            guildId: e.guild_id,
+            channelId: e.channel_id,
+            title: e.title,
+            description: e.description,
+            date: e.date,
+            location: e.location,
+            rsvpCount: e.rsvp_count,
+            createdAt: e.created_at
+        }));
+    },
+
     async getGuildProfiles(guildId) {
         if (!supabase) return [];
         const { data, error } = await supabase

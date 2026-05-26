@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const db = require('../../utils/db');
 
 function parseDuration(timeStr) {
     const regex = /^(\d+)([smh])$/;
@@ -105,12 +106,15 @@ module.exports = {
                 client.giveaways.set(msg.id, {
                     messageId: msg.id,
                     channelId: channel.id,
+                    guildId: guild.id,
                     prize,
                     winnersCount,
                     entrants: new Set(),
                     active: true,
                     timer: setTimeout(() => endGiveaway(msg.id), durationMs)
                 });
+
+                await db.saveGiveaway(guild.id, channel.id, msg.id, prize, winnersCount);
 
                 return;
             }
@@ -201,6 +205,7 @@ module.exports = {
                         .setTimestamp();
 
                     await message.edit({ embeds: [embed], components: [disabledRow] });
+                    await db.endGiveaway(messageId, [], 0);
                     return;
                 }
 
@@ -220,8 +225,25 @@ module.exports = {
                     )
                     .setTimestamp();
 
+                const winnerEmbed = new EmbedBuilder()
+                    .setTitle('🏆 Congratulations!')
+                    .setColor('#FFD700')
+                    .setDescription(`${winnerPings} won the **${giveaway.prize}** giveaway!`)
+                    .addFields(
+                        { name: '🎁 Prize', value: giveaway.prize, inline: true },
+                        { name: '👥 Total Entries', value: `${entrantsArray.length}`, inline: true },
+                        { name: '🏅 Winners', value: winnerPings, inline: false }
+                    )
+                    .setFooter({ text: `Giveaway ID: ${messageId}` })
+                    .setTimestamp();
+
                 await message.edit({ embeds: [embed], components: [disabledRow] });
-                await targetChannel.send({ content: `🎉 Congratulations ${winnerPings}! You won **${giveaway.prize}**!`, reply: { messageReference: messageId } });
+                await targetChannel.send({
+                    content: `🎉 Congratulations ${winnerPings}! You won **${giveaway.prize}**!`,
+                    embeds: [winnerEmbed],
+                    reply: { messageReference: messageId }
+                });
+                await db.endGiveaway(messageId, winners, entrantsArray.length);
             }
 
         } catch (err) {

@@ -713,6 +713,7 @@ module.exports = function(client) {
             client.giveaways.set(msg.id, {
                 messageId: msg.id,
                 channelId,
+                guildId: req.params.guildId,
                 prize,
                 winnersCount: parseInt(winners),
                 entrants: new Set(),
@@ -734,18 +735,32 @@ module.exports = function(client) {
                         );
                         if (!entrants.length) {
                             await m.edit({ embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY ENDED 🎉').setColor('#71717a').setDescription(`**Prize:** 🎁 **${g.prize}**\n\n❌ No valid entrants.`).setTimestamp()], components: [disabledRow] });
+                            await db.endGiveaway(msg.id, [], 0);
                             return;
                         }
                         const winners_ = shuffleArray(entrants).slice(0, g.winnersCount);
                         const pings = winners_.map(w => `<@${w}>`).join(', ');
                         await m.edit({ embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY RESULTS 🎉').setColor('#FF0099').setDescription(`**Prize Won:** 🎁 **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
-                        await ch.send({ content: `🎉 Congratulations ${pings}! You won **${g.prize}**!` });
+                        const winnerEmbed = new EmbedBuilder()
+                            .setTitle('🏆 Congratulations!')
+                            .setColor('#FFD700')
+                            .setDescription(`${pings} won the **${g.prize}** giveaway!`)
+                            .addFields(
+                                { name: '🎁 Prize', value: g.prize, inline: true },
+                                { name: '👥 Total Entries', value: `${entrants.length}`, inline: true },
+                                { name: '🏅 Winners', value: pings, inline: false }
+                            )
+                            .setFooter({ text: `Giveaway ID: ${msg.id}` })
+                            .setTimestamp();
+                        await ch.send({ content: `🎉 Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
+                        await db.endGiveaway(msg.id, winners_, entrants.length);
                     } catch (err) {
                         console.error('[GIVEAWAY TIMER ERROR]', err);
                     }
                 }, durationMs),
             });
 
+            await db.saveGiveaway(req.params.guildId, channelId, msg.id, prize, parseInt(winners));
             res.json({ ok: true, messageId: msg.id });
         } catch (err) {
             console.error('[GIVEAWAY API ERROR]', err);
@@ -773,11 +788,24 @@ module.exports = function(client) {
                 const entrants = Array.from(g.entrants);
                 if (!entrants.length) {
                     if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY ENDED 🎉').setColor('#71717a').setDescription(`**Prize:** 🎁 **${g.prize}**\n\n❌ No valid entrants.`).setTimestamp()], components: [disabledRow] });
+                    await db.endGiveaway(messageId, [], 0);
                 } else {
                     const winners = shuffleArray(entrants).slice(0, g.winnersCount);
                     const pings = winners.map(w => `<@${w}>`).join(', ');
                     if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY RESULTS 🎉').setColor('#FF0099').setDescription(`**Prize Won:** 🎁 **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
-                    await ch.send({ content: `🎉 Congratulations ${pings}! You won **${g.prize}**!` });
+                    const winnerEmbed = new EmbedBuilder()
+                        .setTitle('🏆 Congratulations!')
+                        .setColor('#FFD700')
+                        .setDescription(`${pings} won the **${g.prize}** giveaway!`)
+                        .addFields(
+                            { name: '🎁 Prize', value: g.prize, inline: true },
+                            { name: '👥 Total Entries', value: `${entrants.length}`, inline: true },
+                            { name: '🏅 Winners', value: pings, inline: false }
+                        )
+                        .setFooter({ text: `Giveaway ID: ${messageId}` })
+                        .setTimestamp();
+                    await ch.send({ content: `🎉 Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
+                    await db.endGiveaway(messageId, winners, entrants.length);
                 }
             }
             res.json({ ok: true });
@@ -848,12 +876,37 @@ module.exports = function(client) {
             await msg.edit({ components: [realRow] });
 
             client.events = client.events || new Map();
-            client.events.set(msg.id, { messageId: msg.id, title, description, date, location, channelId, rsvps: new Set() });
+            client.events.set(msg.id, { messageId: msg.id, guildId: req.params.guildId, title, description, date, location, channelId, rsvps: new Set() });
 
+            await db.saveEvent(req.params.guildId, channelId, msg.id, title, description, date, location);
             res.json({ ok: true, messageId: msg.id });
         } catch (err) {
             console.error('[EVENT API ERROR]', err);
             res.status(500).json({ error: 'Failed to create event' });
+        }
+    });
+
+    // ----------------------------------------------------------------
+    // Giveaway & Event History
+    // ----------------------------------------------------------------
+
+    app.get('/api/guilds/:guildId/giveaways/history', authenticateToken, requireGuildAdmin, async (req, res) => {
+        try {
+            const history = await db.getGiveawayHistory(req.params.guildId);
+            res.json(history);
+        } catch (err) {
+            console.error('[GIVEAWAY HISTORY API ERROR]', err);
+            res.status(500).json({ error: 'Failed to fetch giveaway history' });
+        }
+    });
+
+    app.get('/api/guilds/:guildId/events/history', authenticateToken, requireGuildAdmin, async (req, res) => {
+        try {
+            const history = await db.getEventHistory(req.params.guildId);
+            res.json(history);
+        } catch (err) {
+            console.error('[EVENT HISTORY API ERROR]', err);
+            res.status(500).json({ error: 'Failed to fetch event history' });
         }
     });
 

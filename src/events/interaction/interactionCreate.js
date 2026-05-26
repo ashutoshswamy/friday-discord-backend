@@ -235,6 +235,7 @@ module.exports = {
                 }
                 
                 await message.edit({ embeds: [embed] });
+                await db.updateEventRsvpCount(eventId, eventObj.rsvps.size).catch(() => null);
                 return;
             }
 
