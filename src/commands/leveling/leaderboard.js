@@ -181,7 +181,7 @@ module.exports = {
             ctx.font         = 'bold 13px sans-serif';
             const modePillW  = ctx.measureText(modeLabel).width + 24;
             const modePillH  = 26;
-            const modePillY  = headerCY - 34;
+            const modePillY  = headerCY - 44;
 
             ctx.fillStyle = hexAlpha(modeColor, 0.12);
             ctx.beginPath();
@@ -209,7 +209,7 @@ module.exports = {
                 serverName = serverName.slice(0, -1);
             }
             if (serverName.length < guild.name.length) serverName += '…';
-            ctx.fillText(serverName, titleX, headerCY + 10);
+            ctx.fillText(serverName, titleX, headerCY + 16);
 
             // "Top N" pill — top right
             const topLabel  = `TOP  ${entries.length}`;
