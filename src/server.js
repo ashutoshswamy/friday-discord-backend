@@ -257,6 +257,7 @@ module.exports = function(client) {
                 blockedWords,
                 exemptions,
                 punishmentRules,
+                filterOptOuts,
                 shopItems,
                 levelRewards,
                 dbProfiles,
@@ -267,6 +268,7 @@ module.exports = function(client) {
                 db.getBlockedWords(guildId),
                 db.getExemptions(guildId),
                 db.getPunishmentRules(guildId),
+                db.getFilterOptOuts(guildId),
                 db.getShopItems(guildId),
                 db.getLevelRewards(guildId),
                 db.getGuildProfiles(guildId),
@@ -321,6 +323,7 @@ module.exports = function(client) {
                 blockedWords,
                 exemptions,
                 punishmentRules,
+                filterOptOuts,
                 shopItems,
                 levelRewards,
                 logs: dbLogs.slice(0, 50), // Return recent 50 logs
@@ -418,6 +421,32 @@ module.exports = function(client) {
 
         try {
             const success = await db.removeExemption(guildId, type, targetId);
+            res.json({ success });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    // Add filter opt-out
+    app.post('/api/guilds/:guildId/filter-optouts', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId } = req.params;
+        const { filter, channelId } = req.body;
+        if (!filter || !channelId) return res.status(400).json({ error: 'filter and channelId are required' });
+        try {
+            const success = await db.addFilterOptOut(guildId, filter, channelId);
+            res.json({ success });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    // Remove filter opt-out
+    app.delete('/api/guilds/:guildId/filter-optouts/:filter/:channelId', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId, filter, channelId } = req.params;
+        try {
+            const success = await db.removeFilterOptOut(guildId, filter, channelId);
             res.json({ success });
         } catch (err) {
             console.error(err);
