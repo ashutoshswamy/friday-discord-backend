@@ -1639,6 +1639,9 @@ module.exports = function(client) {
         res.json({ status: 'ok', bot: client.user?.tag || 'starting', uptime: Math.floor(process.uptime()) });
     });
 
+    // Minimal ping endpoint for cron keep-alive (plain text, ~2 bytes)
+    app.get('/ping', (req, res) => res.send('ok'));
+
     // Global error handler — prevents stack traces leaking in API responses
     app.use((err, req, res, _next) => {
         console.error('[SERVER UNHANDLED ERROR]', err);
