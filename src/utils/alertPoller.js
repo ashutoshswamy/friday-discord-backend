@@ -11,16 +11,40 @@ async function resolveYoutubeChannelId(url) {
     const directMatch = url.match(/youtube\.com\/channel\/(UC[\w-]+)/);
     if (directMatch) return directMatch[1];
 
-    // Handle or custom name: youtube.com/@handle or youtube.com/c/name or youtube.com/user/name
+    // Normalise: ensure scheme + www
+    let fetchUrl = url.trim();
+    if (!fetchUrl.startsWith('http')) fetchUrl = 'https://' + fetchUrl;
+    fetchUrl = fetchUrl.replace('://youtube.com', '://www.youtube.com');
+
     try {
-        const { data: html } = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-            timeout: 8000
+        const { data: html } = await axios.get(fetchUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            },
+            timeout: 10000
         });
-        const idMatch = html.match(/"channelId":"(UC[\w-]+)"/);
-        if (idMatch) return idMatch[1];
-    } catch {
-        // ignore — will return null
+
+        // Try multiple patterns — YouTube embeds channel ID in several places
+        const patterns = [
+            /"channelId":"(UC[\w-]+)"/,
+            /"externalId":"(UC[\w-]+)"/,
+            /"browseId":"(UC[\w-]+)"/,
+            /\/channel\/(UC[\w-]+)/,
+            /\\"channelId\\":\\"(UC[\w-]+)\\"/,
+            /<link rel="canonical" href="[^"]*\/channel\/(UC[\w-]+)/,
+            /itemprop="channelId"\s+content="(UC[\w-]+)"/,
+        ];
+
+        for (const pattern of patterns) {
+            const match = html.match(pattern);
+            if (match) return match[1];
+        }
+
+        console.warn(`[ALERTS] No channel ID pattern matched for ${url}`);
+    } catch (err) {
+        console.error(`[ALERTS] Failed to fetch page for ${url}:`, err.message);
     }
     return null;
 }
