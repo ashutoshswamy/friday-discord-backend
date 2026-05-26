@@ -1,5 +1,6 @@
-const { Events, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { Events, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const db = require('../../utils/db');
+const { renderRankCard } = require('../../utils/renderRankCard');
 
 // Local in-memory caches
 const spamCache = new Map(); // Tracks timestamps for spam detection: userId -> array of timestamps
@@ -254,21 +255,50 @@ module.exports = {
                 const result = await db.addXp(guild.id, author.id, xpGain);
 
                 if (result.leveledUp) {
-                    const embed = new EmbedBuilder()
-                        .setTitle('🎉 Level Up!')
-                        .setColor('#00FFCC')
-                        .setThumbnail(author.displayAvatarURL({ forceStatic: true }))
-                        .setDescription(`GG ${author}! You have advanced to **Level ${result.newLevel}**!`)
-                        .addFields(
-                            { name: 'Previous Level', value: `${result.oldLevel}`, inline: true },
-                            { name: 'New Level', value: `${result.newLevel}`, inline: true }
-                        )
-                        .setTimestamp();
+                    // Render rank card and send with level-up message
+                    try {
+                        const [updatedProfile, allProfiles, rankConfig] = await Promise.all([
+                            db.getProfile(guild.id, author.id),
+                            db.getGuildProfiles(guild.id),
+                            db.getRankCardConfig(guild.id).catch(() => null),
+                        ]);
 
-                    const levelAlert = await channel.send({ embeds: [embed] }).catch(() => null);
-                    // Keep level alerts on screen for 10 seconds to keep chats uncluttered
-                    if (levelAlert) {
-                        setTimeout(() => levelAlert.delete().catch(() => null), 12000);
+                        allProfiles.sort((a, b) => b.level !== a.level ? b.level - a.level : b.xp - a.xp);
+                        const rankPos = allProfiles.findIndex(p => p.userId === author.id) + 1 || '?';
+
+                        const cardBuffer = await renderRankCard(
+                            author,
+                            updatedProfile,
+                            rankPos,
+                            rankConfig?.theme || 'cyber',
+                            rankConfig?.accentColor || null,
+                            db
+                        );
+
+                        const attachment = new AttachmentBuilder(cardBuffer, { name: `levelup-${author.id}.png` });
+                        const levelAlert = await channel.send({
+                            content: `🎉 **Level Up!** ${author} just reached **Level ${result.newLevel}**! Keep it up!`,
+                            files: [attachment],
+                        }).catch(() => null);
+
+                        if (levelAlert) {
+                            setTimeout(() => levelAlert.delete().catch(() => null), 20000);
+                        }
+                    } catch (cardErr) {
+                        console.error('[ERROR] Level-up card render failed:', cardErr);
+                        // Fallback to plain embed if card render fails
+                        const embed = new EmbedBuilder()
+                            .setTitle('🎉 Level Up!')
+                            .setColor('#00FFCC')
+                            .setThumbnail(author.displayAvatarURL({ forceStatic: true }))
+                            .setDescription(`GG ${author}! You advanced to **Level ${result.newLevel}**!`)
+                            .addFields(
+                                { name: 'Previous Level', value: `${result.oldLevel}`, inline: true },
+                                { name: 'New Level',      value: `${result.newLevel}`, inline: true }
+                            )
+                            .setTimestamp();
+                        const levelAlert = await channel.send({ embeds: [embed] }).catch(() => null);
+                        if (levelAlert) setTimeout(() => levelAlert.delete().catch(() => null), 12000);
                     }
 
                     // ------------------------------------------
