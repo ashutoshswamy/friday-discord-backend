@@ -198,9 +198,9 @@ module.exports = {
     // ==========================================
 
     async getGuildConfig(guildId) {
-        if (!supabase) return { 
-            guildId, automodSpam: false, automodLinks: false, automodCaps: false, 
-            xpMultiplier: 1.0, welcomeChannelId: null, welcomeMessage: null, autoRoleId: null 
+        if (!supabase) return {
+            guildId, automodSpam: false, automodLinks: false, automodCaps: false, automodInvites: false,
+            xpMultiplier: 1.0, welcomeChannelId: null, welcomeMessage: null, autoRoleId: null
         };
 
         const { data, error } = await supabase
@@ -217,6 +217,7 @@ module.exports = {
                 automod_spam: false,
                 automod_links: false,
                 automod_caps: false,
+                automod_invites: false,
                 xp_multiplier: 1.0
             };
             
@@ -247,30 +248,33 @@ module.exports = {
                         automodSpam: false,
                         automodLinks: false,
                         automodCaps: false,
+                        automodInvites: false,
                         xpMultiplier: 1.0,
                         welcomeChannelId: null,
                         welcomeMessage: null,
                         autoRoleId: null
                     };
                 }
-                
+
                 return {
                     guildId: retryInserted.guild_id,
                     automodSpam: retryInserted.automod_spam,
                     automodLinks: retryInserted.automod_links,
                     automodCaps: retryInserted.automod_caps,
+                    automodInvites: retryInserted.automod_invites ?? false,
                     xpMultiplier: retryInserted.xp_multiplier,
                     welcomeChannelId: null,
                     welcomeMessage: null,
                     autoRoleId: null
                 };
             }
-            
+
             return {
                 guildId: inserted.guild_id,
                 automodSpam: inserted.automod_spam,
                 automodLinks: inserted.automod_links,
                 automodCaps: inserted.automod_caps,
+                automodInvites: inserted.automod_invites ?? false,
                 xpMultiplier: inserted.xp_multiplier,
                 welcomeChannelId: inserted.welcome_channel_id,
                 welcomeMessage: inserted.welcome_message,
@@ -283,6 +287,7 @@ module.exports = {
             automodSpam: data.automod_spam,
             automodLinks: data.automod_links,
             automodCaps: data.automod_caps,
+            automodInvites: data.automod_invites ?? false,
             xpMultiplier: data.xp_multiplier,
             welcomeChannelId: data.welcome_channel_id || null,
             welcomeMessage: data.welcome_message || null,
@@ -335,6 +340,7 @@ module.exports = {
         if (updates.automodSpam !== undefined) mappedUpdates.automod_spam = updates.automodSpam;
         if (updates.automodLinks !== undefined) mappedUpdates.automod_links = updates.automodLinks;
         if (updates.automodCaps !== undefined) mappedUpdates.automod_caps = updates.automodCaps;
+        if (updates.automodInvites !== undefined) mappedUpdates.automod_invites = updates.automodInvites;
         if (updates.xpMultiplier !== undefined) mappedUpdates.xp_multiplier = updates.xpMultiplier;
 
         const welcomeUpdates = {};
@@ -373,6 +379,7 @@ module.exports = {
                     automodSpam: retryData.automod_spam,
                     automodLinks: retryData.automod_links,
                     automodCaps: retryData.automod_caps,
+                    automodInvites: retryData.automod_invites ?? false,
                     xpMultiplier: retryData.xp_multiplier,
                     welcomeChannelId: null,
                     welcomeMessage: null,
@@ -385,6 +392,7 @@ module.exports = {
                 automodSpam: data.automod_spam,
                 automodLinks: data.automod_links,
                 automodCaps: data.automod_caps,
+                automodInvites: data.automod_invites ?? false,
                 xpMultiplier: data.xp_multiplier,
                 welcomeChannelId: data.welcome_channel_id || null,
                 welcomeMessage: data.welcome_message || null,

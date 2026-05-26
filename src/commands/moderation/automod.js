@@ -18,7 +18,8 @@ module.exports = {
                         .addChoices(
                             { name: 'Anti-Spam Filter', value: 'spam' },
                             { name: 'Block Links Filter', value: 'links' },
-                            { name: 'Excessive Caps Filter', value: 'caps' }
+                            { name: 'Excessive Caps Filter', value: 'caps' },
+                            { name: 'Discord Invite Filter', value: 'invites' }
                         ))
                 .addBooleanOption(opt =>
                     opt.setName('enable')
@@ -121,10 +122,11 @@ module.exports = {
                 if (moduleName === 'spam') updates.automodSpam = enable;
                 if (moduleName === 'links') updates.automodLinks = enable;
                 if (moduleName === 'caps') updates.automodCaps = enable;
+                if (moduleName === 'invites') updates.automodInvites = enable;
 
                 await db.updateGuildConfig(guild.id, updates);
 
-                const moduleLabels = { spam: 'Anti-Spam Filter', links: 'Block Links Filter', caps: 'Excessive Caps Filter' };
+                const moduleLabels = { spam: 'Anti-Spam Filter', links: 'Block Links Filter', caps: 'Excessive Caps Filter', invites: 'Discord Invite Filter' };
                 const embed = new EmbedBuilder()
                     .setTitle('🛡️ AutoMod Settings Updated')
                     .setColor('#00FFCC')

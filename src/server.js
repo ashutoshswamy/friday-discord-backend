@@ -339,13 +339,14 @@ module.exports = function(client) {
     // Update AutoMod / Onboarding config
     app.post('/api/guilds/:guildId/config', authenticateToken, requireGuildAdmin, async (req, res) => {
         const { guildId } = req.params;
-        const { automodSpam, automodLinks, automodCaps, xpMultiplier, welcomeChannelId, welcomeMessage, autoRoleId } = req.body;
+        const { automodSpam, automodLinks, automodCaps, automodInvites, xpMultiplier, welcomeChannelId, welcomeMessage, autoRoleId } = req.body;
 
         try {
             const updated = await db.updateGuildConfig(guildId, {
                 automodSpam,
                 automodLinks,
                 automodCaps,
+                automodInvites,
                 xpMultiplier,
                 welcomeChannelId,
                 welcomeMessage,

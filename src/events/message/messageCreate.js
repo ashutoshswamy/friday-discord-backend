@@ -121,6 +121,16 @@ module.exports = {
                 }
 
                 // ------------------------------------------
+                // B2. Scan Discord Invite Links
+                // ------------------------------------------
+                if (!infractionReason && config.automodInvites) {
+                    const inviteRegex = /discord(?:\.gg|(?:app)?\.com\/invite)\/[a-zA-Z0-9-]+/i;
+                    if (inviteRegex.test(message.content)) {
+                        infractionReason = 'Posting Discord invite links is not allowed';
+                    }
+                }
+
+                // ------------------------------------------
                 // C. Scan Excessive Capital Letters (Caps)
                 // ------------------------------------------
                 if (!infractionReason && config.automodCaps) {
