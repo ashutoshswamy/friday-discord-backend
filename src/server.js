@@ -1436,8 +1436,19 @@ module.exports = function(client) {
         return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
     }
 
-    // Get all inventory items for a guild
-    // NOTE: user_inventory uses 'purchased_at' (not created_at) as its timestamp column
+    // Derive item category from name
+    const deriveItemType = (name) => {
+        const n = name.toLowerCase();
+        if (['rifle', 'pole', 'shovel'].some(k => n.includes(k))) return 'tool';
+        if (['bass', 'salmon', 'goldfish', 'coral fish', 'whale', 'seaweed', 'boot', 'fish'].some(k => n.includes(k))) return 'fish';
+        if (['bear', 'deer', 'wolf', 'moose', 'boar', 'fox', 'elk'].some(k => n.includes(k))) return 'hunt';
+        if (['worm', 'fossil', 'vase', 'gold chest', 'gem'].some(k => n.includes(k))) return 'dig';
+        if (['pizza', 'bread', 'apple', 'food'].some(k => n.includes(k))) return 'food';
+        if (['lootbox', 'mystery', 'crate'].some(k => n.includes(k))) return 'loot';
+        return 'other';
+    };
+
+    // Get all inventory items for a guild — grouped by (user_id, item_name) with count
     app.get('/api/guilds/:guildId/economy/inventory', authenticateToken, requireGuildAdmin, async (req, res) => {
         const { guildId } = req.params;
         try {
@@ -1448,21 +1459,53 @@ module.exports = function(client) {
                 .eq('guild_id', guildId)
                 .order('purchased_at', { ascending: false });
             if (error) throw error;
-            // Normalize to a consistent shape the dashboard can rely on
-            res.json((data || []).map(row => ({
-                id: row.id,
-                guild_id: row.guild_id,
-                user_id: row.user_id,
-                item_name: row.item_name,
-                acquired_at: row.purchased_at   // unified field name for the dashboard
-            })));
+
+            // Group by (user_id, item_name); keep latest acquired_at and id per group
+            const grouped = {};
+            for (const row of (data || [])) {
+                const key = `${row.user_id}::${row.item_name}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        id: row.id,
+                        guild_id: row.guild_id,
+                        user_id: row.user_id,
+                        item_name: row.item_name,
+                        item_type: deriveItemType(row.item_name),
+                        acquired_at: row.purchased_at,
+                        count: 0,
+                    };
+                }
+                grouped[key].count++;
+            }
+            res.json(Object.values(grouped));
         } catch (err) {
             console.error('[INVENTORY API]', err);
             res.status(500).json({ error: 'Failed to fetch inventory data' });
         }
     });
 
-    // Remove an inventory item by id (admin action)
+    // Remove all instances of an item for a specific user (admin bulk delete)
+    app.delete('/api/guilds/:guildId/economy/inventory', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId } = req.params;
+        const { userId, itemName } = req.body;
+        if (!userId || !itemName) return res.status(400).json({ error: 'userId and itemName are required' });
+        try {
+            const supa = getSupabase();
+            const { error } = await supa
+                .from('user_inventory')
+                .delete()
+                .eq('guild_id', guildId)
+                .eq('user_id', userId)
+                .eq('item_name', itemName);
+            if (error) throw error;
+            res.json({ success: true });
+        } catch (err) {
+            console.error('[INVENTORY BULK DELETE API]', err);
+            res.status(500).json({ error: 'Failed to remove inventory items' });
+        }
+    });
+
+    // Remove a single inventory item by id (kept for compatibility)
     app.delete('/api/guilds/:guildId/economy/inventory/:itemId', authenticateToken, requireGuildAdmin, async (req, res) => {
         const { guildId, itemId } = req.params;
         try {
@@ -1510,6 +1553,67 @@ module.exports = function(client) {
         } catch (err) {
             console.error('[PETS API]', err);
             res.status(500).json({ error: 'Failed to fetch pets data' });
+        }
+    });
+
+    // Admin: update pet stats / level  (petId = `${guildId}_${userId}`)
+    app.patch('/api/guilds/:guildId/economy/pets/:petId', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId, petId } = req.params;
+        const userId = petId.slice(guildId.length + 1);
+        if (!userId) return res.status(400).json({ error: 'Invalid petId' });
+        const { hunger, energy, affection, level } = req.body;
+        const updates = {};
+        if (hunger  !== undefined) updates.hunger    = Math.min(100, Math.max(0, Number(hunger)));
+        if (energy  !== undefined) updates.energy    = Math.min(100, Math.max(0, Number(energy)));
+        if (affection !== undefined) updates.affection = Math.min(100, Math.max(0, Number(affection)));
+        if (level   !== undefined) updates.level     = Math.min(100, Math.max(1, Number(level)));
+        if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No valid fields to update' });
+        try {
+            const supa = getSupabase();
+            const { data, error } = await supa
+                .from('user_pets')
+                .update(updates)
+                .eq('guild_id', guildId)
+                .eq('user_id', userId)
+                .select('*')
+                .single();
+            if (error) throw error;
+            if (!data) return res.status(404).json({ error: 'Pet not found' });
+            res.json({
+                id: `${data.guild_id}_${data.user_id}`,
+                userId: data.user_id,
+                petName: data.pet_name,
+                petType: data.pet_type,
+                level: Number(data.level || 1),
+                hunger: Number(data.hunger ?? 50),
+                affection: Number(data.affection ?? 50),
+                energy: Number(data.energy ?? 100),
+                attack: Number(data.attack || 5),
+                defense: Number(data.defense || 5),
+            });
+        } catch (err) {
+            console.error('[PET PATCH API]', err);
+            res.status(500).json({ error: 'Failed to update pet' });
+        }
+    });
+
+    // Admin: delete a pet  (petId = `${guildId}_${userId}`)
+    app.delete('/api/guilds/:guildId/economy/pets/:petId', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId, petId } = req.params;
+        const userId = petId.slice(guildId.length + 1);
+        if (!userId) return res.status(400).json({ error: 'Invalid petId' });
+        try {
+            const supa = getSupabase();
+            const { error } = await supa
+                .from('user_pets')
+                .delete()
+                .eq('guild_id', guildId)
+                .eq('user_id', userId);
+            if (error) throw error;
+            res.json({ success: true });
+        } catch (err) {
+            console.error('[PET DELETE API]', err);
+            res.status(500).json({ error: 'Failed to delete pet' });
         }
     });
 
