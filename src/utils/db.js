@@ -530,7 +530,7 @@ module.exports = {
     // ==========================================
 
     async getProfile(guildId, userId) {
-        if (!supabase) return { guildId, userId, coins: 100, xp: 0, level: 1, dailyCooldown: 0, workCooldown: 0, lastXpGain: 0 };
+        if (!supabase) return { guildId, userId, coins: 100, xp: 0, level: 1, dailyCooldown: 0, workCooldown: 0, lastXpGain: 0, currentJob: null, jobAppliedAt: 0 };
 
         const { data, error } = await supabase
             .from('user_profiles')
@@ -569,7 +569,9 @@ module.exports = {
                 level: inserted.level,
                 dailyCooldown: Number(inserted.daily_cooldown),
                 workCooldown: Number(inserted.work_cooldown),
-                lastXpGain: Number(inserted.last_xp_gain)
+                lastXpGain: Number(inserted.last_xp_gain),
+                currentJob: inserted.current_job || null,
+                jobAppliedAt: Number(inserted.job_applied_at || 0),
             };
         }
 
@@ -582,7 +584,9 @@ module.exports = {
             level: data.level,
             dailyCooldown: Number(data.daily_cooldown),
             workCooldown: Number(data.work_cooldown),
-            lastXpGain: Number(data.last_xp_gain)
+            lastXpGain: Number(data.last_xp_gain),
+            currentJob: data.current_job || null,
+            jobAppliedAt: Number(data.job_applied_at || 0),
         };
     },
 
@@ -734,6 +738,69 @@ module.exports = {
             reward,
             newBalance: Number(data.coins)
         };
+    },
+
+    async getUserJob(guildId, userId) {
+        const profile = await this.getProfile(guildId, userId);
+        return { jobKey: profile.currentJob || null, jobAppliedAt: profile.jobAppliedAt || 0 };
+    },
+
+    async applyJob(guildId, userId, jobKey) {
+        if (!supabase) return { success: true };
+        const now = Date.now();
+        const switchCooldownMs = 60 * 60 * 1000; // 1 hour between job switches
+
+        const profile = await this.getProfile(guildId, userId);
+        if (profile.currentJob && profile.jobAppliedAt && (now - profile.jobAppliedAt < switchCooldownMs)) {
+            return { success: false, cooldownLeft: switchCooldownMs - (now - profile.jobAppliedAt) };
+        }
+
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({ current_job: jobKey, job_applied_at: now })
+            .eq('guild_id', guildId)
+            .eq('user_id', userId);
+
+        if (error) throw error;
+        return { success: true };
+    },
+
+    async quitJob(guildId, userId) {
+        if (!supabase) return;
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({ current_job: null, job_applied_at: 0 })
+            .eq('guild_id', guildId)
+            .eq('user_id', userId);
+        if (error) throw error;
+    },
+
+    async getGuildJobs(guildId) {
+        if (!supabase) return [];
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select('user_id, current_job, job_applied_at, coins, level')
+            .eq('guild_id', guildId)
+            .not('current_job', 'is', null);
+        if (error) throw error;
+        return (data || []).map(r => ({
+            userId: r.user_id,
+            jobKey: r.current_job,
+            jobAppliedAt: r.job_applied_at,
+            coins: Number(r.coins),
+            level: r.level,
+        }));
+    },
+
+    async adminSetJob(guildId, userId, jobKey) {
+        if (!supabase) return;
+        const now = Date.now();
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({ current_job: jobKey || null, job_applied_at: jobKey ? now : 0 })
+            .eq('guild_id', guildId)
+            .eq('user_id', userId);
+        if (error) throw error;
     },
 
     async transferCoins(guildId, payorId, payeeId, amount) {

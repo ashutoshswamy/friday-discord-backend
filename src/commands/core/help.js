@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBui
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('help')
-        .setDescription('Displays a premium interactive help manual containing all 73 Friday bot protocols.'),
+        .setDescription('Displays a premium interactive help manual containing all 77 Friday bot protocols.'),
 
     /**
      * Executes the help command.
@@ -21,13 +21,13 @@ module.exports = {
                 description: `Welcome to the official manual for **Friday**, your premium cyberpunk administrative assistant.\n\n` +
                     `Friday is powered by a high-performance Express core, a hosted real-time Supabase cluster, and advanced Google Gemini AI model engines.\n\n` +
                     `⚙️ **System Specifications:**\n` +
-                    `• Loaded Protocols: \`73 slash commands\`\n` +
-                    `• Dynamic Systems: \`Leveling, Economy, Pets, Player Bazaar, AutoMod, Onboarding\`\n` +
+                    `• Loaded Protocols: \`77 slash commands\`\n` +
+                    `• Dynamic Systems: \`Leveling, Economy, Jobs, Pets, Player Bazaar, AutoMod, Onboarding\`\n` +
                     `• UI Control Panel: [Web Dashboard](http://localhost:5173/)\n\n` +
                     `📍 Use the **select menu dropdown below** to load specialized protocol system lists in detail.`,
                 fields: [
                     { name: '⚡ Core & AI Systems', value: 'Google Gemini AI generation, conversational ask, text rewriting, quotes, dashboard telemetry.', inline: true },
-                    { name: '🪙 Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily coin cycles, hourly shift wages, scavenging.', inline: true },
+                    { name: '🪙 Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily coin cycles, job careers, hourly shift wages, scavenging.', inline: true },
                     { name: '🎲 Casino & Gambling', value: 'Interactive Blackjack table, slots spinner, roulette payouts, arena cockfights, heists.', inline: true },
                     { name: '🎣 Scavenging & Shop', value: 'Hunting wild game, fishing lakes, shovel excavations, inventory items, player market bazaar.', inline: true },
                     { name: '📈 Stocks & Trading', value: 'Real-time global stock quotes (NASDAQ/NSE/CRYPTO), long-term share investments, 5× leveraged intraday long/short positions.', inline: true },
@@ -68,9 +68,29 @@ module.exports = {
                     { name: '`/gift item [user] [item_name]`', value: 'Atomically shifts item ownership record entries in the inventory database.' },
                     { name: '`/economy [action] [user] [amount]`', value: 'Spawns or deducts server coins from a member wallet (Admin).' },
                     { name: '`/daily`', value: 'Collects daily coin reward payouts.' },
-                    { name: '`/work`', value: 'Performs hourly shift duties for a structured server wage.' },
+                    { name: '`/work`', value: 'Performs hourly shift duties. Pay scales with your current job tier (50–660 coins/shift).' },
+                    { name: '`/job list`', value: 'Browses all 12 available careers across 4 tiers with pay ranges and XP bonuses.' },
+                    { name: '`/job apply [job]`', value: 'Applies for a job career. Higher tiers unlock higher pay per /work shift.' },
+                    { name: '`/job quit`', value: 'Resigns from current job. Reverts /work to generic base pay.' },
+                    { name: '`/job profile [user]`', value: 'Displays career card showing current job, tier, pay range, and wallet.' },
                     { name: '`/beg`', value: 'Beg strangers for spare change. Grants coins (20 to 120) or rare scavenged junk items.' },
                     { name: '`/search`', value: 'Selects active buttons to scavenge random locations. (Includes catch/bite penalties).' }
+                ]
+            },
+            help_jobs: {
+                title: '💼 Job Ecosystem & Career Protocols',
+                color: '#FBBF24',
+                description: 'Tiered career system that scales `/work` pay. Pick a job to unlock higher salaries and XP bonuses per shift. Switch jobs with a 1-hour cooldown.\n\n' +
+                    '**Tier 1 — Starter** *(Level 1+)*: 🛒 Cashier, 🎸 Street Performer, 🚗 Delivery Driver\n' +
+                    '**Tier 2 — Skilled** *(Level 5+)*: 👨‍🍳 Chef, 🔧 Mechanic, 💂 Security Guard\n' +
+                    '**Tier 3 — Professional** *(Level 10+)*: 💻 Software Engineer, 🩺 Doctor, ⚖️ Lawyer\n' +
+                    '**Tier 4 — Elite** *(Level 20+)*: 🏢 CEO, 💰 Investment Banker, 🎮 Game Developer',
+                fields: [
+                    { name: '`/job list`', value: 'Displays all 12 available careers sorted by tier, with pay range, XP bonus, and level requirement.' },
+                    { name: '`/job apply [job]`', value: 'Applies for a job. Must meet the level requirement. Each job changes `/work` pay and flavor text.' },
+                    { name: '`/job quit`', value: 'Resigns from current job. Reverts /work pay to generic base range (50–150).' },
+                    { name: '`/job profile [user?]`', value: 'Displays a career summary card — job title, tier, pay range, XP bonus, and time employed.' },
+                    { name: '`/work`', value: 'Earn coins for your current job. Pay scales with tier: Starter 30–180 · Skilled 110–220 · Pro 200–390 · Elite 280–660.' },
                 ]
             },
             help_casino: {
@@ -239,6 +259,11 @@ module.exports = {
                         .setDescription('/balance, deposit, withdraw, wages, begging, daily.')
                         .setValue('help_economy')
                         .setEmoji('🪙'),
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Job Ecosystem')
+                        .setDescription('/job list, apply, quit, profile. Tiered careers that scale /work pay.')
+                        .setValue('help_jobs')
+                        .setEmoji('💼'),
                     new StringSelectMenuOptionBuilder()
                         .setLabel('Casino & Heists')
                         .setDescription('/blackjack, slots, roulette, cockfights, heists.')

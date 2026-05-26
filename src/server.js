@@ -1725,6 +1725,42 @@ module.exports = function(client) {
         }
     });
 
+    // ── Jobs ──
+    app.get('/api/guilds/:guildId/economy/jobs', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId } = req.params;
+        try {
+            const jobs = await db.getGuildJobs(guildId);
+            res.json(jobs);
+        } catch (err) {
+            console.error('[JOBS GET API]', err);
+            res.status(500).json({ error: 'Failed to fetch jobs' });
+        }
+    });
+
+    app.post('/api/guilds/:guildId/economy/jobs/:userId', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId, userId } = req.params;
+        const { jobKey } = req.body;
+        if (!jobKey) return res.status(400).json({ error: 'jobKey required' });
+        try {
+            await db.adminSetJob(guildId, userId, jobKey);
+            res.json({ success: true });
+        } catch (err) {
+            console.error('[JOBS POST API]', err);
+            res.status(500).json({ error: 'Failed to set job' });
+        }
+    });
+
+    app.delete('/api/guilds/:guildId/economy/jobs/:userId', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId, userId } = req.params;
+        try {
+            await db.adminSetJob(guildId, userId, null);
+            res.json({ success: true });
+        } catch (err) {
+            console.error('[JOBS DELETE API]', err);
+            res.status(500).json({ error: 'Failed to clear job' });
+        }
+    });
+
     // ── Tickets ──
     app.get('/api/guilds/:guildId/tickets', authenticateToken, requireGuildAdmin, async (req, res) => {
         const { guildId } = req.params;
