@@ -49,15 +49,13 @@ module.exports = {
                 .setFooter({ text: `Created by ${interaction.user.tag}` })
                 .setTimestamp();
 
-            // Reply and retrieve the message object to append reaction triggers
-            const responseMessage = await interaction.editReply({ 
-                embeds: [embed], 
-                fetchReply: true 
-            });
+            await interaction.editReply({ embeds: [embed] });
 
-            // React with standard digit emojis sequentially
+            // Fetch the actual message object so .react() is available
+            const responseMessage = await interaction.fetchReply();
+
             for (let i = 0; i < optionsList.length; i++) {
-                await responseMessage.react(digitEmojis[i]).catch(() => null);
+                await responseMessage.react(digitEmojis[i]);
             }
         } catch (err) {
             console.error('[POLL COMMAND ERROR] Failed to deploy poll:', err);

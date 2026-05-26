@@ -1411,6 +1411,35 @@ module.exports = function(client) {
         }
     });
 
+    app.post('/api/guilds/:guildId/poll', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { channelId, question, options } = req.body;
+        if (!channelId || !question || !Array.isArray(options) || options.length < 2 || options.length > 10) {
+            return res.status(400).json({ error: 'Requires channelId, question, and 2–10 options' });
+        }
+        const discordGuild = client.guilds.cache.get(req.params.guildId);
+        if (!discordGuild) return res.status(404).json({ error: 'Guild not found' });
+        try {
+            const channel = discordGuild.channels.cache.get(channelId);
+            if (!channel) return res.status(404).json({ error: 'Channel not found' });
+            const { EmbedBuilder } = require('discord.js');
+            const digitEmojis = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+            const embed = new EmbedBuilder()
+                .setTitle(`📊 ${question}`)
+                .setColor('#00FFCC')
+                .setDescription(options.map((opt, i) => `${digitEmojis[i]} ${opt}`).join('\n\n'))
+                .setFooter({ text: 'Poll · Created from Dashboard' })
+                .setTimestamp();
+            const msg = await channel.send({ embeds: [embed] });
+            for (let i = 0; i < options.length; i++) {
+                await msg.react(digitEmojis[i]);
+            }
+            res.json({ ok: true, messageId: msg.id });
+        } catch (err) {
+            console.error('[POLL API]', err);
+            res.status(500).json({ error: 'Failed to create poll' });
+        }
+    });
+
     // Moderator stats
     app.get('/api/guilds/:guildId/modstats', authenticateToken, requireGuildAdmin, async (req, res) => {
         const { guildId } = req.params;
