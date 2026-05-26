@@ -281,9 +281,6 @@ module.exports = {
                             files: [attachment],
                         }).catch(() => null);
 
-                        if (levelAlert) {
-                            setTimeout(() => levelAlert.delete().catch(() => null), 20000);
-                        }
                     } catch (cardErr) {
                         console.error('[ERROR] Level-up card render failed:', cardErr);
                         // Fallback to plain embed if card render fails
@@ -297,8 +294,7 @@ module.exports = {
                                 { name: 'New Level',      value: `${result.newLevel}`, inline: true }
                             )
                             .setTimestamp();
-                        const levelAlert = await channel.send({ embeds: [embed] }).catch(() => null);
-                        if (levelAlert) setTimeout(() => levelAlert.delete().catch(() => null), 12000);
+                        await channel.send({ embeds: [embed] }).catch(() => null);
                     }
 
                     // ------------------------------------------
