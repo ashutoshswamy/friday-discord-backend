@@ -14,8 +14,8 @@ module.exports = {
         // Optional: Set a custom status/activity for your bot
         if (client.user) {
             client.user.setActivity({
-                name: 'with code',
-                type: 0 // ActivityType.Playing
+                name: 'fridaybot.ashutoshswamy.in',
+                type: 3 // ActivityType.Watching
             });
         }
 
