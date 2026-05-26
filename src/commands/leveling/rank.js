@@ -9,6 +9,12 @@ const RANK_THEMES = {
     forest:   { bg: ['#0a1a0f', '#081208', '#050d04'], accent: ['#00c853', '#69f0ae'], levelColor: '#b9f6ca', trackBg: '#0d2010' },
     sunset:   { bg: ['#1a0a08', '#120604', '#0d0304'], accent: ['#ff4569', '#ff9100'], levelColor: '#ffd740', trackBg: '#1f0e08' },
     aurora:   { bg: ['#0a0813', '#0d0a1a', '#070510'], accent: ['#8b5cf6', '#ec4899'], levelColor: '#a78bfa', trackBg: '#130820' },
+    neon:     { bg: ['#050515', '#08081f', '#020208'], accent: ['#39ff14', '#ff00ff'], levelColor: '#39ff14', trackBg: '#0a0a20' },
+    ocean:    { bg: ['#011020', '#031a2e', '#010810'], accent: ['#00e5ff', '#0ea5e9'], levelColor: '#38bdf8', trackBg: '#051828' },
+    volcano:  { bg: ['#1a0500', '#260800', '#0d0200'], accent: ['#ff6d00', '#ffab40'], levelColor: '#ffd740', trackBg: '#200800' },
+    sakura:   { bg: ['#1a0510', '#22061a', '#0d0208'], accent: ['#f472b6', '#fda4af'], levelColor: '#fbcfe8', trackBg: '#1f0515' },
+    gold:     { bg: ['#1a1200', '#221800', '#0d0900'], accent: ['#fbbf24', '#f59e0b'], levelColor: '#fde68a', trackBg: '#1c1400' },
+    void:     { bg: ['#050005', '#0a000a', '#020002'], accent: ['#7c3aed', '#c026d3'], levelColor: '#ddd6fe', trackBg: '#0a0010' },
 };
 
 module.exports = {
