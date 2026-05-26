@@ -57,17 +57,19 @@ module.exports = {
                     .setFooter({ text: `Created by ${user.tag}` })
                     .setTimestamp();
 
-                await interaction.editReply({ embeds: [embed] });
-                const msg = await interaction.fetchReply();
+                // Send as a normal channel message — interaction reply objects
+                // don't support .react() reliably in discord.js v14
+                const msg = await channel.send({ embeds: [embed] });
 
                 for (let i = 0; i < optionsList.length; i++) {
                     await msg.react(emojiList[i]);
                 }
 
                 await db.savePoll(guild.id, channel.id, msg.id, question, optionsList, emojiList);
+                await interaction.editReply({ content: `📊 Poll posted!`, ephemeral: true });
             } catch (err) {
                 console.error('[POLL CREATE ERROR]', err);
-                const e = { content: '❌ Failed to create poll. Ensure custom emojis are valid Unicode.', ephemeral: true };
+                const e = { content: `❌ Failed to create poll: ${err.message}`, ephemeral: true };
                 interaction.replied || interaction.deferred ? await interaction.followUp(e).catch(() => null) : await interaction.editReply(e).catch(() => null);
             }
             return;

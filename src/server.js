@@ -1434,11 +1434,25 @@ module.exports = function(client) {
                 .setFooter({ text: 'Poll · Created from Dashboard' })
                 .setTimestamp();
             const msg = await channel.send({ embeds: [embed] });
+
+            // React separately — don't let a failed react kill the whole request
+            const reactErrors = [];
             for (let i = 0; i < options.length; i++) {
-                await msg.react(emojiList[i]);
+                try {
+                    await msg.react(emojiList[i]);
+                } catch (reactErr) {
+                    console.error(`[POLL API] Failed to react with ${emojiList[i]}:`, reactErr.message);
+                    reactErrors.push(emojiList[i]);
+                }
             }
+
             await db.savePoll(req.params.guildId, channelId, msg.id, question, options, emojiList);
-            res.json({ ok: true, messageId: msg.id });
+
+            if (reactErrors.length > 0) {
+                res.json({ ok: true, messageId: msg.id, warning: `Some reactions failed: ${reactErrors.join(' ')}. Check bot has Add Reactions permission.` });
+            } else {
+                res.json({ ok: true, messageId: msg.id });
+            }
         } catch (err) {
             console.error('[POLL API]', err);
             res.status(500).json({ error: 'Failed to create poll — check that all emojis are valid Unicode emoji' });
