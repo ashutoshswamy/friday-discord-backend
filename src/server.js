@@ -1484,6 +1484,24 @@ module.exports = function(client) {
         }
     });
 
+    // Grant item(s) to a user (admin)
+    app.post('/api/guilds/:guildId/economy/inventory', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId } = req.params;
+        const { userId, itemName, count } = req.body;
+        if (!userId || !itemName) return res.status(400).json({ error: 'userId and itemName are required' });
+        const qty = Math.max(1, Math.min(100, parseInt(count) || 1));
+        try {
+            const supa = getSupabase();
+            const rows = Array.from({ length: qty }, () => ({ guild_id: guildId, user_id: userId, item_name: itemName }));
+            const { error } = await supa.from('user_inventory').insert(rows);
+            if (error) throw error;
+            res.json({ success: true, granted: qty });
+        } catch (err) {
+            console.error('[INVENTORY GRANT API]', err);
+            res.status(500).json({ error: 'Failed to grant inventory items' });
+        }
+    });
+
     // Remove all instances of an item for a specific user (admin bulk delete)
     app.delete('/api/guilds/:guildId/economy/inventory', authenticateToken, requireGuildAdmin, async (req, res) => {
         const { guildId } = req.params;
