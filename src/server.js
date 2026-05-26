@@ -1412,31 +1412,102 @@ module.exports = function(client) {
     });
 
     app.post('/api/guilds/:guildId/poll', authenticateToken, requireGuildAdmin, async (req, res) => {
-        const { channelId, question, options } = req.body;
+        const { channelId, question, options, emojis } = req.body;
         if (!channelId || !question || !Array.isArray(options) || options.length < 2 || options.length > 10) {
             return res.status(400).json({ error: 'Requires channelId, question, and 2–10 options' });
         }
+        const defaultEmojis = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+        const emojiList = (Array.isArray(emojis) && emojis.length === options.length)
+            ? emojis.map(e => e.trim()).filter(e => e)
+            : defaultEmojis;
+
         const discordGuild = client.guilds.cache.get(req.params.guildId);
         if (!discordGuild) return res.status(404).json({ error: 'Guild not found' });
         try {
             const channel = discordGuild.channels.cache.get(channelId);
             if (!channel) return res.status(404).json({ error: 'Channel not found' });
             const { EmbedBuilder } = require('discord.js');
-            const digitEmojis = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
             const embed = new EmbedBuilder()
                 .setTitle(`📊 ${question}`)
                 .setColor('#00FFCC')
-                .setDescription(options.map((opt, i) => `${digitEmojis[i]} ${opt}`).join('\n\n'))
+                .setDescription(options.map((opt, i) => `${emojiList[i]} ${opt}`).join('\n\n'))
                 .setFooter({ text: 'Poll · Created from Dashboard' })
                 .setTimestamp();
             const msg = await channel.send({ embeds: [embed] });
             for (let i = 0; i < options.length; i++) {
-                await msg.react(digitEmojis[i]);
+                await msg.react(emojiList[i]);
             }
+            await db.savePoll(req.params.guildId, channelId, msg.id, question, options, emojiList);
             res.json({ ok: true, messageId: msg.id });
         } catch (err) {
             console.error('[POLL API]', err);
-            res.status(500).json({ error: 'Failed to create poll' });
+            res.status(500).json({ error: 'Failed to create poll — check that all emojis are valid Unicode emoji' });
+        }
+    });
+
+    app.get('/api/guilds/:guildId/polls', authenticateToken, requireGuildAdmin, async (req, res) => {
+        try {
+            res.json(await db.getPolls(req.params.guildId));
+        } catch (err) {
+            console.error('[POLLS LIST API]', err);
+            res.status(500).json({ error: 'Failed to fetch polls' });
+        }
+    });
+
+    app.post('/api/guilds/:guildId/polls/:messageId/close', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId, messageId } = req.params;
+        const discordGuild = client.guilds.cache.get(guildId);
+        if (!discordGuild) return res.status(404).json({ error: 'Guild not found' });
+
+        try {
+            const polls = await db.getPolls(guildId);
+            const poll = polls.find(p => p.id === messageId);
+            if (!poll) return res.status(404).json({ error: 'Poll not found' });
+            if (poll.status === 'closed') return res.status(400).json({ error: 'Poll already closed' });
+
+            const channel = discordGuild.channels.cache.get(poll.channelId);
+            if (!channel) return res.status(404).json({ error: 'Channel not found' });
+
+            const msg = await channel.messages.fetch(messageId).catch(() => null);
+            if (msg) {
+                const { EmbedBuilder } = require('discord.js');
+                const defaultEmojis = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+                const pollEmojis = (poll.emojis && poll.emojis.length === poll.options.length)
+                    ? poll.emojis : defaultEmojis;
+
+                // Count reactions (subtract 1 for the bot's own reaction)
+                const votes = poll.options.map((opt, i) => {
+                    const reaction = msg.reactions.cache.get(pollEmojis[i]);
+                    const count = reaction ? Math.max(0, reaction.count - 1) : 0;
+                    return { opt, count };
+                });
+
+                const totalVotes = votes.reduce((s, v) => s + v.count, 0);
+                const maxVotes = Math.max(...votes.map(v => v.count));
+
+                const resultsText = votes.map((v, i) => {
+                    const pct = totalVotes > 0 ? Math.round((v.count / totalVotes) * 100) : 0;
+                    const bar = '█'.repeat(Math.round(pct / 10)) + '░'.repeat(10 - Math.round(pct / 10));
+                    const winner = v.count === maxVotes && maxVotes > 0 ? ' 🏆' : '';
+                    return `${pollEmojis[i]} **${v.opt}**${winner}\n\`${bar}\` ${pct}% (${v.count} vote${v.count !== 1 ? 's' : ''})`;
+                }).join('\n\n');
+
+                const embed = new EmbedBuilder()
+                    .setTitle(`📊 [CLOSED] ${poll.question}`)
+                    .setColor('#71717a')
+                    .setDescription(resultsText || '*No votes recorded.*')
+                    .setFooter({ text: `Poll closed · ${totalVotes} total vote${totalVotes !== 1 ? 's' : ''}` })
+                    .setTimestamp();
+
+                await msg.edit({ embeds: [embed] });
+                await msg.reactions.removeAll().catch(() => null);
+            }
+
+            await db.closePoll(messageId);
+            res.json({ ok: true });
+        } catch (err) {
+            console.error('[POLL CLOSE API]', err);
+            res.status(500).json({ error: 'Failed to close poll' });
         }
     });
 

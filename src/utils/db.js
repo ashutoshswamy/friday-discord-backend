@@ -1615,6 +1615,53 @@ module.exports = {
         }));
     },
 
+    // ==========================================
+    // 9. Polls
+    // ==========================================
+
+    async savePoll(guildId, channelId, messageId, question, options, emojis = []) {
+        if (!supabase) return;
+        await supabase.from('polls').upsert({
+            id: messageId,
+            guild_id: guildId,
+            channel_id: channelId,
+            question,
+            options,
+            emojis,
+            status: 'active'
+        });
+    },
+
+    async closePoll(messageId) {
+        if (!supabase) return;
+        await supabase.from('polls').update({
+            status: 'closed',
+            closed_at: new Date().toISOString()
+        }).eq('id', messageId);
+    },
+
+    async getPolls(guildId) {
+        if (!supabase) return [];
+        const { data, error } = await supabase
+            .from('polls')
+            .select('*')
+            .eq('guild_id', guildId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error) return [];
+        return data.map(p => ({
+            id: p.id,
+            guildId: p.guild_id,
+            channelId: p.channel_id,
+            question: p.question,
+            options: p.options || [],
+            emojis: p.emojis || [],
+            status: p.status,
+            createdAt: p.created_at,
+            closedAt: p.closed_at
+        }));
+    },
+
     async getGuildProfiles(guildId) {
         if (!supabase) return [];
         const { data, error } = await supabase
