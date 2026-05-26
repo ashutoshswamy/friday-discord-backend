@@ -64,12 +64,18 @@ module.exports = {
             // ------------------------------------------
             // 1. Fetch Config & Exemptions
             // ------------------------------------------
-            const config = await db.getGuildConfig(guild.id);
-            const exemptions = await db.getExemptions(guild.id);
+            const [config, exemptions, filterOptOuts] = await Promise.all([
+                db.getGuildConfig(guild.id),
+                db.getExemptions(guild.id),
+                db.getFilterOptOuts(guild.id),
+            ]);
 
-            // Check if current channel or user's roles are exempted
+            // Check if current channel or user's roles are exempted (full bypass)
             const isChannelExempt = exemptions.some(ex => ex.type === 'CHANNEL' && ex.targetId === channel.id);
             const isRoleExempt = exemptions.some(ex => ex.type === 'ROLE' && member.roles.cache.has(ex.targetId));
+
+            // Helper: is this channel opted out of a specific filter?
+            const isOptedOut = (filter) => filterOptOuts.some(o => o.filter === filter && o.channelId === channel.id);
 
             if (!isChannelExempt && !isRoleExempt) {
                 let infractionReason = null;
@@ -113,7 +119,7 @@ module.exports = {
                 // ------------------------------------------
                 // B. Scan unauthorized Links
                 // ------------------------------------------
-                if (!infractionReason && config.automodLinks) {
+                if (!infractionReason && config.automodLinks && !isOptedOut('links')) {
                     const linkRegex = /https?:\/\/[^\s]+/i;
                     if (linkRegex.test(message.content)) {
                         infractionReason = 'Sharing links is restricted in this channel';
@@ -123,7 +129,7 @@ module.exports = {
                 // ------------------------------------------
                 // B2. Scan Discord Invite Links
                 // ------------------------------------------
-                if (!infractionReason && config.automodInvites) {
+                if (!infractionReason && config.automodInvites && !isOptedOut('invites')) {
                     const inviteRegex = /discord(?:\.gg|(?:app)?\.com\/invite)\/[a-zA-Z0-9-]+/i;
                     if (inviteRegex.test(message.content)) {
                         infractionReason = 'Posting Discord invite links is not allowed';
@@ -133,7 +139,7 @@ module.exports = {
                 // ------------------------------------------
                 // C. Scan Excessive Capital Letters (Caps)
                 // ------------------------------------------
-                if (!infractionReason && config.automodCaps) {
+                if (!infractionReason && config.automodCaps && !isOptedOut('caps')) {
                     const cleanText = message.content.replace(/[^a-zA-Z]/g, '');
                     const uppercaseCount = message.content.replace(/[^A-Z]/g, '').length;
 
@@ -146,7 +152,7 @@ module.exports = {
                 // ------------------------------------------
                 // D. Scan Chat Message Spamming
                 // ------------------------------------------
-                if (!infractionReason && config.automodSpam) {
+                if (!infractionReason && config.automodSpam && !isOptedOut('spam')) {
                     const now = Date.now();
                     if (!spamCache.has(author.id)) {
                         spamCache.set(author.id, []);

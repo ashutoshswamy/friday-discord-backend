@@ -67,6 +67,35 @@ module.exports = {
                         .setDescription('Role to exempt')
                         .setRequired(false)))
         
+        // Subcommand: optout
+        .addSubcommand(sub =>
+            sub.setName('optout')
+                .setDescription('Opt a channel out of a specific AutoMod filter without fully whitelisting it.')
+                .addStringOption(opt =>
+                    opt.setName('action')
+                        .setDescription('Action to perform')
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'Add Opt-Out', value: 'add' },
+                            { name: 'Remove Opt-Out', value: 'remove' },
+                            { name: 'List Opt-Outs', value: 'list' }
+                        ))
+                .addStringOption(opt =>
+                    opt.setName('filter')
+                        .setDescription('The AutoMod filter to opt out of')
+                        .setRequired(false)
+                        .addChoices(
+                            { name: 'Anti-Spam Filter', value: 'spam' },
+                            { name: 'Block Links Filter', value: 'links' },
+                            { name: 'Excessive Caps Filter', value: 'caps' },
+                            { name: 'Discord Invite Filter', value: 'invites' }
+                        ))
+                .addChannelOption(opt =>
+                    opt.setName('channel')
+                        .setDescription('Channel to opt out')
+                        .addChannelTypes(ChannelType.GuildText)
+                        .setRequired(false)))
+
         // Subcommand: punishments
         .addSubcommand(sub =>
             sub.setName('punishments')
@@ -240,7 +269,63 @@ module.exports = {
             }
 
             // ------------------------------------------
-            // D. Subcommand: punishments
+            // D. Subcommand: optout
+            // ------------------------------------------
+            if (subcommand === 'optout') {
+                const action = options.getString('action');
+                const filter = options.getString('filter');
+                const channelOption = options.getChannel('channel');
+
+                const filterLabels = { spam: 'Anti-Spam Filter', links: 'Block Links Filter', caps: 'Excessive Caps Filter', invites: 'Discord Invite Filter' };
+
+                if (action === 'list') {
+                    const optOuts = await db.getFilterOptOuts(guild.id);
+                    if (optOuts.length === 0) {
+                        return interaction.editReply({ content: '📜 No per-filter channel opt-outs are configured for this server.' });
+                    }
+
+                    const embed = new EmbedBuilder()
+                        .setTitle('🛡️ AutoMod Channel Opt-Outs')
+                        .setColor('#00FFCC')
+                        .setDescription(optOuts.map((o, idx) => {
+                            return `${idx + 1}. **${filterLabels[o.filter] || o.filter}** → <#${o.channelId}>`;
+                        }).join('\n'))
+                        .setFooter({ text: 'These channels skip only their specified filter — other AutoMod rules still apply.' })
+                        .setTimestamp();
+
+                    return interaction.editReply({ embeds: [embed] });
+                }
+
+                if (!filter || !channelOption) {
+                    return interaction.editReply({ content: '❌ You must specify both a `filter` and a `channel` for add/remove.', ephemeral: true });
+                }
+
+                if (action === 'add') {
+                    const success = await db.addFilterOptOut(guild.id, filter, channelOption.id);
+                    if (!success) {
+                        return interaction.editReply({ content: `❌ Failed to add opt-out. It may already exist.`, ephemeral: true });
+                    }
+
+                    const embed = new EmbedBuilder()
+                        .setTitle('✅ Filter Opt-Out Added')
+                        .setColor('#00FFCC')
+                        .setDescription(`${channelOption} will now bypass the **${filterLabels[filter]}**.\nAll other AutoMod filters still apply in that channel.`)
+                        .setTimestamp();
+
+                    return interaction.editReply({ embeds: [embed] });
+                }
+
+                if (action === 'remove') {
+                    const success = await db.removeFilterOptOut(guild.id, filter, channelOption.id);
+                    if (!success) {
+                        return interaction.editReply({ content: `❌ No opt-out found for ${channelOption} on the **${filterLabels[filter]}**.`, ephemeral: true });
+                    }
+                    return interaction.editReply({ content: `✅ Removed opt-out — ${channelOption} is now subject to the **${filterLabels[filter]}** again.` });
+                }
+            }
+
+            // ------------------------------------------
+            // E. Subcommand: punishments
             // ------------------------------------------
             if (subcommand === 'punishments') {
                 const action = options.getString('action');

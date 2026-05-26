@@ -533,6 +533,43 @@ module.exports = {
         return this.addPunishmentRule(guildId, warnThreshold, punishmentType, durationMs);
     },
 
+    // NOTE: automod_filter_optouts table must exist in Supabase:
+    //   CREATE TABLE automod_filter_optouts (
+    //     guild_id TEXT NOT NULL,
+    //     filter TEXT NOT NULL,
+    //     channel_id TEXT NOT NULL,
+    //     PRIMARY KEY (guild_id, filter, channel_id)
+    //   );
+
+    async getFilterOptOuts(guildId) {
+        if (!supabase) return [];
+        const { data, error } = await supabase
+            .from('automod_filter_optouts')
+            .select('filter, channel_id')
+            .eq('guild_id', guildId);
+        if (error) return [];
+        return data.map(r => ({ filter: r.filter, channelId: r.channel_id }));
+    },
+
+    async addFilterOptOut(guildId, filter, channelId) {
+        if (!supabase) return false;
+        const { error } = await supabase
+            .from('automod_filter_optouts')
+            .upsert([{ guild_id: guildId, filter, channel_id: channelId }], { onConflict: 'guild_id,filter,channel_id' });
+        return !error;
+    },
+
+    async removeFilterOptOut(guildId, filter, channelId) {
+        if (!supabase) return false;
+        const { error, count } = await supabase
+            .from('automod_filter_optouts')
+            .delete({ count: 'exact' })
+            .eq('guild_id', guildId)
+            .eq('filter', filter)
+            .eq('channel_id', channelId);
+        return !error && count > 0;
+    },
+
     // ==========================================
     // 3. Economy & Virtual Shop
     // ==========================================
