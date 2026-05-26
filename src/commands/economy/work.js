@@ -11,24 +11,43 @@ const GENERIC_TASKS = [
 ];
 
 const JOB_TASKS = {
-    cashier:   ['You scanned items and handled the checkout rush.', 'A busy Saturday shift flew by and your register balanced perfectly.'],
-    performer: ['You played an epic set on the street corner and the crowd loved it.', 'Tips were flying — your busking skills paid off tonight.'],
-    delivery:  ['You completed 12 delivery runs without a single mishap.', 'Rush hour was brutal but you hit every drop-off on time.'],
-    chef:      ['You crafted a tasting menu that had the restaurant fully booked.', 'Service was slammed but your station held solid all night.'],
-    mechanic:  ['You diagnosed and repaired three vehicles in a single afternoon.', 'A tricky transmission job took skill — you nailed it.'],
-    guard:     ['A quiet patrol shift — nothing slipped past you tonight.', 'You diffused a tense situation and kept the venue secure.'],
-    engineer:  ['You shipped a feature, squashed two critical bugs, and passed code review.', 'Sprint planning, a deploy, and a hotfix all before lunch.'],
-    doctor:    ['A complex procedure went flawlessly — the patient is recovering well.', 'You treated a full ward and stayed two hours past your shift.'],
-    lawyer:    ['You won a motion hearing and your client signed off on the settlement.', 'Contract negotiation went deep into the night — outcome: favourable.'],
-    ceo:       ['Q3 earnings smashed projections. The board is delighted.', 'You closed a landmark acquisition deal and celebrated with the team.'],
-    banker:    ['A leveraged buyout closed at midnight — massive payday.', 'Your fund outperformed the index by 12 points this quarter.'],
-    gamedev:   ['You shipped the new update — the community response is overwhelmingly positive.', 'Three sprints crushed: new level, new boss, new soundtrack track.'],
+    // Tier 1
+    cashier:    ['You scanned items all day and your register balanced to the cent.', 'A Black Friday rush hit — you kept the queue moving like a pro.', 'You caught a pricing error and saved the store a hefty refund.'],
+    performer:  ['You played an epic set on the corner and tips piled up fast.', 'A small crowd gathered — one person dropped a 500-coin note.', 'Rough night — barely anyone stopped, but the coins still added up.'],
+    delivery:   ['You completed 14 runs without a single late delivery.', 'Rush hour was brutal but you hit every drop-off on time.', 'A long-haul route paid out nicely — 80 km of open road.'],
+    janitor:    ['Three floors mopped, two bathrooms scrubbed, and overtime approved.', 'You cleared a spillage before anyone slipped — management noticed.', 'Late-night deep-clean shift complete. The building gleams.'],
+    barista:    ['The morning rush was relentless — your latte art was flawless throughout.', 'A loyal regular tipped you generously for remembering their order.', 'You covered two sick colleagues and crushed it solo.'],
+    farmhand:   ['You harvested two full rows before noon — the foreman was impressed.', 'Long day under the sun, but the crop yield was record-breaking.', 'You repaired a broken irrigation line and saved half the field.'],
+
+    // Tier 2
+    chef:       ['You crafted a tasting menu that had the restaurant fully booked.', 'Service was slammed but your station held solid all night.', 'The head chef praised your sauce technique in front of the whole kitchen.'],
+    mechanic:   ['You diagnosed and fixed three vehicles in one afternoon.', 'A tricky transmission rebuild took skill — you nailed every torque spec.', 'Emergency call-out at midnight — engine replaced, customer ecstatic.'],
+    guard:      ['A quiet patrol shift — nothing slipped past you.', 'You diffused a tense situation and kept the venue safe.', 'You spotted a suspicious bag early and averted a major incident.'],
+    plumber:    ['You cleared a burst pipe in record time — no water damage.', 'A major commercial fit-out: 40 metres of copper piping laid perfectly.', 'Emergency call — flooded basement pumped dry before dawn.'],
+    electrician:['You rewired an entire office floor ahead of schedule.', 'A fault diagnosis that stumped the whole crew — you cracked it in minutes.', 'You installed a new distribution board cleanly and passed the safety audit first time.'],
+    nurse:      ['A full ward round, three IV lines, and two critical patients stabilised.', 'You stayed two hours late to cover a colleague — the team appreciated it.', 'Your calm under pressure during a code blue made all the difference.'],
+
+    // Tier 3
+    engineer:   ['You shipped a feature, squashed two critical bugs, and passed code review.', 'Sprint planning, a deploy, and a hotfix all before lunch.', 'Your refactor cut API response time by 40% — the team is stoked.'],
+    doctor:     ['A complex procedure went flawlessly — the patient is recovering well.', 'You treated a full ward and stayed two hours past your shift.', 'Your differential diagnosis caught a rare condition the junior staff missed.'],
+    lawyer:     ['You won a motion hearing and your client signed off on the settlement.', 'Contract negotiation ran deep into the night — outcome: fully favourable.', 'You dismantled the opposing counsel\'s argument in under ten minutes.'],
+    architect:  ['Your concept drawings for the new civic centre wowed the planning committee.', 'Site inspection complete — every beam and wall aligns to the millimetre.', 'The client approved your revised facade design on the spot.'],
+    pharmacist: ['You counselled 30 patients and caught a dangerous drug interaction.', 'Stock audit complete — zero discrepancies, full compliance sign-off.', 'You handled a prescription emergency with textbook precision.'],
+    analyst:    ['Your market model predicted the dip — the fund avoided a major loss.', 'A 60-slide deck delivered in two hours — client loved every slide.', 'Your valuation report became the basis for a nine-figure acquisition.'],
+
+    // Tier 4
+    ceo:        ['Q3 earnings smashed projections. The board gave a standing ovation.', 'You closed a landmark acquisition deal over a single lunch meeting.', 'Your strategic pivot just unlocked a new market worth billions.'],
+    banker:     ['A leveraged buyout closed at midnight — massive payday for the team.', 'Your fund outperformed the index by 18 points this quarter.', 'You structured a $2B bond issuance in 48 hours — flawlessly executed.'],
+    gamedev:    ['You shipped the update — the community response is overwhelmingly positive.', 'Three sprints crushed: new level, new boss, new soundtrack.', 'Your game hit the top-10 chart within 24 hours of the patch dropping.'],
+    surgeon:    ['A twelve-hour spinal reconstruction — perfect outcome, zero complications.', 'You performed a last-minute bypass that saved a life tonight.', 'The medical board cited your technique as best-in-class.'],
+    aerospace:  ['Your propulsion design passed final testing — launch window confirmed.', 'Wind-tunnel simulations validated — the airframe is ready for production.', 'You solved a critical guidance software bug 48 hours before launch day.'],
+    hedgefund:  ['Your short position on the sector paid out 8× margin overnight.', 'A bold contrarian bet came good — the portfolio is up 22% this week.', 'Volatile session: you rode the wave and locked in a monster gain at the bell.'],
 };
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('work')
-        .setDescription('Work your shift and earn coins (5-minute cooldown). Pay scales with your job tier.'),
+        .setDescription('Work your shift and earn coins (1-hour cooldown). Pay scales with your job tier.'),
 
     async execute(interaction) {
         const { guild, user } = interaction;
@@ -40,7 +59,7 @@ module.exports = {
             if (!result.success) {
                 const nextClaimTimeUnix = Math.floor((Date.now() + result.cooldownLeft) / 1000);
                 return interaction.editReply({
-                    content: `⏳ You are too exhausted to work! You can work again **<t:${nextClaimTimeUnix}:R>** (at <t:${nextClaimTimeUnix}:T>).`,
+                    content: `⏳ You are still on shift cooldown! You can work again **<t:${nextClaimTimeUnix}:R>** (at <t:${nextClaimTimeUnix}:T>).`,
                     ephemeral: true,
                 });
             }

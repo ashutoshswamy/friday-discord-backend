@@ -708,7 +708,7 @@ module.exports = {
     async claimWork(guildId, userId) {
         const profile = await this.getProfile(guildId, userId);
         const now = Date.now();
-        const cooldownMs = 5 * 60 * 1000; // 5 minutes
+        const cooldownMs = 60 * 60 * 1000; // 1 hour
 
         if (profile.workCooldown && (now - profile.workCooldown < cooldownMs)) {
             return {

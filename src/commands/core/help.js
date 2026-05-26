@@ -81,16 +81,16 @@ module.exports = {
                 title: '💼 Job Ecosystem & Career Protocols',
                 color: '#FBBF24',
                 description: 'Tiered career system that scales `/work` pay. Pick a job to unlock higher salaries and XP bonuses per shift. Switch jobs with a 1-hour cooldown.\n\n' +
-                    '**Tier 1 — Starter** *(Level 1+)*: 🛒 Cashier, 🎸 Street Performer, 🚗 Delivery Driver\n' +
-                    '**Tier 2 — Skilled** *(Level 5+)*: 👨‍🍳 Chef, 🔧 Mechanic, 💂 Security Guard\n' +
-                    '**Tier 3 — Professional** *(Level 10+)*: 💻 Software Engineer, 🩺 Doctor, ⚖️ Lawyer\n' +
-                    '**Tier 4 — Elite** *(Level 20+)*: 🏢 CEO, 💰 Investment Banker, 🎮 Game Developer',
+                    '**Tier 1 — Starter** *(Level 1+)*: 🛒 Cashier · 🎸 Street Performer · 🚗 Delivery Driver · 🧹 Janitor · ☕ Barista · 🌾 Farmhand\n' +
+                    '**Tier 2 — Skilled** *(Level 5+)*: 👨‍🍳 Chef · 🔧 Mechanic · 💂 Security Guard · 🪠 Plumber · ⚡ Electrician · 🏥 Nurse\n' +
+                    '**Tier 3 — Professional** *(Level 10+)*: 💻 Software Engineer · 🩺 Doctor · ⚖️ Lawyer · 🏗️ Architect · 💊 Pharmacist · 📊 Financial Analyst\n' +
+                    '**Tier 4 — Elite** *(Level 20+)*: 🏢 CEO · 💰 Investment Banker · 🎮 Game Developer · 🔬 Surgeon · 🚀 Aerospace Engineer · 📈 Hedge Fund Manager',
                 fields: [
-                    { name: '`/job list`', value: 'Displays all 12 available careers sorted by tier, with pay range, XP bonus, and level requirement.' },
+                    { name: '`/job list`', value: 'Displays all 24 available careers sorted by tier, with pay range, XP bonus, and level requirement.' },
                     { name: '`/job apply [job]`', value: 'Applies for a job. Must meet the level requirement. Each job changes `/work` pay and flavor text.' },
                     { name: '`/job quit`', value: 'Resigns from current job. Reverts /work pay to generic base range (50–150).' },
                     { name: '`/job profile [user?]`', value: 'Displays a career summary card — job title, tier, pay range, XP bonus, and time employed.' },
-                    { name: '`/work`', value: 'Earn coins for your current job. Pay scales with tier: Starter 30–180 · Skilled 110–220 · Pro 200–390 · Elite 280–660.' },
+                    { name: '`/work`', value: 'Earn coins for your current job (1-hour cooldown). Pay scales with tier: Starter 50–300 · Skilled 400–920 · Pro 1,200–3,500 · Elite 5,000–20,000.' },
                 ]
             },
             help_casino: {
