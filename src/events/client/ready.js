@@ -25,5 +25,12 @@ module.exports = {
         } catch (err) {
             console.error('[ERROR] Failed to start Dashboard API Server:', err);
         }
+
+        // Start YouTube / Twitch alert pollers
+        try {
+            require('../../utils/alertPoller').startAlertPoller(client);
+        } catch (err) {
+            console.error('[ERROR] Failed to start alert poller:', err);
+        }
     },
 };

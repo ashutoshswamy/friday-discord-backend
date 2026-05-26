@@ -1477,6 +1477,50 @@ module.exports = {
         return !error && count > 0;
     },
 
+    // Returns all youtube_alerts across all guilds (for poller)
+    async getAllYoutubeAlerts() {
+        if (!supabase) return [];
+        const { data, error } = await supabase.from('youtube_alerts').select('*');
+        if (error) return [];
+        return data.map(item => ({
+            guildId: item.guild_id,
+            channelId: item.channel_id,
+            youtubeUrl: item.youtube_url,
+            lastVideoId: item.last_video_id || null
+        }));
+    },
+
+    async updateYoutubeLastVideo(guildId, youtubeUrl, lastVideoId) {
+        if (!supabase) return;
+        await supabase
+            .from('youtube_alerts')
+            .update({ last_video_id: lastVideoId })
+            .eq('guild_id', guildId)
+            .eq('youtube_url', youtubeUrl.trim());
+    },
+
+    // Returns all twitch_alerts across all guilds (for poller)
+    async getAllTwitchAlerts() {
+        if (!supabase) return [];
+        const { data, error } = await supabase.from('twitch_alerts').select('*');
+        if (error) return [];
+        return data.map(item => ({
+            guildId: item.guild_id,
+            channelId: item.channel_id,
+            twitchUsername: item.twitch_username,
+            isLive: item.is_live || false
+        }));
+    },
+
+    async updateTwitchIsLive(guildId, twitchUsername, isLive) {
+        if (!supabase) return;
+        await supabase
+            .from('twitch_alerts')
+            .update({ is_live: isLive })
+            .eq('guild_id', guildId)
+            .eq('twitch_username', twitchUsername.toLowerCase().trim());
+    },
+
     async getGuildProfiles(guildId) {
         if (!supabase) return [];
         const { data, error } = await supabase
