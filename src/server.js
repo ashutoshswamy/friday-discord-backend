@@ -35,6 +35,12 @@ module.exports = function(client) {
     }
     const JWT_SECRET = process.env.JWT_SECRET;
 
+    // Disable X-Powered-By header (reduces response bloat + hides tech stack)
+    app.disable('x-powered-by');
+
+    // Disable ETag generation (not needed for API/ping routes)
+    app.disable('etag');
+
     // Enable CORS for frontend only
     app.use(cors({ origin: FRONTEND_URL, credentials: true }));
     app.use(express.json());
@@ -2033,8 +2039,8 @@ module.exports = function(client) {
         res.json({ status: 'ok', bot: client.user?.tag || 'starting', uptime: Math.floor(process.uptime()) });
     });
 
-    // Minimal ping endpoint for cron keep-alive (plain text, ~2 bytes)
-    app.get('/ping', (req, res) => res.send('ok'));
+    // Minimal ping endpoint for cron keep-alive — 204 No Content, zero body
+    app.get('/ping', (req, res) => res.status(204).end());
 
     // Global error handler — prevents stack traces leaking in API responses
     app.use((err, req, res, _next) => {
