@@ -1534,17 +1534,22 @@ module.exports = function(client) {
         try {
             const logs = await db.getGuildLogs(guildId);
             const statsMap = {};
+            const allTypes = new Set();
+
             for (const l of logs) {
                 const mid = l.moderatorId;
                 if (!mid) continue;
-                if (!statsMap[mid]) statsMap[mid] = { moderatorId: mid, WARN: 0, TIMEOUT: 0, KICK: 0, BAN: 0, total: 0 };
-                if (l.type.includes('WARN')) statsMap[mid].WARN++;
-                else if (l.type === 'TIMEOUT') statsMap[mid].TIMEOUT++;
-                else if (l.type === 'KICK') statsMap[mid].KICK++;
-                else if (l.type.includes('BAN')) statsMap[mid].BAN++;
+                const type = l.type || 'UNKNOWN';
+                allTypes.add(type);
+                if (!statsMap[mid]) statsMap[mid] = { moderatorId: mid, total: 0 };
+                statsMap[mid][type] = (statsMap[mid][type] || 0) + 1;
                 statsMap[mid].total++;
             }
-            res.json(Object.values(statsMap).sort((a, b) => b.total - a.total));
+
+            res.json({
+                types: [...allTypes].sort(),
+                stats: Object.values(statsMap).sort((a, b) => b.total - a.total)
+            });
         } catch (err) {
             console.error('[MODSTATS API]', err);
             res.status(500).json({ error: 'Failed to fetch modstats' });
