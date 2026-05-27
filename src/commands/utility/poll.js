@@ -90,36 +90,48 @@ module.exports = {
                 if (!msg)
                     return interaction.editReply({ content: '❌ Could not find the poll message. It may have been deleted.', ephemeral: true });
 
-                // End the native Discord poll — Discord handles the results display
+                // End the native Discord poll
                 const endedMsg = await msg.endPoll().catch(async (err) => {
                     console.error('[POLL CLOSE ERROR] endPoll failed:', err);
                     return null;
                 });
 
-                await db.closePoll(messageId);
+                // Re-fetch the message to get finalized vote counts from Discord's API
+                const freshMsg = endedMsg
+                    ? await pollChannel.messages.fetch(messageId).catch(() => endedMsg)
+                    : null;
 
-                if (endedMsg?.poll) {
-                    // Build a results summary reply
-                    const answers = [...endedMsg.poll.answers.values()];
+                let results = null;
+                let embed;
+
+                if (freshMsg?.poll) {
+                    const answers    = [...(freshMsg.poll.answers).values()];
                     const totalVotes = answers.reduce((s, a) => s + (a.voteCount ?? 0), 0);
-                    const maxVotes   = Math.max(...answers.map(a => a.voteCount ?? 0));
+                    const maxVotes   = Math.max(0, ...answers.map(a => a.voteCount ?? 0));
 
-                    const resultsText = answers.map((a, i) => {
-                        const count  = a.voteCount ?? 0;
-                        const pct    = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                        const filled = Math.round(pct / 10);
+                    results = answers.map(a => {
+                        const count = a.voteCount ?? 0;
+                        const pct   = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                        return { text: a.text, count, pct, winner: count === maxVotes && maxVotes > 0 };
+                    });
+
+                    const resultsText = results.map(r => {
+                        const filled = Math.round(r.pct / 10);
                         const bar    = '█'.repeat(filled) + '░'.repeat(10 - filled);
-                        const winner = count === maxVotes && maxVotes > 0 ? ' 🏆' : '';
-                        return `**${a.text}**${winner}\n\`${bar}\` ${pct}% (${count} vote${count !== 1 ? 's' : ''})`;
+                        return `**${r.text}**${r.winner ? ' 🏆' : ''}\n\`${bar}\` ${r.pct}% (${r.count} vote${r.count !== 1 ? 's' : ''})`;
                     }).join('\n\n');
 
-                    const embed = new EmbedBuilder()
+                    embed = new EmbedBuilder()
                         .setTitle(`📊 Poll Closed — ${poll.question}`)
                         .setColor('#71717a')
                         .setDescription(resultsText || '*No votes recorded.*')
                         .setFooter({ text: `Closed by ${user.tag} · ${totalVotes} total vote${totalVotes !== 1 ? 's' : ''}` })
                         .setTimestamp();
+                }
 
+                await db.closePoll(messageId, results);
+
+                if (embed) {
                     await interaction.editReply({ embeds: [embed] });
                 } else {
                     await interaction.editReply({ content: `🔒 Poll closed! Results visible in <#${poll.channelId}>.` });

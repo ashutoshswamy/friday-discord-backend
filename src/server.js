@@ -1506,14 +1506,13 @@ module.exports = function(client) {
                 return null;
             });
 
-            await db.closePoll(messageId);
-
-            // Build results summary from the ended poll answers
+            // Build results from the answered poll — re-fetch if needed to get fresh counts
             let results = null;
             if (endedMsg?.poll) {
-                const answers = [...endedMsg.poll.answers.values()];
+                const freshMsg = await channel.messages.fetch(messageId).catch(() => endedMsg);
+                const answers = [...(freshMsg.poll?.answers ?? endedMsg.poll.answers).values()];
                 const totalVotes = answers.reduce((s, a) => s + (a.voteCount ?? 0), 0);
-                const maxVotes   = Math.max(...answers.map(a => a.voteCount ?? 0));
+                const maxVotes   = Math.max(0, ...answers.map(a => a.voteCount ?? 0));
                 results = answers.map(a => {
                     const count = a.voteCount ?? 0;
                     const pct   = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
@@ -1521,6 +1520,7 @@ module.exports = function(client) {
                 });
             }
 
+            await db.closePoll(messageId, results);
             res.json({ ok: true, results });
         } catch (err) {
             console.error('[POLL CLOSE API]', err);

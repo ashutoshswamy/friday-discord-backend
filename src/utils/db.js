@@ -1673,12 +1673,14 @@ module.exports = {
         });
     },
 
-    async closePoll(messageId) {
+    async closePoll(messageId, results = null) {
         if (!supabase) return;
-        await supabase.from('polls').update({
+        const payload = {
             status: 'closed',
             closed_at: new Date().toISOString()
-        }).eq('id', messageId);
+        };
+        if (results !== null) payload.results = results;
+        await supabase.from('polls').update(payload).eq('id', messageId);
     },
 
     async getPolls(guildId) {
@@ -1699,7 +1701,8 @@ module.exports = {
             emojis: p.emojis || [],
             status: p.status,
             createdAt: p.created_at,
-            closedAt: p.closed_at
+            closedAt: p.closed_at,
+            results: p.results || null
         }));
     },
 
