@@ -632,6 +632,7 @@ module.exports = {
             lastXpGain: Number(data.last_xp_gain),
             currentJob: data.current_job || null,
             jobAppliedAt: Number(data.job_applied_at || 0),
+            xpMultiplier: data.xp_multiplier !== undefined && data.xp_multiplier !== null ? Number(data.xp_multiplier) : 1.0,
         };
     },
 
@@ -1281,6 +1282,46 @@ module.exports = {
             level: data.level,
             xp: Number(data.xp)
         };
+    },
+
+    async setUserXpMultiplier(guildId, userId, multiplier) {
+        if (!supabase) return { success: true };
+        // Ensure the profile row exists
+        await this.getProfile(guildId, userId);
+
+        try {
+            const { error } = await supabase
+                .from('user_profiles')
+                .update({ xp_multiplier: multiplier })
+                .eq('guild_id', guildId)
+                .eq('user_id', userId);
+
+            if (error) {
+                // Column may not exist yet — log and treat as no-op
+                console.warn('[DB WARNING] setUserXpMultiplier: xp_multiplier column missing or update failed.', error.message);
+                return { success: false, reason: 'column_missing' };
+            }
+            return { success: true };
+        } catch (err) {
+            console.error('[DB ERROR] setUserXpMultiplier:', err.message);
+            return { success: false, reason: err.message };
+        }
+    },
+
+    async getUserXpMultiplier(guildId, userId) {
+        if (!supabase) return 1.0;
+        try {
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('xp_multiplier')
+                .eq('guild_id', guildId)
+                .eq('user_id', userId)
+                .maybeSingle();
+            if (error || !data) return 1.0;
+            return data.xp_multiplier !== undefined && data.xp_multiplier !== null ? Number(data.xp_multiplier) : 1.0;
+        } catch {
+            return 1.0;
+        }
     },
 
     async getLeaderboard(guildId) {

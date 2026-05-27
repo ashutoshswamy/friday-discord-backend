@@ -261,8 +261,12 @@ module.exports = {
         // Only run leveling calculations if the message wasn't deleted by AutoMod
         if (!wasDeleted) {
             try {
-                const config = await db.getGuildConfig(guild.id);
-                const multiplier = config.xpMultiplier || 1.0;
+                const [config, userMultiplier] = await Promise.all([
+                    db.getGuildConfig(guild.id),
+                    db.getUserXpMultiplier(guild.id, author.id),
+                ]);
+                const guildMultiplier = config.xpMultiplier || 1.0;
+                const multiplier = guildMultiplier * userMultiplier;
 
                 // Base XP per message: 15 to 25 XP
                 const baseXP = Math.floor(Math.random() * 11) + 15;

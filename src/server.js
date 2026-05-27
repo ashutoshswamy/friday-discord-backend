@@ -1014,6 +1014,7 @@ module.exports = function(client) {
                     bank: dbProfile.bank !== undefined ? dbProfile.bank : 0,
                     xp: dbProfile.xp !== undefined ? dbProfile.xp : 0,
                     level: dbProfile.level !== undefined ? dbProfile.level : 1,
+                    xpMultiplier: dbProfile.xpMultiplier !== undefined ? dbProfile.xpMultiplier : 1.0,
                     warningCount: warningsMap[m.id] || 0
                 };
             });
@@ -1067,6 +1068,32 @@ module.exports = function(client) {
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: 'Failed to update member XP' });
+        }
+    });
+
+    // Set Per-User XP Multiplier
+    app.post('/api/guilds/:guildId/members/:userId/multiplier', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId, userId } = req.params;
+        const { multiplier } = req.body;
+
+        const parsed = parseFloat(multiplier);
+        if (isNaN(parsed) || parsed < 0.1 || parsed > 10.0) {
+            return res.status(400).json({ error: 'Multiplier must be a number between 0.1 and 10.0' });
+        }
+
+        try {
+            const result = await db.setUserXpMultiplier(guildId, userId, parsed);
+            if (!result.success) {
+                if (result.reason === 'column_missing') {
+                    return res.status(503).json({ error: 'xp_multiplier column not found. Run the DB migration: ALTER TABLE user_profiles ADD COLUMN xp_multiplier NUMERIC DEFAULT 1.0;' });
+                }
+                return res.status(500).json({ error: result.reason || 'Failed to set multiplier' });
+            }
+            await db.logInfraction(guildId, userId, req.user.id, 'XP_MULTIPLIER_UPDATE', `Admin set per-user XP multiplier to ${parsed}x`);
+            res.json({ success: true, multiplier: parsed });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Failed to set user XP multiplier' });
         }
     });
 
