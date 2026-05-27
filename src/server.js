@@ -1500,13 +1500,13 @@ module.exports = function(client) {
             const msg = await channel.messages.fetch(messageId).catch(() => null);
             if (!msg) return res.status(404).json({ error: 'Poll message not found — it may have been deleted' });
 
-            // End the native Discord poll
-            const endedMsg = await msg.endPoll().catch(err => {
+            // End the native Discord poll via MessageManager
+            const endedMsg = await channel.messages.endPoll(messageId).catch(err => {
                 console.error('[POLL CLOSE API] endPoll failed:', err.message);
                 return null;
             });
 
-            // Build results from the answered poll — re-fetch if needed to get fresh counts
+            // Re-fetch to get finalized vote counts
             let results = null;
             if (endedMsg?.poll) {
                 const freshMsg = await channel.messages.fetch(messageId).catch(() => endedMsg);

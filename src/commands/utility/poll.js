@@ -90,13 +90,13 @@ module.exports = {
                 if (!msg)
                     return interaction.editReply({ content: '❌ Could not find the poll message. It may have been deleted.', ephemeral: true });
 
-                // End the native Discord poll
-                const endedMsg = await msg.endPoll().catch(async (err) => {
+                // End the native Discord poll via MessageManager
+                const endedMsg = await pollChannel.messages.endPoll(messageId).catch(async (err) => {
                     console.error('[POLL CLOSE ERROR] endPoll failed:', err);
                     return null;
                 });
 
-                // Re-fetch the message to get finalized vote counts from Discord's API
+                // Re-fetch to get finalized vote counts from Discord's API
                 const freshMsg = endedMsg
                     ? await pollChannel.messages.fetch(messageId).catch(() => endedMsg)
                     : null;
