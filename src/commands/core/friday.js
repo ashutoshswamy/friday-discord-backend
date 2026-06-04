@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const axios = require('axios');
 const db = require('../../utils/db');
 
 const FRIDAY_QUOTES = [
@@ -371,6 +372,10 @@ module.exports = {
                     const seed = Math.floor(Math.random() * 1000000);
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}&safe=true`;
 
+                    // Download the image as a buffer so Discord can display it as an attachment
+                    const imgResponse = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 60000 });
+                    const attachment = new AttachmentBuilder(Buffer.from(imgResponse.data), { name: 'imagine.png' });
+
                     // Get updated balance to display
                     const updatedProfile = await db.getProfile(guild.id, member.id);
                     const remainingCoins = updatedProfile ? updatedProfile.coins : (profile.coins - 50);
@@ -379,11 +384,11 @@ module.exports = {
                         .setTitle('🎨 Friday Protocol: Neural Image Synthesis')
                         .setColor('#ec4899')
                         .setDescription(`*Prompt:* "${prompt}"\n\nDeducted **50 coins** from your wallet.`)
-                        .setImage(imageUrl)
+                        .setImage('attachment://imagine.png')
                         .setTimestamp()
                         .setFooter({ text: `Remaining Balance: ${remainingCoins} coins • Friday Generator Core` });
 
-                    return interaction.editReply({ embeds: [embed] });
+                    return interaction.editReply({ embeds: [embed], files: [attachment] });
                 } catch (genError) {
                     console.error('[IMAGE GENERATION ERROR]', genError);
 
