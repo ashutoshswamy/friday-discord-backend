@@ -1,27 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const https = require('https');
-const http = require('http');
 const db = require('../../utils/db');
-
-function downloadImageBuffer(url, redirects = 5) {
-    return new Promise((resolve, reject) => {
-        if (redirects < 0) return reject(new Error('Too many redirects'));
-        const client = url.startsWith('https') ? https : http;
-        const req = client.get(url, (res) => {
-            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                return downloadImageBuffer(res.headers.location, redirects - 1).then(resolve).catch(reject);
-            }
-            if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
-            const chunks = [];
-            res.on('data', chunk => chunks.push(chunk));
-            res.on('end', () => resolve(Buffer.concat(chunks)));
-            res.on('error', reject);
-        });
-        req.setTimeout(90000, () => { req.destroy(); reject(new Error('Request timed out')); });
-        req.on('error', reject);
-    });
-}
 
 const FRIDAY_QUOTES = [
     "I am Friday. I monitor this server. I scan for anomalies.",
@@ -80,13 +59,6 @@ module.exports = {
         .addSubcommand(sub =>
             sub.setName('summarize')
                 .setDescription('Reads recent channel history and outputs a concise summary.'))
-        .addSubcommand(sub =>
-            sub.setName('imagine')
-                .setDescription('Generates a synthetic image from a prompt (Costs 50 coins).')
-                .addStringOption(opt =>
-                    opt.setName('prompt')
-                        .setDescription('The visual description for the image generator')
-                        .setRequired(true))),
 
     /**
      * Executes the friday command.
@@ -345,85 +317,6 @@ module.exports = {
                 }
             }
 
-            // ------------------------------------------
-            // G. Subcommand: imagine
-            // ------------------------------------------
-            if (subcommand === 'imagine') {
-                const prompt = options.getString('prompt');
-
-                // Block explicit/inappropriate prompt content
-                const BLOCKED_TERMS = [
-                    'nude', 'naked', 'nsfw', 'porn', 'sex', 'hentai', 'explicit',
-                    'genitals', 'penis', 'vagina', 'breasts', 'nipple', 'erotic',
-                    'xxx', 'lewd', 'fetish', 'rape', 'assault', 'gore', 'torture',
-                    'self-harm', 'suicide', 'drug use', 'child', 'loli', 'shota',
-                ];
-                const lowerPrompt = prompt.toLowerCase();
-                if (BLOCKED_TERMS.some(term => lowerPrompt.includes(term))) {
-                    return interaction.reply({
-                        content: '❌ **Inappropriate Prompt:** Your prompt contains content that is not allowed. Please keep prompts safe for all audiences.',
-                        ephemeral: true,
-                    });
-                }
-
-                await interaction.deferReply();
-
-                let profile;
-                try {
-                    // Check user balance first
-                    profile = await db.getProfile(guild.id, member.id);
-                    if (!profile || profile.coins < 50) {
-                        return interaction.editReply({
-                            content: `❌ **Insufficient Coins:** You need at least **50 coins** to generate a synthetic image. (Current Balance: **${profile ? profile.coins : 0} coins**)`
-                        });
-                    }
-
-                    // Deduct 50 coins
-                    await db.updateCoins(guild.id, member.id, -50);
-                } catch (dbError) {
-                    console.error('[DATABASE ERROR IN IMAGINE]', dbError);
-                    return interaction.editReply({
-                        content: '❌ Failed to process coin transaction. Please try again later.'
-                    });
-                }
-
-                try {
-                    // Generate image via Pollinations AI — safe=true enforces content filtering
-                    const seed = Math.floor(Math.random() * 1000000);
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
-
-                    // Download the image as a buffer so Discord can display it as an attachment
-                    const imgBuffer = await downloadImageBuffer(imageUrl);
-                    const attachment = new AttachmentBuilder(imgBuffer, { name: 'imagine.png' });
-
-                    // Get updated balance to display
-                    const updatedProfile = await db.getProfile(guild.id, member.id);
-                    const remainingCoins = updatedProfile ? updatedProfile.coins : (profile.coins - 50);
-
-                    const embed = new EmbedBuilder()
-                        .setTitle('🎨 Friday Protocol: Neural Image Synthesis')
-                        .setColor('#ec4899')
-                        .setDescription(`*Prompt:* "${prompt}"\n\nDeducted **50 coins** from your wallet.`)
-                        .setImage('attachment://imagine.png')
-                        .setTimestamp()
-                        .setFooter({ text: `Remaining Balance: ${remainingCoins} coins • Friday Generator Core` });
-
-                    return interaction.editReply({ embeds: [embed], files: [attachment] });
-                } catch (genError) {
-                    console.error('[IMAGE GENERATION ERROR]', genError.message, genError.response?.status, genError.response?.statusText);
-
-                    // Refund coins on failure
-                    try {
-                        await db.updateCoins(guild.id, member.id, 50);
-                    } catch (refundError) {
-                        console.error('[REFUND FAILURE]', refundError);
-                    }
-
-                    return interaction.editReply({
-                        content: `❌ **Generation Failed:** Could not generate the image. Your 50 coins have been refunded.`
-                    });
-                }
-            }
 
         } catch (err) {
             console.error('[FRIDAY SYSTEM CORE ERROR]', err);

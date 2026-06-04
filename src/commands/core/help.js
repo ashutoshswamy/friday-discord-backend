@@ -44,7 +44,6 @@ module.exports = {
                 fields: [
                     { name: '`/friday ask [query]`', value: 'Conversational assistant using Gemini 3.1 LLM system persona.' },
                     { name: '`/friday rewrite [style] [text]`', value: 'Transforms input text into custom personas (Professional, Cyberpunk, Sarcastic, Pirate, Shakespeare).' },
-                    { name: '`/friday imagine [prompt]`', value: 'Generates high-res image canvas via Gemini (Costs 🪙50 coins, auto-refunds if failed).' },
                     { name: '`/friday summarize`', value: 'Compiles text summaries of the last 50 text channel messages using Gemini.' },
                     { name: '`/friday status`', value: 'Monitors real-time server telemetry: uptime, memory heap maps, web-socket connection latency.' },
                     { name: '`/friday quote`', value: 'Returns a randomized witty administrative logs system quote.' },
@@ -251,7 +250,7 @@ module.exports = {
                         .setEmoji('🌌'),
                     new StringSelectMenuOptionBuilder()
                         .setLabel('Core & AI Systems')
-                        .setDescription('/friday imagine, ask, rewrite, summarize, customcmd add/remove.')
+                        .setDescription('/friday ask, rewrite, summarize, customcmd add/remove.')
                         .setValue('help_core')
                         .setEmoji('⚡'),
                     new StringSelectMenuOptionBuilder()
