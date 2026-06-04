@@ -1,7 +1,27 @@
 const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const axios = require('axios');
+const https = require('https');
+const http = require('http');
 const db = require('../../utils/db');
+
+function downloadImageBuffer(url, redirects = 5) {
+    return new Promise((resolve, reject) => {
+        if (redirects < 0) return reject(new Error('Too many redirects'));
+        const client = url.startsWith('https') ? https : http;
+        const req = client.get(url, (res) => {
+            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                return downloadImageBuffer(res.headers.location, redirects - 1).then(resolve).catch(reject);
+            }
+            if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
+            const chunks = [];
+            res.on('data', chunk => chunks.push(chunk));
+            res.on('end', () => resolve(Buffer.concat(chunks)));
+            res.on('error', reject);
+        });
+        req.setTimeout(90000, () => { req.destroy(); reject(new Error('Request timed out')); });
+        req.on('error', reject);
+    });
+}
 
 const FRIDAY_QUOTES = [
     "I am Friday. I monitor this server. I scan for anomalies.",
@@ -373,8 +393,8 @@ module.exports = {
                     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
 
                     // Download the image as a buffer so Discord can display it as an attachment
-                    const imgResponse = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 60000 });
-                    const attachment = new AttachmentBuilder(Buffer.from(imgResponse.data), { name: 'imagine.png' });
+                    const imgBuffer = await downloadImageBuffer(imageUrl);
+                    const attachment = new AttachmentBuilder(imgBuffer, { name: 'imagine.png' });
 
                     // Get updated balance to display
                     const updatedProfile = await db.getProfile(guild.id, member.id);
