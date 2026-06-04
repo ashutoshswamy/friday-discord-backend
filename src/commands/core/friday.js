@@ -58,7 +58,7 @@ module.exports = {
                         .setRequired(true)))
         .addSubcommand(sub =>
             sub.setName('summarize')
-                .setDescription('Reads recent channel history and outputs a concise summary.'))
+                .setDescription('Reads recent channel history and outputs a concise summary.')),
 
     /**
      * Executes the friday command.
