@@ -5,19 +5,27 @@ module.exports = {
     noDefer: true,
     data: new SlashCommandBuilder()
         .setName('urban')
-        .setDescription('Lookup slang definitions from the Urban Dictionary.')
-        .addStringOption(opt => 
+        .setDescription('Lookup slang definitions from the Urban Dictionary. (NSFW channels only)')
+        .setNSFW(true)
+        .addStringOption(opt =>
             opt.setName('term')
                 .setDescription('The word or phrase to lookup')
                 .setRequired(true)),
 
     /**
      * Executes the urban command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
+     * @param {import('discord.js').ChatInputCommandInteraction} interaction
      */
     async execute(interaction) {
         const { options } = interaction;
         const term = options.getString('term').trim();
+
+        if (!interaction.channel?.nsfw) {
+            return interaction.reply({
+                content: '🔞 This command can only be used in **NSFW channels**. Urban Dictionary may contain explicit content.',
+                ephemeral: true,
+            });
+        }
 
         try {
             await interaction.deferReply();

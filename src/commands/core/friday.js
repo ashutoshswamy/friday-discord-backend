@@ -329,6 +329,22 @@ module.exports = {
             // ------------------------------------------
             if (subcommand === 'imagine') {
                 const prompt = options.getString('prompt');
+
+                // Block explicit/inappropriate prompt content
+                const BLOCKED_TERMS = [
+                    'nude', 'naked', 'nsfw', 'porn', 'sex', 'hentai', 'explicit',
+                    'genitals', 'penis', 'vagina', 'breasts', 'nipple', 'erotic',
+                    'xxx', 'lewd', 'fetish', 'rape', 'assault', 'gore', 'torture',
+                    'self-harm', 'suicide', 'drug use', 'child', 'loli', 'shota',
+                ];
+                const lowerPrompt = prompt.toLowerCase();
+                if (BLOCKED_TERMS.some(term => lowerPrompt.includes(term))) {
+                    return interaction.reply({
+                        content: '❌ **Inappropriate Prompt:** Your prompt contains content that is not allowed. Please keep prompts safe for all audiences.',
+                        ephemeral: true,
+                    });
+                }
+
                 await interaction.deferReply();
 
                 let profile;
@@ -351,9 +367,9 @@ module.exports = {
                 }
 
                 try {
-                    // Generate image via Pollinations AI (keyless, no quota)
+                    // Generate image via Pollinations AI — safe=true enforces content filtering
                     const seed = Math.floor(Math.random() * 1000000);
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}&safe=true`;
 
                     // Get updated balance to display
                     const updatedProfile = await db.getProfile(guild.id, member.id);
