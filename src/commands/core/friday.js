@@ -370,7 +370,7 @@ module.exports = {
                 try {
                     // Generate image via Pollinations AI — safe=true enforces content filtering
                     const seed = Math.floor(Math.random() * 1000000);
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}&safe=true`;
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
 
                     // Download the image as a buffer so Discord can display it as an attachment
                     const imgResponse = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 60000 });
@@ -390,7 +390,7 @@ module.exports = {
 
                     return interaction.editReply({ embeds: [embed], files: [attachment] });
                 } catch (genError) {
-                    console.error('[IMAGE GENERATION ERROR]', genError);
+                    console.error('[IMAGE GENERATION ERROR]', genError.message, genError.response?.status, genError.response?.statusText);
 
                     // Refund coins on failure
                     try {
