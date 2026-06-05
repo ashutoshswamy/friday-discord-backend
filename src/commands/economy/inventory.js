@@ -192,11 +192,21 @@ module.exports = {
             });
 
             collector.on('end', async () => {
-                const disabledRow = new ActionRowBuilder().addComponents(
-                    ButtonBuilder.from(sellBtn).setDisabled(true),
-                    ButtonBuilder.from(useBtn).setDisabled(true)
-                );
-                await interaction.editReply({ components: [disabledRow] }).catch(() => null);
+                const disabledComponents = [
+                    new ActionRowBuilder().addComponents(
+                        ButtonBuilder.from(sellBtn).setDisabled(true),
+                        ButtonBuilder.from(useBtn).setDisabled(true)
+                    )
+                ];
+                if (sellableOwned.length > 0) {
+                    const disabledSelect = new StringSelectMenuBuilder()
+                        .setCustomId('inv_sell_select')
+                        .setPlaceholder('🗑️ Session expired')
+                        .setDisabled(true)
+                        .addOptions({ label: 'Expired', value: 'expired' });
+                    disabledComponents.push(new ActionRowBuilder().addComponents(disabledSelect));
+                }
+                await interaction.editReply({ components: disabledComponents }).catch(() => null);
             });
 
         } catch (err) {
