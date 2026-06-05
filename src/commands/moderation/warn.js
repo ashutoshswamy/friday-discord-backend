@@ -1,98 +1,110 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
+    noDefer: true,
     data: new SlashCommandBuilder()
         .setName('warn')
         .setDescription('Issues a formal warning to a user.')
-        .addUserOption(option => 
+        .addUserOption(option =>
             option.setName('user')
                 .setDescription('The user to warn')
                 .setRequired(true))
-        .addStringOption(option => 
-            option.setName('reason')
-                .setDescription('The reason for issuing this warning')
-                .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
-    /**
-     * Executes the warn command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const targetUser = interaction.options.getUser('user');
-        const reason = interaction.options.getString('reason');
         const { guild, user } = interaction;
 
         if (!guild) return;
 
-        // Check if user is trying to warn themselves
         if (targetUser.id === user.id) {
-            return interaction.editReply({ content: 'You cannot warn yourself!', ephemeral: true });
+            return interaction.reply({ content: '❌ You cannot warn yourself.', ephemeral: true });
         }
 
-        // Check if user is a bot
         if (targetUser.bot) {
-            return interaction.editReply({ content: 'You cannot warn bot accounts!', ephemeral: true });
+            return interaction.reply({ content: '❌ You cannot warn bot accounts.', ephemeral: true });
         }
 
-        // Block warnings against the server owner
         if (targetUser.id === guild.ownerId) {
-            return interaction.editReply({ content: 'You cannot warn the server owner.', ephemeral: true });
+            return interaction.reply({ content: '❌ You cannot warn the server owner.', ephemeral: true });
         }
 
-        // Enforce role hierarchy — cannot warn someone equal or higher ranking
         const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
         if (targetMember && guild.ownerId !== user.id) {
             if (targetMember.roles.highest.position >= interaction.member.roles.highest.position) {
-                return interaction.editReply({
-                    content: 'You cannot warn this user because they have an equal or higher role than you.',
+                return interaction.reply({
+                    content: '❌ You cannot warn this user — they have an equal or higher role.',
                     ephemeral: true
                 });
             }
         }
 
-        try {
-            // Write warning record to our local JSON database wrapper
-            const warning = await db.addWarning(guild.id, targetUser.id, user.id, reason);
+        const modal = new ModalBuilder()
+            .setCustomId(`warn_modal_${targetUser.id}`)
+            .setTitle(`⚠️ Warn ${targetUser.username}`);
 
-            // Log infraction
+        const reasonInput = new TextInputBuilder()
+            .setCustomId('warn_reason')
+            .setLabel('Reason for Warning')
+            .setStyle(TextInputStyle.Paragraph)
+            .setPlaceholder('Describe the rule violation or behavior that warrants this warning...')
+            .setMinLength(5)
+            .setMaxLength(500)
+            .setRequired(true);
+
+        modal.addComponents(new ActionRowBuilder().addComponents(reasonInput));
+
+        await interaction.showModal(modal);
+
+        const submitted = await interaction.awaitModalSubmit({
+            filter: i => i.customId === `warn_modal_${targetUser.id}` && i.user.id === user.id,
+            time: 120000
+        }).catch(() => null);
+
+        if (!submitted) return;
+
+        await submitted.deferReply();
+
+        const reason = submitted.fields.getTextInputValue('warn_reason');
+
+        try {
+            const warning = await db.addWarning(guild.id, targetUser.id, user.id, reason);
             await db.logInfraction(guild.id, targetUser.id, user.id, 'WARN', reason);
 
-            // Fetch current warn count for escalation check
             const allWarns = await db.getWarnings(guild.id, targetUser.id);
             const warnCount = allWarns.length;
 
-            // Attempt to DM the warned user
             const dmsSent = await targetUser.send(
-                `⚠️ **Warning Issued**\n` +
-                `You have been formally warned in the server **${guild.name}**.\n` +
-                `• **Reason:** ${reason}`
+                `⚠️ **Warning Issued** — **${guild.name}**\n` +
+                `You have received a formal warning (Warning #${warnCount}).\n` +
+                `**Reason:** ${reason}`
             ).then(() => true).catch(() => false);
 
             const embed = new EmbedBuilder()
-                .setTitle('Warning Issued')
+                .setTitle('⚠️ Warning Issued')
                 .setColor('#FF8C00')
                 .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`Successfully warned **${targetUser.tag}**. (Warning #${warnCount})`)
+                .setDescription(`**${targetUser.tag}** has received Warning #${warnCount}.`)
                 .addFields(
-                    { name: 'User ID', value: `\`${targetUser.id}\``, inline: true },
+                    { name: 'User', value: `<@${targetUser.id}> (\`${targetUser.id}\`)`, inline: true },
+                    { name: 'Moderator', value: `<@${user.id}>`, inline: true },
                     { name: 'Warning ID', value: `\`${warning.id}\``, inline: true },
-                    { name: 'Moderator', value: `${user}`, inline: true },
-                    { name: 'User Notified via DM', value: dmsSent ? '✅ Yes' : '❌ No (DMs closed)', inline: true },
+                    { name: 'DM Sent', value: dmsSent ? '✅ Yes' : '❌ No (DMs closed)', inline: true },
+                    { name: 'Total Warnings', value: `⚠️ **${warnCount}** warning(s)`, inline: true },
                     { name: 'Reason', value: reason }
                 )
                 .setTimestamp();
 
-            await interaction.editReply({ embeds: [embed] });
+            await submitted.editReply({ embeds: [embed] });
 
-            // Check all punishment escalation rules for exact threshold match
+            // Escalation check
             const rules = await db.getPunishmentRules(guild.id);
             const matchingRule = rules.find(r => warnCount === r.warnThreshold);
             if (matchingRule) {
                 const member = await guild.members.fetch(targetUser.id).catch(() => null);
                 if (member) {
-                    const escReason = `[AUTOMOD ESCALATION] Reached ${matchingRule.warnThreshold} warnings.`;
+                    const escReason = `[AUTO-ESCALATION] Reached ${matchingRule.warnThreshold} warnings.`;
                     try {
                         if (matchingRule.punishmentType === 'TIMEOUT' && member.moderatable) {
                             await member.timeout(matchingRule.durationMs, escReason);
@@ -111,12 +123,7 @@ module.exports = {
             }
         } catch (err) {
             console.error('[ERROR] Warn failed:', err);
-            const _errMsg = { content: 'An error occurred while attempting to issue this warning.', ephemeral: true };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(_errMsg).catch(() => null);
-            } else {
-                await interaction.editReply(_errMsg).catch(() => null);
-            }
+            await submitted.editReply({ content: '❌ An error occurred while issuing this warning.', ephemeral: true }).catch(() => null);
         }
     }
 };

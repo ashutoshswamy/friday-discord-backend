@@ -1873,6 +1873,51 @@ module.exports = {
     xpNeededForNextLevel,
 
     // ==========================================
+    // Reset — wipe all guild data
+    // ==========================================
+
+    async resetGuildData(guildId) {
+        if (!supabase) return { success: true, note: 'no-op: supabase not configured' };
+
+        const tables = [
+            'warnings',
+            'logs',
+            'guild_configs',
+            'blocked_words',
+            'automod_exemptions',
+            'automod_rules',
+            'automod_filter_optouts',
+            'user_profiles',
+            'shop_items',
+            'user_inventory',
+            'market_listings',
+            'level_rewards',
+            'custom_commands',
+            'youtube_alerts',
+            'twitch_alerts',
+            'giveaways',
+            'guild_events',
+            'polls',
+            'guild_tickets',
+            'user_pets',
+            'user_stocks',
+        ];
+
+        const errors = [];
+        for (const table of tables) {
+            const { error } = await supabase.from(table).delete().eq('guild_id', guildId);
+            if (error) errors.push(`${table}: ${error.message}`);
+        }
+
+        if (errors.length > 0) {
+            console.error(`[DB] resetGuildData partial failure for ${guildId}:`, errors);
+            return { success: false, errors };
+        }
+
+        return { success: true };
+    },
+
+    // ==========================================
     // 7. Ticket Tracking
     // ==========================================
 

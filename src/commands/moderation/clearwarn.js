@@ -46,7 +46,7 @@ module.exports = {
 
                 if (countDeleted === 0) {
                     return interaction.editReply({
-                        content: `**${targetUser.tag}** has no active warnings in this server.`,
+                        content: `ℹ️ **${targetUser.tag}** has no active warnings to clear.`,
                         ephemeral: true
                     });
                 }
@@ -55,10 +55,14 @@ module.exports = {
                 await db.logInfraction(guild.id, targetUser.id, user.id, 'CLEAR_ALL_WARNS', `Cleared all (${countDeleted}) warnings`);
 
                 const embed = new EmbedBuilder()
-                    .setTitle('Warnings Cleared')
-                    .setColor('#00FF00')
-                    .setDescription(`Successfully cleared **all (${countDeleted})** warning records for **${targetUser.tag}**.`)
-                    .addFields({ name: 'Moderator', value: `${user}`, inline: true })
+                    .setTitle('🧹 All Warnings Cleared')
+                    .setColor('#00FF66')
+                    .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
+                    .setDescription(`Cleared **${countDeleted}** warning(s) for **${targetUser.tag}**.`)
+                    .addFields(
+                        { name: 'User', value: `<@${targetUser.id}>`, inline: true },
+                        { name: 'Moderator', value: `<@${user.id}>`, inline: true }
+                    )
                     .setTimestamp();
 
                 return interaction.editReply({ embeds: [embed] });
@@ -66,36 +70,38 @@ module.exports = {
 
             // Case 2: Clear specific warning ID
             if (warningId) {
-                // Ensure casing matches
                 const targetWarnId = warningId.toUpperCase().trim();
                 const deleted = await db.deleteWarning(guild.id, targetUser.id, targetWarnId);
 
                 if (!deleted) {
                     return interaction.editReply({
-                        content: `❌ Could not find a warning with ID \`${targetWarnId}\` for user **${targetUser.tag}**. Double check using \`/warnings\`.`,
+                        content: `❌ Could not find warning ID \`${targetWarnId}\` for **${targetUser.tag}**. Verify with \`/warnings\`.`,
                         ephemeral: true
                     });
                 }
 
-                // Log cleanup infraction
                 await db.logInfraction(guild.id, targetUser.id, user.id, 'CLEAR_WARN', `Cleared warning ID ${targetWarnId}`);
 
                 const embed = new EmbedBuilder()
-                    .setTitle('Warning Cleared')
-                    .setColor('#00FF00')
-                    .setDescription(`Successfully deleted warning ID \`${targetWarnId}\` for **${targetUser.tag}**.`)
-                    .addFields({ name: 'Moderator', value: `${user}`, inline: true })
+                    .setTitle('🗑️ Warning Removed')
+                    .setColor('#00FF66')
+                    .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
+                    .setDescription(`Warning \`${targetWarnId}\` has been removed from **${targetUser.tag}**'s record.`)
+                    .addFields(
+                        { name: 'User', value: `<@${targetUser.id}>`, inline: true },
+                        { name: 'Moderator', value: `<@${user.id}>`, inline: true }
+                    )
                     .setTimestamp();
 
                 return interaction.editReply({ embeds: [embed] });
             }
         } catch (err) {
             console.error('[ERROR] Clear warn failed:', err);
-            const _errMsg = { content: 'An error occurred while attempting to clear warning records.', ephemeral: true };
+            const errMsg = { content: '❌ Failed to clear warning records.', ephemeral: true };
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(_errMsg).catch(() => null);
+                await interaction.followUp(errMsg).catch(() => null);
             } else {
-                await interaction.editReply(_errMsg).catch(() => null);
+                await interaction.editReply(errMsg).catch(() => null);
             }
         }
     }

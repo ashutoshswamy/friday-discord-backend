@@ -2036,6 +2036,23 @@ module.exports = function(client) {
         }
     });
 
+    // Reset all guild data
+    app.delete('/api/guilds/:guildId/reset', authenticateToken, requireGuildAdmin, async (req, res) => {
+        const { guildId } = req.params;
+        try {
+            const result = await db.resetGuildData(guildId);
+            if (!result.success) {
+                console.error(`[RESET API] Partial failure for guild ${guildId}:`, result.errors);
+                return res.status(500).json({ error: 'Reset partially failed. Check server logs.', details: result.errors });
+            }
+            console.log(`[RESET API] Guild ${guildId} data wiped by user ${req.user.id}`);
+            res.json({ success: true, message: 'All guild data has been reset.' });
+        } catch (err) {
+            console.error('[RESET API]', err);
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     // Health check
     app.get('/', (req, res) => {
         res.json({ status: 'ok', bot: client.user?.tag || 'starting', uptime: Math.floor(process.uptime()) });

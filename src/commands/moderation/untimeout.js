@@ -29,19 +29,17 @@ module.exports = {
         const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
 
         if (!targetMember) {
-            return interaction.editReply({ content: 'This user is not currently in the server.', ephemeral: true });
+            return interaction.editReply({ content: '❌ This user is not currently in the server.', ephemeral: true });
         }
 
-        // Verify if they are actually in a timeout currently
         if (!targetMember.communicationDisabledUntilTimestamp || targetMember.communicationDisabledUntilTimestamp < Date.now()) {
-            return interaction.editReply({ content: 'This user does not currently have an active timeout.', ephemeral: true });
+            return interaction.editReply({ content: '❌ This user does not currently have an active timeout.', ephemeral: true });
         }
 
-        // Verify bot can moderate
         if (!targetMember.moderatable) {
-            return interaction.editReply({ 
-                content: 'I cannot remove the timeout for this user. They may have a higher role than me or I do not have permission to moderate them.', 
-                ephemeral: true 
+            return interaction.editReply({
+                content: '❌ I cannot remove the timeout for this user — they may outrank me or I lack permission.',
+                ephemeral: true
             });
         }
 
@@ -53,13 +51,13 @@ module.exports = {
             await db.logInfraction(guild.id, targetUser.id, user.id, 'UNTIMEOUT', reason);
 
             const embed = new EmbedBuilder()
-                .setTitle('Timeout Removed')
-                .setColor('#00FF00')
+                .setTitle('🔊 Timeout Removed')
+                .setColor('#00FF66')
                 .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`Successfully removed the timeout for **${targetUser.tag}**.`)
+                .setDescription(`**${targetUser.tag}** can now send messages and join voice channels again.`)
                 .addFields(
                     { name: 'User ID', value: `\`${targetUser.id}\``, inline: true },
-                    { name: 'Moderator', value: `${user}`, inline: true },
+                    { name: 'Moderator', value: `<@${user.id}>`, inline: true },
                     { name: 'Reason', value: reason }
                 )
                 .setTimestamp();
@@ -67,11 +65,11 @@ module.exports = {
             await interaction.editReply({ embeds: [embed] });
         } catch (err) {
             console.error('[ERROR] Untimeout failed:', err);
-            const _errMsg = { content: 'An error occurred while attempting to remove the timeout. Please check my role permissions.', ephemeral: true };
+            const errMsg = { content: '❌ Failed to remove the timeout. Verify my role has the Moderate Members permission.', ephemeral: true };
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(_errMsg).catch(() => null);
+                await interaction.followUp(errMsg).catch(() => null);
             } else {
-                await interaction.editReply(_errMsg).catch(() => null);
+                await interaction.editReply(errMsg).catch(() => null);
             }
         }
     }

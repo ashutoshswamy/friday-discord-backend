@@ -80,7 +80,7 @@ module.exports = {
             }
         } catch (err) {
             console.error('[ERROR] Lockdown command failed:', err);
-            const _errMsg = { content: '❌ Failed to update channel permissions. Verify my role is higher than the channel overrides and has ', ephemeral: true };
+            const _errMsg = { content: '❌ Failed to update channel permissions. Verify my role has the Manage Channels permission and is positioned above the target channel overrides.', ephemeral: true };
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp(_errMsg).catch(() => null);
             } else {

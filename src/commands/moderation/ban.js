@@ -1,19 +1,19 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ban')
         .setDescription('Bans a user from the server and deletes their recent message history.')
-        .addUserOption(option => 
+        .addUserOption(option =>
             option.setName('user')
                 .setDescription('The user to ban')
                 .setRequired(true))
-        .addStringOption(option => 
+        .addStringOption(option =>
             option.setName('reason')
                 .setDescription('The reason for banning this user')
                 .setRequired(false))
-        .addIntegerOption(option => 
+        .addIntegerOption(option =>
             option.setName('days')
                 .setDescription('Number of days of message history to delete (0-7 days)')
                 .setMinValue(0)
@@ -21,10 +21,6 @@ module.exports = {
                 .setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
-    /**
-     * Executes the ban command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const targetUser = interaction.options.getUser('user');
         const reason = interaction.options.getString('reason') || 'No reason provided';
@@ -33,66 +29,110 @@ module.exports = {
 
         if (!guild) return;
 
-        // Check if user tries to ban themselves
         if (targetUser.id === user.id) {
-            return interaction.editReply({ content: 'You cannot ban yourself!', ephemeral: true });
+            return interaction.editReply({ content: '❌ You cannot ban yourself.', ephemeral: true });
         }
 
-        // Try to fetch the guild member to verify role hierarchies
         const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
 
         if (targetMember) {
-            // Check if member is bannable by the bot
             if (!targetMember.bannable) {
-                return interaction.editReply({ 
-                    content: 'I cannot ban this user. They may have a higher role than me or I do not have permission to ban them.', 
-                    ephemeral: true 
+                return interaction.editReply({
+                    content: '❌ I cannot ban this user — they may outrank me or I lack permission.',
+                    ephemeral: true
                 });
             }
 
-            // Check if executing user has role superiority
             if (targetMember.roles.highest.position >= interaction.member.roles.highest.position && guild.ownerId !== user.id) {
                 return interaction.editReply({
-                    content: 'You cannot ban this user because they have an equal or higher role than you.',
+                    content: '❌ You cannot ban this user — they have an equal or higher role.',
                     ephemeral: true
                 });
             }
         }
 
-        try {
-            // Delete messages from past N days (converted to seconds)
-            const deleteMessageSeconds = days * 24 * 60 * 60;
+        const confirmBtn = new ButtonBuilder()
+            .setCustomId('ban_confirm')
+            .setLabel('🔨 Confirm Ban')
+            .setStyle(ButtonStyle.Danger);
 
-            await guild.members.ban(targetUser.id, { 
-                deleteMessageSeconds, 
-                reason: `${reason} | Banned by ${user.tag}` 
-            });
+        const cancelBtn = new ButtonBuilder()
+            .setCustomId('ban_cancel')
+            .setLabel('✕ Cancel')
+            .setStyle(ButtonStyle.Secondary);
 
-            // Log infraction in our database utility
-            await db.logInfraction(guild.id, targetUser.id, user.id, 'BAN', reason);
+        const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
-            const embed = new EmbedBuilder()
-                .setTitle('User Banned')
-                .setColor('#FF0000')
-                .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`Successfully banned **${targetUser.tag}** from the server.`)
-                .addFields(
-                    { name: 'User ID', value: `\`${targetUser.id}\``, inline: true },
-                    { name: 'Moderator', value: `${user}`, inline: true },
-                    { name: 'Deleted Message History', value: `${days} day(s)`, inline: true },
-                    { name: 'Reason', value: reason }
-                )
-                .setTimestamp();
+        const confirmEmbed = new EmbedBuilder()
+            .setTitle('⚠️ Confirm Ban')
+            .setColor('#FF0000')
+            .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
+            .setDescription(`You are about to **permanently ban** <@${targetUser.id}> from **${guild.name}**.`)
+            .addFields(
+                { name: 'User', value: `${targetUser.tag} (\`${targetUser.id}\`)`, inline: true },
+                { name: 'Delete Messages', value: `${days} day(s)`, inline: true },
+                { name: 'Reason', value: reason }
+            )
+            .setFooter({ text: 'This action cannot be easily undone. Confirm within 30 seconds.' });
 
-            await interaction.editReply({ embeds: [embed] });
-        } catch (err) {
-            console.error('[ERROR] Ban failed:', err);
-            const _errMsg = { content: 'An error occurred while attempting to ban this user. Please verify my bot role has the ', ephemeral: true };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(_errMsg).catch(() => null);
-            } else {
-                await interaction.editReply(_errMsg).catch(() => null);
+        const response = await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
+
+        const collector = response.createMessageComponentCollector({
+            filter: i => i.user.id === user.id,
+            time: 30000,
+            max: 1
+        });
+
+        collector.on('collect', async i => {
+            if (i.customId === 'ban_cancel') {
+                return i.update({
+                    content: '✅ Ban cancelled.',
+                    embeds: [],
+                    components: []
+                });
             }
-        }
+
+            try {
+                const deleteMessageSeconds = days * 24 * 60 * 60;
+                await guild.members.ban(targetUser.id, {
+                    deleteMessageSeconds,
+                    reason: `${reason} | Banned by ${user.tag}`
+                });
+
+                await db.logInfraction(guild.id, targetUser.id, user.id, 'BAN', reason);
+
+                const embed = new EmbedBuilder()
+                    .setTitle('🔨 User Banned')
+                    .setColor('#FF0000')
+                    .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
+                    .setDescription(`**${targetUser.tag}** has been permanently banned from **${guild.name}**.`)
+                    .addFields(
+                        { name: 'User ID', value: `\`${targetUser.id}\``, inline: true },
+                        { name: 'Moderator', value: `<@${user.id}>`, inline: true },
+                        { name: 'Deleted Messages', value: `${days} day(s)`, inline: true },
+                        { name: 'Reason', value: reason }
+                    )
+                    .setTimestamp();
+
+                await i.update({ embeds: [embed], components: [] });
+            } catch (err) {
+                console.error('[ERROR] Ban failed:', err);
+                await i.update({
+                    content: '❌ Failed to ban this user. Verify my role has the Ban Members permission.',
+                    embeds: [],
+                    components: []
+                });
+            }
+        });
+
+        collector.on('end', async (collected, reason) => {
+            if (reason === 'time' && collected.size === 0) {
+                await interaction.editReply({
+                    content: '⏰ Confirmation timed out. Ban cancelled.',
+                    embeds: [],
+                    components: []
+                }).catch(() => null);
+            }
+        });
     }
 };

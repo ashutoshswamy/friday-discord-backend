@@ -1,42 +1,88 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('coinflip')
-        .setDescription('Flip a coin and see if it lands on heads or tails.')
-        .addStringOption(opt =>
-            opt.setName('guess')
-                .setDescription('Your guess before the flip')
-                .setRequired(false)
-                .addChoices(
-                    { name: 'Heads', value: 'heads' },
-                    { name: 'Tails', value: 'tails' }
-                )),
+        .setDescription('Flip a coin — pick Heads or Tails before the flip.'),
 
     async execute(interaction) {
-        const { user, options } = interaction;
-        const guess = options.getString('guess');
-        const result = Math.random() < 0.5 ? 'heads' : 'tails';
-        const emoji = result === 'heads' ? '🪙' : '🔵';
+        const { user } = interaction;
 
-        let description = `${emoji} The coin landed on **${result.charAt(0).toUpperCase() + result.slice(1)}**!`;
-        let color = '#FFD700';
+        const headsBtn = new ButtonBuilder()
+            .setCustomId('cf_heads')
+            .setLabel('🪙 Heads')
+            .setStyle(ButtonStyle.Primary);
 
-        if (guess) {
-            const won = guess === result;
-            description += won
-                ? `\n\n✅ You guessed **${guess}** — **You win!**`
-                : `\n\n❌ You guessed **${guess}** — **Better luck next time!**`;
-            color = won ? '#4ade80' : '#f87171';
-        }
+        const tailsBtn = new ButtonBuilder()
+            .setCustomId('cf_tails')
+            .setLabel('🔵 Tails')
+            .setStyle(ButtonStyle.Secondary);
 
-        const embed = new EmbedBuilder()
+        const skipBtn = new ButtonBuilder()
+            .setCustomId('cf_skip')
+            .setLabel('🎲 Just Flip')
+            .setStyle(ButtonStyle.Secondary);
+
+        const row = new ActionRowBuilder().addComponents(headsBtn, tailsBtn, skipBtn);
+
+        const prompt = new EmbedBuilder()
             .setTitle('🪙 Coin Flip')
-            .setDescription(description)
-            .setColor(color)
-            .setFooter({ text: `Flipped by ${user.tag}` })
-            .setTimestamp();
+            .setColor('#FFD700')
+            .setDescription('Make your call before the flip, or just watch it land!')
+            .setFooter({ text: 'Choose within 20 seconds' });
 
-        await interaction.editReply({ embeds: [embed] });
+        const response = await interaction.editReply({ embeds: [prompt], components: [row] });
+
+        const collector = response.createMessageComponentCollector({
+            filter: i => i.user.id === user.id,
+            time: 20000,
+            max: 1
+        });
+
+        collector.on('collect', async i => {
+            await i.deferUpdate();
+
+            const guess = i.customId === 'cf_skip' ? null : i.customId.replace('cf_', '');
+            const result = Math.random() < 0.5 ? 'heads' : 'tails';
+            const resultEmoji = result === 'heads' ? '🪙' : '🔵';
+            const resultLabel = result.charAt(0).toUpperCase() + result.slice(1);
+
+            let color = '#FFD700';
+            let outcomeText = `${resultEmoji} The coin landed on **${resultLabel}**!`;
+
+            if (guess) {
+                const won = guess === result;
+                outcomeText += won
+                    ? `\n\n✅ You called **${guess.charAt(0).toUpperCase() + guess.slice(1)}** — **You win!**`
+                    : `\n\n❌ You called **${guess.charAt(0).toUpperCase() + guess.slice(1)}** — **Better luck next time!**`;
+                color = won ? '#00FF66' : '#FF3333';
+            }
+
+            const disabledRow = new ActionRowBuilder().addComponents(
+                ButtonBuilder.from(headsBtn).setDisabled(true).setStyle(guess === 'heads' ? ButtonStyle.Primary : ButtonStyle.Secondary),
+                ButtonBuilder.from(tailsBtn).setDisabled(true).setStyle(guess === 'tails' ? ButtonStyle.Primary : ButtonStyle.Secondary),
+                ButtonBuilder.from(skipBtn).setDisabled(true)
+            );
+
+            const resultEmbed = new EmbedBuilder()
+                .setTitle('🪙 Coin Flip Result')
+                .setDescription(outcomeText)
+                .setColor(color)
+                .setFooter({ text: `Flipped by ${user.tag}` })
+                .setTimestamp();
+
+            await i.editReply({ embeds: [resultEmbed], components: [disabledRow] });
+        });
+
+        collector.on('end', async (collected, reason) => {
+            if (reason === 'time' && collected.size === 0) {
+                const disabledRow = new ActionRowBuilder().addComponents(
+                    ButtonBuilder.from(headsBtn).setDisabled(true),
+                    ButtonBuilder.from(tailsBtn).setDisabled(true),
+                    ButtonBuilder.from(skipBtn).setDisabled(true)
+                );
+                await interaction.editReply({ components: [disabledRow] }).catch(() => null);
+            }
+        });
     }
 };

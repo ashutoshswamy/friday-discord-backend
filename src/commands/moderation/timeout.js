@@ -1,15 +1,24 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 const db = require('../../utils/db');
+
+const DURATION_LABELS = {
+    60000: '60 Seconds',
+    300000: '5 Minutes',
+    600000: '10 Minutes',
+    3600000: '1 Hour',
+    86400000: '1 Day',
+    604800000: '1 Week'
+};
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('timeout')
         .setDescription('Puts a user in a timeout (native Discord mute).')
-        .addUserOption(option => 
+        .addUserOption(option =>
             option.setName('user')
                 .setDescription('The user to timeout')
                 .setRequired(true))
-        .addIntegerOption(option => 
+        .addIntegerOption(option =>
             option.setName('duration')
                 .setDescription('The duration of the timeout')
                 .setRequired(true)
@@ -21,16 +30,12 @@ module.exports = {
                     { name: '1 Day', value: 24 * 60 * 60 * 1000 },
                     { name: '1 Week', value: 7 * 24 * 60 * 60 * 1000 }
                 ))
-        .addStringOption(option => 
+        .addStringOption(option =>
             option.setName('reason')
                 .setDescription('The reason for the timeout')
                 .setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
-    /**
-     * Executes the timeout command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const targetUser = interaction.options.getUser('user');
         const duration = interaction.options.getInteger('duration');
@@ -39,72 +44,108 @@ module.exports = {
 
         if (!guild) return;
 
-        // Check if user tries to timeout themselves
         if (targetUser.id === user.id) {
-            return interaction.editReply({ content: 'You cannot timeout yourself!', ephemeral: true });
+            return interaction.editReply({ content: '❌ You cannot timeout yourself.', ephemeral: true });
         }
 
         const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
 
         if (!targetMember) {
-            return interaction.editReply({ content: 'This user is not currently in the server.', ephemeral: true });
+            return interaction.editReply({ content: '❌ This user is not currently in the server.', ephemeral: true });
         }
 
-        // Check if member is moderatable by the bot (e.g. not owner/higher role)
         if (!targetMember.moderatable) {
-            return interaction.editReply({ 
-                content: 'I cannot timeout this user. They may have a higher role than me or I do not have permission to timeout them.', 
-                ephemeral: true 
-            });
-        }
-
-        // Check role hierarchy
-        if (targetMember.roles.highest.position >= interaction.member.roles.highest.position && guild.ownerId !== user.id) {
             return interaction.editReply({
-                content: 'You cannot timeout this user because they have an equal or higher role than you.',
+                content: '❌ I cannot timeout this user — they may outrank me or I lack permission.',
                 ephemeral: true
             });
         }
 
-        try {
-            await targetMember.timeout(duration, `${reason} | Timed out by ${user.tag}`);
-
-            // Log infraction
-            await db.logInfraction(guild.id, targetUser.id, user.id, 'TIMEOUT', reason);
-
-            // Pre-calculate readable duration text
-            const durationTexts = {
-                60000: '60 Seconds',
-                300000: '5 Minutes',
-                600000: '10 Minutes',
-                3600000: '1 Hour',
-                86400000: '1 Day',
-                604800000: '1 Week'
-            };
-            const durationText = durationTexts[duration] || `${duration / 1000}s`;
-
-            const embed = new EmbedBuilder()
-                .setTitle('User Timed Out')
-                .setColor('#FFFF00')
-                .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`Successfully timed out **${targetUser.tag}**.`)
-                .addFields(
-                    { name: 'User ID', value: `\`${targetUser.id}\``, inline: true },
-                    { name: 'Moderator', value: `${user}`, inline: true },
-                    { name: 'Duration', value: durationText, inline: true },
-                    { name: 'Reason', value: reason }
-                )
-                .setTimestamp();
-
-            await interaction.editReply({ embeds: [embed] });
-        } catch (err) {
-            console.error('[ERROR] Timeout failed:', err);
-            const _errMsg = { content: 'An error occurred while attempting to timeout this user. Please verify my bot role has the ', ephemeral: true };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(_errMsg).catch(() => null);
-            } else {
-                await interaction.editReply(_errMsg).catch(() => null);
-            }
+        if (targetMember.roles.highest.position >= interaction.member.roles.highest.position && guild.ownerId !== user.id) {
+            return interaction.editReply({
+                content: '❌ You cannot timeout this user — they have an equal or higher role.',
+                ephemeral: true
+            });
         }
+
+        const durationLabel = DURATION_LABELS[duration] || `${duration / 1000}s`;
+        const expiresUnix = Math.floor((Date.now() + duration) / 1000);
+
+        const confirmBtn = new ButtonBuilder()
+            .setCustomId('to_confirm')
+            .setLabel(`🔇 Timeout for ${durationLabel}`)
+            .setStyle(ButtonStyle.Danger);
+
+        const cancelBtn = new ButtonBuilder()
+            .setCustomId('to_cancel')
+            .setLabel('✕ Cancel')
+            .setStyle(ButtonStyle.Secondary);
+
+        const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
+
+        const confirmEmbed = new EmbedBuilder()
+            .setTitle('⚠️ Confirm Timeout')
+            .setColor('#FFCC00')
+            .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
+            .setDescription(`You are about to mute <@${targetUser.id}> in **${guild.name}**.`)
+            .addFields(
+                { name: 'User', value: `${targetUser.tag} (\`${targetUser.id}\`)`, inline: true },
+                { name: 'Duration', value: `⏳ **${durationLabel}**`, inline: true },
+                { name: 'Expires', value: `<t:${expiresUnix}:R>`, inline: true },
+                { name: 'Reason', value: reason }
+            )
+            .setFooter({ text: 'Confirm within 30 seconds.' });
+
+        const response = await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
+
+        const collector = response.createMessageComponentCollector({
+            filter: i => i.user.id === user.id,
+            time: 30000,
+            max: 1
+        });
+
+        collector.on('collect', async i => {
+            if (i.customId === 'to_cancel') {
+                return i.update({ content: '✅ Timeout cancelled.', embeds: [], components: [] });
+            }
+
+            try {
+                await targetMember.timeout(duration, `${reason} | Timed out by ${user.tag}`);
+                await db.logInfraction(guild.id, targetUser.id, user.id, 'TIMEOUT', reason);
+
+                const embed = new EmbedBuilder()
+                    .setTitle('🔇 User Timed Out')
+                    .setColor('#FFCC00')
+                    .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
+                    .setDescription(`**${targetUser.tag}** has been timed out in **${guild.name}**.`)
+                    .addFields(
+                        { name: 'User ID', value: `\`${targetUser.id}\``, inline: true },
+                        { name: 'Moderator', value: `<@${user.id}>`, inline: true },
+                        { name: 'Duration', value: `⏳ **${durationLabel}**`, inline: true },
+                        { name: 'Expires', value: `<t:${expiresUnix}:R>`, inline: true },
+                        { name: 'Reason', value: reason }
+                    )
+                    .setTimestamp();
+
+                await i.update({ embeds: [embed], components: [] });
+            } catch (err) {
+                console.error('[ERROR] Timeout failed:', err);
+                await i.update({
+                    content: '❌ Failed to timeout this user. Verify my role has the Moderate Members permission.',
+                    embeds: [],
+                    components: []
+                });
+            }
+        });
+
+        collector.on('end', async (collected, reason) => {
+            if (reason === 'time' && collected.size === 0) {
+                await interaction.editReply({
+                    content: '⏰ Confirmation timed out. No action taken.',
+                    embeds: [],
+                    components: []
+                }).catch(() => null);
+            }
+        });
     }
 };
