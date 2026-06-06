@@ -149,24 +149,6 @@ async function renderWelcomeCard(member, guild, theme, accentColor) {
     ctx.font = '16px sans-serif';
     ctx.fillText(`Joined ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 250, 155);
 
-    // Progress bar decoration
-    const barX = 250, barY = 192, barWidth = 500, barHeight = 12, barRadius = 6;
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    ctx.beginPath();
-    ctx.roundRect(barX, barY, barWidth, barHeight, barRadius);
-    ctx.fill();
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(barX, barY, barWidth, barHeight, barRadius);
-    ctx.clip();
-    const barGradient = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
-    barGradient.addColorStop(0, accent1);
-    barGradient.addColorStop(1, accent2);
-    ctx.fillStyle = barGradient;
-    ctx.fillRect(barX, barY, barWidth * 0.15, barHeight);
-    ctx.restore();
-
     ctx.restore();
 
     return canvas.toBuffer('image/png');
