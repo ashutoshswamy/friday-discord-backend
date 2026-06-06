@@ -23,7 +23,7 @@ module.exports = {
                     `⚙️ **System Specifications:**\n` +
                     `• Loaded Protocols: \`77 slash commands\`\n` +
                     `• Dynamic Systems: \`Leveling, Economy, Jobs, Pets, Player Bazaar, AutoMod, Onboarding\`\n` +
-                    `• UI Control Panel: [Web Dashboard](http://localhost:5173/)\n\n` +
+                    `• UI Control Panel: [Web Dashboard](https://fridaybot.ashutoshswamy.in)\n\n` +
                     `📍 Use the **select menu dropdown below** to load specialized protocol system lists in detail.`,
                 fields: [
                     { name: '⚡ Core & AI Systems', value: 'Google Gemini AI generation, conversational ask, text rewriting, quotes, dashboard telemetry.', inline: true },
