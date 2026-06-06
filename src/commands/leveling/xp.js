@@ -46,9 +46,9 @@ module.exports = {
             const result = await db.updateXpAdmin(guild.id, targetUser.id, action, amount);
 
             const actionTexts = {
-                ADD: `Added **${amount} XP** to`,
-                REMOVE: `Deducted **${amount} XP** from`,
-                SET: `Overwrote XP balance to **${amount} XP** for`
+                ADD: `Added **${amount.toLocaleString()} XP** to`,
+                REMOVE: `Deducted **${amount.toLocaleString()} XP** from`,
+                SET: `Overwrote XP balance to **${amount.toLocaleString()} XP** for`
             };
 
             const embed = new EmbedBuilder()
@@ -57,7 +57,7 @@ module.exports = {
                 .setDescription(`${actionTexts[action]} ${targetUser}.`)
                 .addFields(
                     { name: 'Resulting Level', value: `✨ **Level ${result.level}**`, inline: true },
-                    { name: 'Resulting XP', value: `🏆 \`${result.xp}\` XP`, inline: true }
+                    { name: 'Resulting XP', value: `🏆 \`${result.xp.toLocaleString()}\` XP`, inline: true }
                 )
                 .setTimestamp();
 

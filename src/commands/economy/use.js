@@ -41,12 +41,12 @@ async function processItem(guild, user, matchedItem, shopItems) {
             const xpGain = Math.floor(Math.random() * 201) + 100;
             await db.addXp(guild.id, user.id, xpGain);
             prizeTitle = '🏆 Leveling Spark!';
-            prizeDesc = `The Lootbox erupted with leveling energy!\nYou gained **🏆 ${xpGain} XP** towards your rank!`;
+            prizeDesc = `The Lootbox erupted with leveling energy!\nYou gained **🏆 ${xpGain.toLocaleString()} XP** towards your rank!`;
         } else {
             const coinGain = Math.floor(Math.random() * 401) + 200;
             await db.updateCoins(guild.id, user.id, coinGain);
             prizeTitle = '🪙 Coin Cache!';
-            prizeDesc = `The chest opened to reveal spare coins!\nYou pocketed **🪙 ${coinGain} coins** in your wallet.`;
+            prizeDesc = `The chest opened to reveal spare coins!\nYou pocketed **🪙 ${coinGain.toLocaleString()} coins** in your wallet.`;
         }
 
         embed.setTitle(`🎁 Lootbox: ${prizeTitle}`)
@@ -67,7 +67,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
             embed.setTitle(`✨ Used ${customConsumable.name}!`)
                 .setColor('#00FFCC')
                 .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`You consumed **${customConsumable.name}**!\nYou gained **🏆 ${actionValue} XP** towards your rank.`);
+                .setDescription(`You consumed **${customConsumable.name}**!\nYou gained **🏆 ${actionValue.toLocaleString()} XP** towards your rank.`);
             return { embed };
         } else if (actionType === 'COINS') {
             await db.updateCoins(guild.id, user.id, actionValue);

@@ -22,7 +22,7 @@ function buildTierEmbed(tier) {
     jobs.forEach(j => {
         embed.addFields({
             name: `${j.emoji} ${j.name}`,
-            value: `*${j.description}*\n🪙 **${j.minPay}–${j.maxPay}**/shift${j.xpBonus > 0 ? ` · **+${j.xpBonus} XP**` : ''}`,
+            value: `*${j.description}*\n🪙 **${j.minPay.toLocaleString()}–${j.maxPay.toLocaleString()}**/shift${j.xpBonus > 0 ? ` · **+${j.xpBonus.toLocaleString()} XP**` : ''}`,
         });
     });
 
@@ -158,8 +158,8 @@ module.exports = {
                 .addFields(
                     { name: 'Position',  value: `${job.emoji} ${job.name}`,                       inline: true },
                     { name: 'Tier',      value: `${TIER_LABELS[job.tier]} (Tier ${job.tier})`,     inline: true },
-                    { name: 'Pay Range', value: `🪙 ${job.minPay}–${job.maxPay} per /work shift`,  inline: true },
-                    { name: 'XP Bonus',  value: job.xpBonus > 0 ? `+${job.xpBonus} XP per shift` : 'None', inline: true },
+                    { name: 'Pay Range', value: `🪙 ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()} per /work shift`,  inline: true },
+                    { name: 'XP Bonus',  value: job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP per shift` : 'None', inline: true },
                     { name: 'Req. Level', value: `Level ${job.levelRequired}+`,                   inline: true },
                 )
                 .setFooter({ text: 'Use /work to earn coins. Job switch cooldown: 1 hour.' })
@@ -252,8 +252,8 @@ module.exports = {
                     .addFields(
                         { name: 'Position',   value: `${job.emoji} ${job.name}`,                         inline: true },
                         { name: 'Tier',       value: `${TIER_LABELS[job.tier]} (Tier ${job.tier})`,       inline: true },
-                        { name: 'Pay Range',  value: `🪙 ${job.minPay}–${job.maxPay}/shift`,              inline: true },
-                        { name: 'XP Bonus',   value: job.xpBonus > 0 ? `+${job.xpBonus} XP/shift` : 'None', inline: true },
+                        { name: 'Pay Range',  value: `🪙 ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()}/shift`,              inline: true },
+                        { name: 'XP Bonus',   value: job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP/shift` : 'None', inline: true },
                         { name: 'Employed',   value: appliedDate,                                         inline: true },
                         { name: 'Wallet',     value: `🪙 ${profile.coins.toLocaleString()} coins`,       inline: true },
                     );

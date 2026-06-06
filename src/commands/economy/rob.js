@@ -48,7 +48,7 @@ module.exports = {
 
             if (victimProfile.coins < 50) {
                 return interaction.editReply({
-                    content: `❌ <@${targetUser.id}> is practically broke! They only have 🪙 **${victimProfile.coins}** coins. It isn't worth the risk.`,
+                    content: `❌ <@${targetUser.id}> is practically broke! They only have 🪙 **${victimProfile.coins.toLocaleString()}** coins. It isn't worth the risk.`,
                     ephemeral: true
                 });
             }
@@ -106,8 +106,8 @@ module.exports = {
                         `You managed to escape with **🪙 ${stolenAmount.toLocaleString()}** coins!`
                     )
                     .addFields(
-                        { name: 'Stolen Loot', value: `🪙 **+${stolenAmount}** coins`, inline: true },
-                        { name: 'Victim Loss', value: `🪙 **-${stolenAmount}** coins`, inline: true }
+                        { name: 'Stolen Loot', value: `🪙 **+${stolenAmount.toLocaleString()}** coins`, inline: true },
+                        { name: 'Victim Loss', value: `🪙 **-${stolenAmount.toLocaleString()}** coins`, inline: true }
                     );
             } else {
                 // Caught! Pay a fine directly to the victim
@@ -127,8 +127,8 @@ module.exports = {
                         `The local guard fined you **🪙 ${fineAmount.toLocaleString()}** coins, which was paid directly to the victim.`
                     )
                     .addFields(
-                        { name: 'Fine Paid', value: `🪙 **-${fineAmount}** coins`, inline: true },
-                        { name: 'Victim Compensated', value: `🪙 **+${fineAmount}** coins`, inline: true }
+                        { name: 'Fine Paid', value: `🪙 **-${fineAmount.toLocaleString()}** coins`, inline: true },
+                        { name: 'Victim Compensated', value: `🪙 **+${fineAmount.toLocaleString()}** coins`, inline: true }
                     );
             }
 

@@ -27,9 +27,9 @@ module.exports = {
                     `🔗 **[Access Web Dashboard](${dashboardUrl})**`
                 )
                 .addFields(
-                    { name: 'Total Members Count', value: `👥 **${guild.memberCount}** members`, inline: true },
-                    { name: 'Channels Count', value: `📺 **${guild.channels.cache.size}** channels`, inline: true },
-                    { name: 'Roles Registered', value: `🎭 **${guild.roles.cache.size}** roles`, inline: true }
+                    { name: 'Total Members Count', value: `👥 **${guild.memberCount.toLocaleString()}** members`, inline: true },
+                    { name: 'Channels Count', value: `📺 **${guild.channels.cache.size.toLocaleString()}** channels`, inline: true },
+                    { name: 'Roles Registered', value: `🎭 **${guild.roles.cache.size.toLocaleString()}** roles`, inline: true }
                 )
                 .setFooter({ text: 'Telemetry analysis provided by Friday Bot' })
                 .setTimestamp();

@@ -63,7 +63,7 @@ module.exports = {
 
             // Construct response text
             const baseText = BEG_RESPONSES[Math.floor(Math.random() * BEG_RESPONSES.length)];
-            const formattedText = baseText.replace('{amount}', payout.toString());
+            const formattedText = baseText.replace('{amount}', payout.toLocaleString());
 
             const embed = new EmbedBuilder()
                 .setTitle('👛 Begging for Change')
@@ -72,7 +72,7 @@ module.exports = {
                 .setDescription(formattedText)
                 .addFields({
                     name: 'Coins Pocketed',
-                    value: `🪙 **+${payout}** coins`,
+                    value: `🪙 **+${payout.toLocaleString()}** coins`,
                     inline: true
                 })
                 .setTimestamp();

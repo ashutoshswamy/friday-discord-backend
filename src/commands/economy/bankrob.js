@@ -56,7 +56,7 @@ module.exports = {
             const victimBankBalance = victimProfile.bank || 0;
             if (victimBankBalance < 200) {
                 return interaction.editReply({
-                    content: `❌ <@${targetUser.id}>'s bank vault is practically empty! They only have 🪙 **${victimBankBalance}** coins in the bank. It isn't worth the massive risk.`,
+                    content: `❌ <@${targetUser.id}>'s bank vault is practically empty! They only have 🪙 **${victimBankBalance.toLocaleString()}** coins in the bank. It isn't worth the massive risk.`,
                     ephemeral: true
                 });
             }
@@ -122,7 +122,7 @@ module.exports = {
                         const clickerProfile = await db.getProfile(guild.id, clicker.id);
                         if (clickerProfile.coins < 100) {
                             return i.reply({
-                                content: `❌ You need at least 🪙 **100** coins in your active wallet to join this high-risk heist! (Current: 🪙 ${clickerProfile.coins})`,
+                                content: `❌ You need at least 🪙 **100** coins in your active wallet to join this high-risk heist! (Current: 🪙 ${clickerProfile.coins.toLocaleString()})`,
                                 ephemeral: true
                             });
                         }

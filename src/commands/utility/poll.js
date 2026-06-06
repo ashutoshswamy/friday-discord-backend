@@ -118,14 +118,14 @@ module.exports = {
                     const resultsText = results.map(r => {
                         const filled = Math.round(r.pct / 10);
                         const bar    = '█'.repeat(filled) + '░'.repeat(10 - filled);
-                        return `**${r.text}**${r.winner ? ' 🏆' : ''}\n\`${bar}\` ${r.pct}% (${r.count} vote${r.count !== 1 ? 's' : ''})`;
+                        return `**${r.text}**${r.winner ? ' 🏆' : ''}\n\`${bar}\` ${r.pct}% (${r.count.toLocaleString()} vote${r.count !== 1 ? 's' : ''})`;
                     }).join('\n\n');
 
                     embed = new EmbedBuilder()
                         .setTitle(`📊 Poll Closed — ${poll.question}`)
                         .setColor('#71717a')
                         .setDescription(resultsText || '*No votes recorded.*')
-                        .setFooter({ text: `Closed by ${user.tag} · ${totalVotes} total vote${totalVotes !== 1 ? 's' : ''}` })
+                        .setFooter({ text: `Closed by ${user.tag} · ${totalVotes.toLocaleString()} total vote${totalVotes !== 1 ? 's' : ''}` })
                         .setTimestamp();
                 }
 

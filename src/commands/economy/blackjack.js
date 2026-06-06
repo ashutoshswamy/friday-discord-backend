@@ -104,7 +104,7 @@ module.exports = {
                             inline: true 
                         }
                     )
-                    .setFooter({ text: `Current Bet: 🪙 ${bet} coins` });
+                    .setFooter({ text: `Current Bet: 🪙 ${bet.toLocaleString()} coins` });
 
                 if (isFinal) {
                     embed.setDescription(`### ${status}`);
@@ -181,7 +181,7 @@ module.exports = {
 
                 let finalStatus = '';
                 if (playerScore > 21) {
-                    finalStatus = `💥 **Bust!** You went over 21. You lost your bet of 🪙 **${bet}** coins.`;
+                    finalStatus = `💥 **Bust!** You went over 21. You lost your bet of 🪙 **${bet.toLocaleString()}** coins.`;
                 } else if (dealerScore > 21) {
                     let payout = bet * 2;
                     await db.updateCoins(guild.id, user.id, payout);
@@ -191,11 +191,11 @@ module.exports = {
                     await db.updateCoins(guild.id, user.id, payout);
                     finalStatus = `🎉 **You Win!** Your score of **${playerScore}** beat the dealer's **${dealerScore}**. You won 🪙 **${payout.toLocaleString()}** coins!`;
                 } else if (playerScore < dealerScore) {
-                    finalStatus = `❌ **You Lose!** Dealer's score of **${dealerScore}** beat your **${playerScore}**. You lost your bet of 🪙 **${bet}** coins.`;
+                    finalStatus = `❌ **You Lose!** Dealer's score of **${dealerScore}** beat your **${playerScore}**. You lost your bet of 🪙 **${bet.toLocaleString()}** coins.`;
                 } else {
                     // Push (Tie)
                     await db.updateCoins(guild.id, user.id, bet);
-                    finalStatus = `🤝 **Push!** It is a tie score of **${playerScore}**. Your bet of 🪙 **${bet}** coins was refunded.`;
+                    finalStatus = `🤝 **Push!** It is a tie score of **${playerScore}**. Your bet of 🪙 **${bet.toLocaleString()}** coins was refunded.`;
                 }
 
                 await interaction.editReply({

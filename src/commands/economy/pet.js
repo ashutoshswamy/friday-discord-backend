@@ -92,7 +92,7 @@ module.exports = {
                 const profile = await db.getProfile(guild.id, user.id);
                 if (profile.coins < 200) {
                     return interaction.editReply({
-                        content: `❌ Adoption fee is 🪙 **200** coins! You currently have 🪙 **${profile.coins}** coins in your active wallet.`,
+                        content: `❌ Adoption fee is 🪙 **200** coins! You currently have 🪙 **${profile.coins.toLocaleString()}** coins in your active wallet.`,
                         ephemeral: true
                     });
                 }
@@ -155,7 +155,7 @@ module.exports = {
                     .setColor('#00E5FF')
                     .setDescription(
                         `**Companion:** ${pet.type}\n` +
-                        `**Level:** ✨ **Level ${pet.level}** (\`${pet.xp} / ${xpNeeded}\` XP)\n\n` +
+                        `**Level:** ✨ **Level ${pet.level}** (\`${pet.xp.toLocaleString()} / ${xpNeeded.toLocaleString()}\` XP)\n\n` +
                         `• **🍖 Hunger:** \`${activeHunger}/100\` (${hungerEmoji})\n` +
                         `• **⚡ Energy:** \`${activeEnergy}/100\` (${energyEmoji})\n` +
                         `• **❤️ Affection:** \`${pet.affection}/100\`\n` +
@@ -287,7 +287,7 @@ module.exports = {
                     .setDescription(
                         `You completed a highly productive training course with **${pet.name}**!\n\n` +
                         `• ${attributeText}\n` +
-                        `• Gained **🏆 ${xpGain} Pet XP**\n` +
+                        `• Gained **🏆 ${xpGain.toLocaleString()} Pet XP**\n` +
                         `• Energy consumed: **⚡ -25** (Current: \`${newEnergy}/100\`)\n` +
                         `• Hunger calories burned: **🍖 -10** (Current: \`${newHunger}/100\`)`
                     );

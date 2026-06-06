@@ -52,7 +52,7 @@ module.exports = {
                     { name: 'Role ID', value: `\`${targetRole.id}\``, inline: true },
                     { name: 'Color Hex', value: `\`${targetRole.hexColor}\``, inline: true },
                     { name: 'Position Rank', value: `${targetRole.position} / ${guild.roles.cache.size}`, inline: true },
-                    { name: 'Members Count', value: `👤 **${membersCount}** members`, inline: true },
+                    { name: 'Members Count', value: `👤 **${membersCount.toLocaleString()}** members`, inline: true },
                     { name: 'Hoisted (Separated)', value: targetRole.hoist ? '✅ Yes' : '❌ No', inline: true },
                     { name: 'Mentionable', value: targetRole.mentionable ? '✅ Yes' : '❌ No', inline: true },
                     { name: 'Created At', value: `<t:${createdUnix}:F> (<t:${createdUnix}:R>)`, inline: false },

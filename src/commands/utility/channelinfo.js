@@ -50,7 +50,7 @@ module.exports = {
             if (channel.type === ChannelType.GuildVoice) {
                 embed.addFields(
                     { name: 'User Bitrate', value: `🔊 ${channel.bitrate / 1000}kbps`, inline: true },
-                    { name: 'User Limit Capacity', value: channel.userLimit > 0 ? `👥 ${channel.userLimit} members max` : '👥 Unlimited', inline: true }
+                    { name: 'User Limit Capacity', value: channel.userLimit > 0 ? `👥 ${channel.userLimit.toLocaleString()} members max` : '👥 Unlimited', inline: true }
                 );
             }
 

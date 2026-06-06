@@ -105,7 +105,7 @@ module.exports = {
                         .setDescription(
                             `✨ **Bingo!**\n` +
                             `You carefully searched the **${locObj.name}** and found a stash of spare coins!\n` +
-                            `You added **🪙 ${coinGain} coins** to your active wallet.`
+                            `You added **🪙 ${coinGain.toLocaleString()} coins** to your active wallet.`
                         );
                 }
                 // 20% chance: Find a rare collectible item!

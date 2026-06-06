@@ -99,7 +99,7 @@ module.exports = {
                 .addFields(
                     { name: 'Position',    value: job ? `${job.emoji} ${job.name}` : '🧑 Unemployed',           inline: true },
                     { name: 'Salary',      value: `🪙 **+${reward.toLocaleString()}** coins`,                    inline: true },
-                    { name: 'XP Bonus',    value: xpBonus > 0 ? `+${xpBonus} XP` : 'None',                      inline: true },
+                    { name: 'XP Bonus',    value: xpBonus > 0 ? `+${xpBonus.toLocaleString()} XP` : 'None',      inline: true },
                     { name: 'Wallet',      value: `🪙 **${finalBalance.coins.toLocaleString()}** coins`,         inline: true },
                 )
                 .setFooter({ text: job ? `Tier ${job.tier} job · Use /job list to explore careers` : 'Use /job apply to unlock higher pay' })

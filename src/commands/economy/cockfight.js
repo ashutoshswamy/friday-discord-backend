@@ -92,7 +92,7 @@ module.exports = {
                 )
                 .addFields(
                     { name: 'Your Fighter', value: `🐓 **${playerBird}**`, inline: true },
-                    { name: 'Your Bet', value: `🪙 **${bet}** coins`, inline: true },
+                    { name: 'Your Bet', value: `🪙 **${bet.toLocaleString()}** coins`, inline: true },
                     { name: 'Payout', value: winnings > 0 ? `🪙 **+${winnings.toLocaleString()}**` : `🪙 **0**`, inline: true },
                     { name: 'Wallet Balance', value: `🪙 **${finalBalance.coins.toLocaleString()}** coins`, inline: false }
                 )
