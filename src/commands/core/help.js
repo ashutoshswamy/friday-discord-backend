@@ -12,7 +12,7 @@ const pages = {
  bodyText: `**System Specifications:**\n• Loaded Protocols: \`79 slash commands\`\n• Dynamic Systems: \`Leveling, Economy, Jobs, Pets, Player Bazaar, AutoMod, Onboarding\`\n• UI Control Panel: [Web Dashboard](https://fridaybot.ashutoshswamy.in)`,
  fields: [
  { name: ' Core & AI Systems', value: 'Google Gemini AI generation, conversational ask, text rewriting, quotes, dashboard telemetry.' },
- { name: 'Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily/weekly/monthly coin cycles, job careers, hourly shift wages, scavenging.' },
+ { name: 'Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily/weekly/monthly coin cycles, job careers, hourly shift wages, scavenging, word scramble.' },
  { name: ' Casino & Gambling', value: 'Interactive Blackjack table, slots spinner, roulette payouts, arena cockfights, heists.' },
  { name: ' Scavenging & Shop', value: 'Hunting wild game, fishing lakes, shovel excavations, 30+ sellable loot drops, consumable items, player market bazaar.' },
  { name: ' Stocks & Trading', value: 'Real-time global stock quotes (NASDAQ/NSE/CRYPTO), long-term share investments, 5× leveraged intraday long/short positions.' },
@@ -57,7 +57,8 @@ const pages = {
  { name: '`/work`', value: 'Performs hourly shift duties. Pay scales with your current job tier (50–660 coins/shift).' },
  { name: '`/job list`', value: 'Browses all 12 available careers across 4 tiers with pay ranges and XP bonuses.' },
  { name: '`/beg`', value: 'Beg strangers for spare change. Grants coins (20 to 120) or rare scavenged junk items.' },
- { name: '`/search`', value: 'Selects active buttons to scavenge random locations. (Includes catch/bite penalties).' }
+ { name: '`/search`', value: 'Selects active buttons to scavenge random locations. (Includes catch/bite penalties).' },
+ { name: '`/scramble`', value: 'Starts a channel word scramble — first to unscramble wins coins + XP. Reward scales by word length (base: length × 35 coins). Speed bonuses: answer in ≤15s for +75%, ≤30s for +40%, ≤45s for +15%.' }
  ]
  },
  help_jobs: {
@@ -235,7 +236,7 @@ function buildMenu(disabled = false) {
  .addOptions(
  new StringSelectMenuOptionBuilder().setLabel('Galaxy System Overview').setDescription('Bot introduction, core systems specs & categories.').setValue('overview'),
  new StringSelectMenuOptionBuilder().setLabel('Core & AI Systems').setDescription('/friday ask, rewrite, summarize, customcmd add/remove.').setValue('help_core'),
- new StringSelectMenuOptionBuilder().setLabel('Economy & Banking').setDescription('/balance, deposit, withdraw, wages, daily, weekly, monthly.').setValue('help_economy'),
+ new StringSelectMenuOptionBuilder().setLabel('Economy & Banking').setDescription('/balance, deposit, wages, daily, weekly, monthly, scramble.').setValue('help_economy'),
  new StringSelectMenuOptionBuilder().setLabel('Job Ecosystem').setDescription('/job list, apply, quit, profile. Tiered careers that scale /work pay.').setValue('help_jobs'),
  new StringSelectMenuOptionBuilder().setLabel('Casino & Heists').setDescription('/blackjack, slots, roulette, cockfights, heists.').setValue('help_casino'),
  new StringSelectMenuOptionBuilder().setLabel('Scavenging & Shop').setDescription('/hunt, fish, dig, sell 30+ items, consumables, market bazaar.').setValue('help_grinding'),

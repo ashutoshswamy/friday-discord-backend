@@ -3,6 +3,8 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const db = require('../../utils/db');
+const { EMOJIS } = require('../../utils/emojis');
 
 const WORDS = [
  'javascript', 'discord', 'server', 'giveaway', 'python', 'keyboard',
@@ -38,7 +40,7 @@ module.exports = {
  .setRequired(false)),
 
  async execute(interaction) {
- const { channel, user, options } = interaction;
+ const { channel, guild, user, options } = interaction;
  const guess = options.getString('answer')?.toLowerCase().trim();
 
  if (guess) {
@@ -50,12 +52,49 @@ module.exports = {
  clearTimeout(game.timeoutId);
  activeGames.delete(channel.id);
 
+ const elapsed = (Date.now() - game.startTime) / 1000;
+ const baseCoins = game.answer.length * 35;
+ let speedBonus = 0;
+ let speedLabel = '';
+ if (elapsed <= 15) {
+  speedBonus = Math.floor(baseCoins * 0.75);
+  speedLabel = ' Lightning fast!';
+ } else if (elapsed <= 30) {
+  speedBonus = Math.floor(baseCoins * 0.40);
+  speedLabel = ' Quick solver!';
+ } else if (elapsed <= 45) {
+  speedBonus = Math.floor(baseCoins * 0.15);
+  speedLabel = '';
+ }
+ const totalCoins = baseCoins + speedBonus;
+ const xpReward = 30 + Math.floor(game.answer.length * 3);
+
+ await Promise.all([
+  db.updateCoins(game.guildId, user.id, totalCoins).catch(() => null),
+  db.addXp(game.guildId, user.id, xpReward).catch(() => null)
+ ]);
+
+ let rewardText = `${EMOJIS.coin} **+${totalCoins.toLocaleString()}** coins`;
+ if (speedBonus > 0) rewardText += ` *(base ${baseCoins} + speed bonus ${speedBonus})*`;
+ rewardText += `\n ** +${xpReward} XP**`;
+ if (speedLabel) rewardText += `\n*${speedLabel}*`;
+
  const container = new ContainerBuilder()
  .setAccentColor(0x4ade80)
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(
- `## Correct!\n **${user.tag}** got it!\nThe word was **${game.answer}**`
+ .addSectionComponents(
+  new SectionBuilder()
+  .addTextDisplayComponents(
+   new TextDisplayBuilder().setContent(
+   `## Correct!\n**${user.tag}** solved it!\nThe word was **${game.answer}**`
+   )
+  )
+  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
  )
+ .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+ .addTextDisplayComponents(
+  new TextDisplayBuilder().setContent(
+   `**Rewards**\n${rewardText}\n\n-# Solved in ${elapsed.toFixed(1)}s · Longer words = bigger payouts`
+  )
  );
 
  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -72,6 +111,7 @@ module.exports = {
  const word = WORDS[Math.floor(Math.random() * WORDS.length)];
  const scrambled = scrambleWord(word);
  const timeLimit = 60;
+ const baseCoins = word.length * 35;
 
  const timeoutId = setTimeout(async () => {
  activeGames.delete(channel.id);
@@ -85,7 +125,9 @@ module.exports = {
  await channel.send({ flags: MessageFlags.IsComponentsV2, components: [container] }).catch(() => null);
  }, timeLimit * 1000);
 
- activeGames.set(channel.id, { answer: word, scrambled, timeoutId });
+ activeGames.set(channel.id, { answer: word, scrambled, timeoutId, guildId: guild.id, startTime: Date.now() });
+
+ const maxCoins = baseCoins + Math.floor(baseCoins * 0.75);
 
  const container = new ContainerBuilder()
  .setAccentColor(0x8b5cf6)
@@ -100,9 +142,12 @@ module.exports = {
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
  )
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
+ .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`-# Started by ${user.tag}`)
+ new TextDisplayBuilder().setContent(
+  `${EMOJIS.coin} **${baseCoins}–${maxCoins} coins** + ** XP** · Answer fast for a speed bonus!\n` +
+  `-# Started by ${user.tag}`
+ )
  );
 
  await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
