@@ -14,7 +14,7 @@ function buildLobbyContainer(hostUser, targetUser, crew, buttons) {
     .setAccentColor(0xFF0055)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        `## ${EMOJIS.fridaythink} Cooperative Bank Heist Lobby\n` +
+        `## Cooperative Bank Heist Lobby\n` +
         ` <@${hostUser.id}> is planning a bank heist targeting <@${targetUser.id}>'s vault!\n\n` +
         `At least **1 accomplice** (2 crew total) required. Success scales with crew size.\n\n` +
         `**Heist Crew (${crew.length}):**\n${crewList}\n\n` +
@@ -171,7 +171,7 @@ module.exports = {
             .setAccentColor(0x9CA3AF)
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
-                `## ${EMOJIS.fridaysleep} Heist Aborted\n <@${user.id}> decided to call off the bank heist. The crew disbanded safely.`
+                `## Heist Aborted\n <@${user.id}> decided to call off the bank heist. The crew disbanded safely.`
               )
             );
           return interaction.followUp({ flags: MessageFlags.IsComponentsV2, components: [cancelContainer] });
@@ -184,7 +184,7 @@ module.exports = {
             .setAccentColor(0x9CA3AF)
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
-                `## ${EMOJIS.fridaypanic} Heist Aborted — No Accomplices\n Not enough accomplices joined the crew in time. The vault raid was called off.`
+                `## Heist Aborted — No Accomplices\n Not enough accomplices joined the crew in time. The vault raid was called off.`
               )
             );
           return interaction.followUp({ flags: MessageFlags.IsComponentsV2, components: [failContainer] });
@@ -218,7 +218,7 @@ module.exports = {
             .setAccentColor(0x00FF66)
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
-                `## ${EMOJIS.fridayhype} VAULT BREACHED!\n **Heist Success!**\n\n` +
+                `## VAULT BREACHED!\n **Heist Success!**\n\n` +
                 `The crew infiltrated <@${targetUser.id}>'s bank vault and escaped with **${EMOJIS.coin} ${stolenAmount.toLocaleString()}** coins!`
               )
             )
@@ -255,7 +255,7 @@ module.exports = {
             .setAccentColor(0xFF3333)
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
-                `## ${EMOJIS.fridaypanic} VAULT ALARMS TRIGGERED!\n **BUSTED!**\n\n` +
+                `## VAULT ALARMS TRIGGERED!\n **BUSTED!**\n\n` +
                 `The crew triggered laser grids in <@${targetUser.id}>'s vault and were captured!\n` +
                 `All fines paid directly to <@${targetUser.id}>'s wallet as compensation.`
               )

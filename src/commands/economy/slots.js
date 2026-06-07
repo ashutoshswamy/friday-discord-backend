@@ -65,9 +65,7 @@ module.exports = {
       const finalBalance = await db.getProfile(guild.id, user.id);
       const isWin = winnings > 0;
 
-      const slotTitle = isWin
-        ? (multiplier >= 5 ? `${EMOJIS.fridaylove} Slot Machine` : `${EMOJIS.fridayhype} Slot Machine`)
-        : `${EMOJIS.fridaypanic} Slot Machine`;
+      const slotTitle = 'Slot Machine';
 
       const container = new ContainerBuilder()
         .setAccentColor(isWin ? 0xFFD700 : 0xFF3333)

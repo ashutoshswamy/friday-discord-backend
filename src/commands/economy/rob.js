@@ -62,7 +62,7 @@ module.exports = {
               new SectionBuilder()
                 .addTextDisplayComponents(
                   new TextDisplayBuilder().setContent(
-                    `## ${EMOJIS.fridaypanic} GUARD PET DEFENDED!\n` +
+                    `## GUARD PET DEFENDED!\n` +
                     `You sneaked up to rob <@${targetUser.id}>, but their guard pet **${victimPet.name}** (${victimPet.type}) caught your scent!\n` +
                     `You were forced to retreat and paid **${EMOJIS.coin} ${fineAmount.toLocaleString()} coins** in damages.`
                   )
@@ -92,7 +92,7 @@ module.exports = {
         await db.updateCoins(guild.id, targetUser.id, -stolenAmount);
 
         accentColor = 0x00FF66;
-        title = `${EMOJIS.fridayhype} Successful Heist!`;
+        title = `Successful Heist!`;
         descText = `You successfully infiltrated <@${targetUser.id}>'s vault and escaped with **${EMOJIS.coin} ${stolenAmount.toLocaleString()}** coins!`;
         detailText = `**Stolen Loot:** ${EMOJIS.coin} **+${stolenAmount.toLocaleString()}** coins\n**Victim Loss:** ${EMOJIS.coin} **-${stolenAmount.toLocaleString()}** coins`;
       } else {
@@ -104,7 +104,7 @@ module.exports = {
         await db.updateCoins(guild.id, targetUser.id, fineAmount);
 
         accentColor = 0xFF3333;
-        title = `${EMOJIS.fridaypanic} BUSTED!`;
+        title = `BUSTED!`;
         descText = `You were caught red-handed attempting to rob <@${targetUser.id}>! Fined **${EMOJIS.coin} ${fineAmount.toLocaleString()}** coins paid directly to the victim.`;
         detailText = `**Fine Paid:** ${EMOJIS.coin} **-${fineAmount.toLocaleString()}** coins\n**Victim Compensated:** ${EMOJIS.coin} **+${fineAmount.toLocaleString()}** coins`;
       }

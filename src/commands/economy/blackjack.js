@@ -128,7 +128,7 @@ module.exports = {
         await db.updateCoins(guild.id, user.id, payout);
         return interaction.editReply({
           flags: MessageFlags.IsComponentsV2,
-          components: [buildContainer(true, `You got a **Natural Blackjack** right off the deal!`, 0x00FF66, `${EMOJIS.fridaylove} Natural Blackjack!`)]
+          components: [buildContainer(true, `You got a **Natural Blackjack** right off the deal!`, 0x00FF66, `Natural Blackjack!`)]
         });
       }
 
@@ -200,7 +200,7 @@ module.exports = {
         if (reason === 'time') {
           // Refund the bet
           await db.updateCoins(guild.id, user.id, currentBet);
-          const timeoutContainer = buildContainer(true, '**Game Timed Out** — your bet has been refunded.', 0x6b7280, `${EMOJIS.fridaythink} Time Out`);
+          const timeoutContainer = buildContainer(true, '**Game Timed Out** — your bet has been refunded.', 0x6b7280, `Time Out`);
           timeoutContainer.addActionRowComponents(disabledRow);
           return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [timeoutContainer] }).catch(() => null);
         }
@@ -208,7 +208,7 @@ module.exports = {
         if (reason === 'surrender') {
           const refund = Math.floor(bet / 2);
           await db.updateCoins(guild.id, user.id, refund);
-          const surrenderContainer = buildContainer(true, `You surrendered your hand and lost half of your bet. Returned ${EMOJIS.coin} **${refund.toLocaleString()}** coins.`, 0x71717A, `${EMOJIS.fridaysleep} Surrendered`);
+          const surrenderContainer = buildContainer(true, `You surrendered your hand and lost half of your bet. Returned ${EMOJIS.coin} **${refund.toLocaleString()}** coins.`, 0x71717A, `Surrendered`);
           surrenderContainer.addActionRowComponents(disabledRow);
           return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [surrenderContainer] }).catch(() => null);
         }
@@ -228,29 +228,29 @@ module.exports = {
         if (playerScore > 21) {
           finalStatus = `**Bust!** You went over 21 score and lost your bet of ${EMOJIS.coin} **${currentBet.toLocaleString()}** coins.`;
           color = 0xFF3333;
-          title = `${EMOJIS.fridaypanic} Bust!`;
+          title = `Bust!`;
         } else if (dealerScore > 21) {
           const winnings = currentBet * 2;
           await db.updateCoins(guild.id, user.id, winnings);
           finalStatus = `**Dealer Bust!** Friday went over 21. You won ${EMOJIS.coin} **${winnings.toLocaleString()}** coins!`;
           color = 0x00FF66;
-          title = `${EMOJIS.fridayhype} Dealer Bust!`;
+          title = `Dealer Bust!`;
         } else if (playerScore > dealerScore) {
           const winnings = currentBet * 2;
           await db.updateCoins(guild.id, user.id, winnings);
           finalStatus = `**You Win!** Your score **${playerScore}** beat Friday's **${dealerScore}**. Won ${EMOJIS.coin} **${winnings.toLocaleString()}** coins!`;
           color = 0x00FF66;
-          title = `${EMOJIS.fridayhappy} You Win!`;
+          title = `You Win!`;
         } else if (playerScore < dealerScore) {
           finalStatus = `**You Lose!** Friday's score **${dealerScore}** beat your **${playerScore}**. Lost ${EMOJIS.coin} **${currentBet.toLocaleString()}** coins.`;
           color = 0xFF3333;
-          title = `${EMOJIS.fridaypanic} You Lose!`;
+          title = `You Lose!`;
         } else {
           // Push
           await db.updateCoins(guild.id, user.id, currentBet);
           finalStatus = `**Push!** You and Friday tied at **${playerScore}**. Your bet of ${EMOJIS.coin} **${currentBet.toLocaleString()}** was refunded.`;
           color = 0xFFCC00;
-          title = `${EMOJIS.fridaycool} Push!`;
+          title = `Push!`;
         }
 
         const finalContainer = buildContainer(true, finalStatus, color, title);

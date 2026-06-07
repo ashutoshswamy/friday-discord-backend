@@ -37,7 +37,7 @@ module.exports = {
  opt.setName('method')
  .setDescription('Choose feed method: Pay 100 coins or feed a Worm from your inventory')
  .addChoices(
- { name: '🪙 Pay 100 coins (Restores 25 hunger)', value: 'coins' },
+ { name: '<:coin:1512926963239489606> Pay 100 coins (Restores 25 hunger)', value: 'coins' },
  { name: ' Feed "Common Worm" (Restores 50 hunger)', value: 'worm' }
  )
  .setRequired(true)))

@@ -57,7 +57,7 @@ module.exports = {
       if (!result.success) {
         const nextClaimTimeUnix = Math.floor((Date.now() + result.cooldownLeft) / 1000);
         return interaction.editReply({
-          content: `${EMOJIS.fridaysleep} You are still on shift cooldown! You can work again **<t:${nextClaimTimeUnix}:R>** (at <t:${nextClaimTimeUnix}:T>).`,
+          content: `You are still on shift cooldown! You can work again **<t:${nextClaimTimeUnix}:R>** (at <t:${nextClaimTimeUnix}:T>).`,
           ephemeral: true,
         });
       }
@@ -89,7 +89,7 @@ module.exports = {
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(`## ${EMOJIS.fridayhappy} Shift Completed\n${taskText}`)
+              new TextDisplayBuilder().setContent(`## Shift Completed\n${taskText}`)
             )
             .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
         )

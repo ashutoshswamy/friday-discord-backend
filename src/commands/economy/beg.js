@@ -37,7 +37,7 @@ module.exports = {
     if (userCooldown && (now - userCooldown < cooldownMs)) {
       const timeLeft = Math.ceil((cooldownMs - (now - userCooldown)) / 1000);
       return interaction.editReply({
-        content: `${EMOJIS.fridaypanic} Keep your dignity! You must wait **${timeLeft}s** before begging again.`,
+        content: `Keep your dignity! You must wait **${timeLeft}s** before begging again.`,
         ephemeral: true
       });
     }
@@ -65,7 +65,7 @@ module.exports = {
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(`## ${EMOJIS.fridayhappy} Begging for Change\n${formattedText}`)
+              new TextDisplayBuilder().setContent(`## Begging for Change\n${formattedText}`)
             )
             .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
         )

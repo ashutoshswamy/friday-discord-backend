@@ -58,7 +58,7 @@ module.exports = {
         new SectionBuilder()
           .addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-              `## ${EMOJIS.fridaycool} Rock · Paper · Scissors\n**${user.username}**, make your move!${betLine}`
+              `## Rock · Paper · Scissors\n**${user.username}**, make your move!${betLine}`
             )
           )
           .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -90,14 +90,14 @@ module.exports = {
       let coinDelta = 0;
 
       if (playerChoice === botChoice) {
-        resultText = `${EMOJIS.fridaycool} It's a **Tie**!`;
+        resultText = `It's a **Tie**!`;
         color = 0x94a3b8;
         if (bet > 0 && guild) {
           await db.updateCoins(guild.id, user.id, bet);
           resultText += '\n↩ Bet refunded.';
         }
       } else if (playerData.beats === botChoice) {
-        resultText = `${EMOJIS.fridayhype} You **Win**!`;
+        resultText = `You **Win**!`;
         color = 0x00FF66;
         if (bet > 0 && guild) {
           coinDelta = bet * 2;
@@ -105,7 +105,7 @@ module.exports = {
           resultText += `\n${EMOJIS.coin} **+${coinDelta.toLocaleString()} coins**`;
         }
       } else {
-        resultText = `${EMOJIS.fridaypanic} You **Lose**!`;
+        resultText = `You **Lose**!`;
         color = 0xFF3333;
         if (bet > 0) resultText += `\n${EMOJIS.coin} **-${bet.toLocaleString()} coins**`;
       }
@@ -149,7 +149,7 @@ module.exports = {
           .setAccentColor(0x6b7280)
           .addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-              `${EMOJIS.fridaythink} You took too long to make your move!` + (bet > 0 ? '\n↩ Bet refunded.' : '')
+              `You took too long to make your move!` + (bet > 0 ? '\n↩ Bet refunded.' : '')
             )
           )
           .addActionRowComponents(

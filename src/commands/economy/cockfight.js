@@ -73,7 +73,7 @@ module.exports = {
 
       const finalBalance = await db.getProfile(guild.id, user.id);
 
-      const arenaTitle = isWin ? `${EMOJIS.fridayhype} Cockfight Arena` : `${EMOJIS.fridaypanic} Cockfight Arena`;
+      const arenaTitle = 'Cockfight Arena';
 
       const container = new ContainerBuilder()
         .setAccentColor(isWin ? 0x00FF66 : 0xFF3333)

@@ -29,7 +29,7 @@ async function buildBalanceContainer(guild, targetUser) {
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `**<:coin:1512926963239489606> Active Wallet:** <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins\n` +
+ `**Active Wallet:** <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins\n` +
  `**Bank Vault:** <:coin:1512926963239489606> **${(profile.bank || 0).toLocaleString()}** coins\n` +
  `**Stock Portfolio:** <:coin:1512926963239489606> **${totalStockAssets.toLocaleString()}** coins\n` +
  `**Net Worth:** <:coin:1512926963239489606> **${netWorth.toLocaleString()}** coins`

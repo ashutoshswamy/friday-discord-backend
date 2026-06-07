@@ -51,7 +51,7 @@ module.exports = {
           new SectionBuilder()
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
-                `## ${EMOJIS.fridayhype} Daily Reward Claimed!\nYour daily allowance has been deposited into your wallet.`
+                `## Daily Reward Claimed!\nYour daily allowance has been deposited into your wallet.`
               )
             )
             .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -93,7 +93,7 @@ module.exports = {
             new SectionBuilder()
               .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                  `## ${EMOJIS.fridayhype} Daily Reward Claimed!\nYour daily allowance has been deposited into your wallet.`
+                  `## Daily Reward Claimed!\nYour daily allowance has been deposited into your wallet.`
                 )
               )
               .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
