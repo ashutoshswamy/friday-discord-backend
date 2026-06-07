@@ -70,6 +70,14 @@ const DEFAULT_SHOP_ITEMS = [
         roleRewardId: null,
         actionType: 'COINS',
         actionValue: 300
+    },
+    {
+        name: 'Pickaxe',
+        cost: 600,
+        description: 'Heavy steel pickaxe required to excavate ores and minerals using /mine.',
+        roleRewardId: null,
+        actionType: null,
+        actionValue: null
     }
 ];
 

@@ -29,6 +29,13 @@ const SELL_CATALOG = {
  'sapphire': 2500, 'ruby': 4000,
  'diamond': 9000,
  'buried gold chest': 3000,
+ // ── Mine ──
+ 'coal': 80, 'iron ore': 150,
+ 'gold ore': 400, 'quartz crystal': 600,
+ 'emerald': 2000, 'ruby shard': 3500,
+ 'diamond ore': 7000,
+ 'crystal shard': 12000,
+ 'mythril core': 18000,
  // ── Collectibles ──
  'silver ring': 1000,
  'common gem': 750,

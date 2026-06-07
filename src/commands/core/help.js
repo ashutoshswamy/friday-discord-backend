@@ -78,6 +78,9 @@ const pages = {
  description: 'Risk management, casino tabletop games, player-to-player wallet thefts, and cooperative server vault heist coordination.',
  fields: [
  { name: '`/blackjack [bet]`', value: 'Play high-stakes Blackjack using interactive Hit & Stand components against the dealer.' },
+ { name: '`/highlow [bet]`', value: 'Draw a card and guess if the next is higher or lower. Chain correct guesses to climb multipliers up to 4.5×. Cash out anytime.' },
+ { name: '`/dice [bet]`', value: 'Roll two dice against Friday. Higher total wins 2×. Tie refunds your bet.' },
+ { name: '`/horse [horse] [bet]`', value: 'Bet on one of 5 horses in a live-narrated race. Odds range from 1.8× (favourite) to 6× (dark horse).' },
  { name: '`/slots [bet]`', value: 'Spins cyber slot rollers for high winning coin multipliers.' },
  { name: '`/roulette [bet] [space]`', value: 'Color (red/black/green) and number roulette game following casino house odds.' },
  { name: '`/cockfight [bet]`', value: 'Bets on randomized arena gladiators fights with extensive text simulation narrative logs.' },
@@ -93,6 +96,7 @@ const pages = {
  { name: '`/hunt`', value: 'Ventures wild woodlands (requires Hunting Rifle). Awards 9 drops: Rabbit → Eagle Feather → Duck → Deer → Deer Antler → Wild Boar → Wolf Pelt → Grizzly Bear → Dragon Scale.' },
  { name: '`/fish`', value: 'Casts fishing lines (requires Fishing Pole). Awards 12 drops: Clam → Common Bass → Pufferfish → Salmon → Lobster → Goldfish → Coral Fish → Shark Tooth → Ancient Pearl → Mythical Whale.' },
  { name: '`/dig`', value: 'Excavates the ground (requires Shovel). Awards 9 drops: Common Worm → Old Coin → Cracked Geode → Dirt Fossil → Ancient Vase → Sapphire → Ruby → Diamond → Buried Gold Chest.' },
+ { name: '`/mine`', value: 'Excavates the mine shaft (requires Pickaxe). Awards 9 ore tiers: Coal → Iron Ore → Gold Ore → Quartz Crystal → Emerald → Ruby Shard → Diamond Ore → Crystal Shard → Mythril Core.' },
  { name: '`/inventory [user]`', value: 'Exposes user items portfolio, details, and purchase timestamps.' },
  { name: '`/shop view`', value: 'Displays server shop with interactive buy menu.' },
  { name: '`/shop catalog`', value: 'Shows all built-in items (tools, consumables, collectibles) with suggested prices for admins.' },
@@ -102,7 +106,8 @@ const pages = {
  { name: '`/market view`', value: 'Browses player-posted auction listings (Listing ID, Seller, Price, Timestamp).' },
  { name: '`/market list [item] [price]`', value: 'Lists an item from your inventory up for sale for a custom coin price.' },
  { name: '`/market buy [listing_id]`', value: 'Buys listed item from market, transfers coins to seller, and moves item to buyer.' },
- { name: '`/market cancel [listing_id]`', value: 'Cancels your active market listing and reclaims your item.' }
+ { name: '`/market cancel [listing_id]`', value: 'Cancels your active market listing and reclaims your item.' },
+ { name: '`/trade [@user]`', value: 'Opens an interactive bilateral trade session. Both parties offer coins and up to 5 items each. Trade executes only when both confirm.' }
  ]
  },
  help_pets_leveling: {
