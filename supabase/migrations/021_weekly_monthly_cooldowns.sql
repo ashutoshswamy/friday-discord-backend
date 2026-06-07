@@ -1,0 +1,3 @@
+ALTER TABLE user_profiles
+  ADD COLUMN IF NOT EXISTS weekly_cooldown BIGINT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS monthly_cooldown BIGINT DEFAULT 0;

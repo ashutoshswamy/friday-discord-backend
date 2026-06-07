@@ -9,10 +9,10 @@ const pages = {
  title: ' Friday Protocol Core — System Manual',
  accentColor: 0x8B5CF6,
  description: `Welcome to the official manual for **Friday**, your premium cyberpunk administrative assistant.\n\nFriday is powered by a high-performance Express core, a hosted real-time Supabase cluster, and advanced Google Gemini AI model engines.`,
- bodyText: `**System Specifications:**\n• Loaded Protocols: \`77 slash commands\`\n• Dynamic Systems: \`Leveling, Economy, Jobs, Pets, Player Bazaar, AutoMod, Onboarding\`\n• UI Control Panel: [Web Dashboard](https://fridaybot.ashutoshswamy.in)`,
+ bodyText: `**System Specifications:**\n• Loaded Protocols: \`79 slash commands\`\n• Dynamic Systems: \`Leveling, Economy, Jobs, Pets, Player Bazaar, AutoMod, Onboarding\`\n• UI Control Panel: [Web Dashboard](https://fridaybot.ashutoshswamy.in)`,
  fields: [
  { name: ' Core & AI Systems', value: 'Google Gemini AI generation, conversational ask, text rewriting, quotes, dashboard telemetry.' },
- { name: '<:coin:1512926963239489606> Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily coin cycles, job careers, hourly shift wages, scavenging.' },
+ { name: '<:coin:1512926963239489606> Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily/weekly/monthly coin cycles, job careers, hourly shift wages, scavenging.' },
  { name: ' Casino & Gambling', value: 'Interactive Blackjack table, slots spinner, roulette payouts, arena cockfights, heists.' },
  { name: ' Scavenging & Shop', value: 'Hunting wild game, fishing lakes, shovel excavations, inventory items, player market bazaar.' },
  { name: ' Stocks & Trading', value: 'Real-time global stock quotes (NASDAQ/NSE/CRYPTO), long-term share investments, 5× leveraged intraday long/short positions.' },
@@ -51,7 +51,9 @@ const pages = {
  { name: '`/gift coins [user] [amount]`', value: 'Securely transfers active wallet coin balances.' },
  { name: '`/gift item [user] [item_name]`', value: 'Atomically shifts item ownership record entries in the inventory database.' },
  { name: '`/economy [action] [user] [amount]`', value: 'Spawns or deducts server coins from a member wallet (Admin).' },
- { name: '`/daily`', value: 'Collects daily coin reward payouts.' },
+ { name: '`/daily`', value: 'Collects daily coin reward payouts (200 coins, 24h cooldown).' },
+ { name: '`/weekly`', value: 'Collects weekly coin reward payouts (1,500 coins, 7-day cooldown).' },
+ { name: '`/monthly`', value: 'Collects monthly coin reward payouts (7,500 coins, 30-day cooldown).' },
  { name: '`/work`', value: 'Performs hourly shift duties. Pay scales with your current job tier (50–660 coins/shift).' },
  { name: '`/job list`', value: 'Browses all 12 available careers across 4 tiers with pay ranges and XP bonuses.' },
  { name: '`/beg`', value: 'Beg strangers for spare change. Grants coins (20 to 120) or rare scavenged junk items.' },
@@ -232,7 +234,7 @@ function buildMenu(disabled = false) {
  .addOptions(
  new StringSelectMenuOptionBuilder().setLabel('Galaxy System Overview').setDescription('Bot introduction, core systems specs & categories.').setValue('overview'),
  new StringSelectMenuOptionBuilder().setLabel('Core & AI Systems').setDescription('/friday ask, rewrite, summarize, customcmd add/remove.').setValue('help_core'),
- new StringSelectMenuOptionBuilder().setLabel('Economy & Banking').setDescription('/balance, deposit, withdraw, wages, begging, daily.').setValue('help_economy'),
+ new StringSelectMenuOptionBuilder().setLabel('Economy & Banking').setDescription('/balance, deposit, withdraw, wages, daily, weekly, monthly.').setValue('help_economy'),
  new StringSelectMenuOptionBuilder().setLabel('Job Ecosystem').setDescription('/job list, apply, quit, profile. Tiered careers that scale /work pay.').setValue('help_jobs'),
  new StringSelectMenuOptionBuilder().setLabel('Casino & Heists').setDescription('/blackjack, slots, roulette, cockfights, heists.').setValue('help_casino'),
  new StringSelectMenuOptionBuilder().setLabel('Scavenging & Shop').setDescription('/hunt, fish, dig, inventory, shop, players bazaar.').setValue('help_grinding'),
@@ -249,7 +251,7 @@ function buildMenu(disabled = false) {
 module.exports = {
  data: new SlashCommandBuilder()
  .setName('help')
- .setDescription('Displays a premium interactive help manual containing all 77 Friday bot protocols.'),
+ .setDescription('Displays a premium interactive help manual containing all 79 Friday bot protocols.'),
 
  async execute(interaction) {
  const { guild, user } = interaction;

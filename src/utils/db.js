@@ -575,7 +575,7 @@ module.exports = {
     // ==========================================
 
     async getProfile(guildId, userId) {
-        if (!supabase) return { guildId, userId, coins: 100, xp: 0, level: 1, dailyCooldown: 0, workCooldown: 0, lastXpGain: 0, currentJob: null, jobAppliedAt: 0 };
+        if (!supabase) return { guildId, userId, coins: 100, xp: 0, level: 1, dailyCooldown: 0, workCooldown: 0, weeklyCooldown: 0, monthlyCooldown: 0, lastXpGain: 0, currentJob: null, jobAppliedAt: 0 };
 
         const { data, error } = await supabase
             .from('user_profiles')
@@ -595,6 +595,8 @@ module.exports = {
                 level: 1,
                 daily_cooldown: 0,
                 work_cooldown: 0,
+                weekly_cooldown: 0,
+                monthly_cooldown: 0,
                 last_xp_gain: 0
             };
             const { data: inserted, error: insertErr } = await supabase
@@ -614,6 +616,8 @@ module.exports = {
                 level: inserted.level,
                 dailyCooldown: Number(inserted.daily_cooldown),
                 workCooldown: Number(inserted.work_cooldown),
+                weeklyCooldown: Number(inserted.weekly_cooldown || 0),
+                monthlyCooldown: Number(inserted.monthly_cooldown || 0),
                 lastXpGain: Number(inserted.last_xp_gain),
                 currentJob: inserted.current_job || null,
                 jobAppliedAt: Number(inserted.job_applied_at || 0),
@@ -629,6 +633,8 @@ module.exports = {
             level: data.level,
             dailyCooldown: Number(data.daily_cooldown),
             workCooldown: Number(data.work_cooldown),
+            weeklyCooldown: Number(data.weekly_cooldown || 0),
+            monthlyCooldown: Number(data.monthly_cooldown || 0),
             lastXpGain: Number(data.last_xp_gain),
             currentJob: data.current_job || null,
             jobAppliedAt: Number(data.job_applied_at || 0),
@@ -736,6 +742,76 @@ module.exports = {
             .update({ 
                 coins: newBalance,
                 daily_cooldown: now
+            })
+            .eq('guild_id', guildId)
+            .eq('user_id', userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return {
+            success: true,
+            reward,
+            newBalance: Number(data.coins)
+        };
+    },
+
+    async claimWeekly(guildId, userId) {
+        const profile = await this.getProfile(guildId, userId);
+        const now = Date.now();
+        const cooldownMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+        if (profile.weeklyCooldown && (now - profile.weeklyCooldown < cooldownMs)) {
+            return {
+                success: false,
+                cooldownLeft: cooldownMs - (now - profile.weeklyCooldown)
+            };
+        }
+
+        const reward = 1500;
+        const newBalance = profile.coins + reward;
+
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .update({
+                coins: newBalance,
+                weekly_cooldown: now
+            })
+            .eq('guild_id', guildId)
+            .eq('user_id', userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return {
+            success: true,
+            reward,
+            newBalance: Number(data.coins)
+        };
+    },
+
+    async claimMonthly(guildId, userId) {
+        const profile = await this.getProfile(guildId, userId);
+        const now = Date.now();
+        const cooldownMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+        if (profile.monthlyCooldown && (now - profile.monthlyCooldown < cooldownMs)) {
+            return {
+                success: false,
+                cooldownLeft: cooldownMs - (now - profile.monthlyCooldown)
+            };
+        }
+
+        const reward = 7500;
+        const newBalance = profile.coins + reward;
+
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .update({
+                coins: newBalance,
+                monthly_cooldown: now
             })
             .eq('guild_id', guildId)
             .eq('user_id', userId)
