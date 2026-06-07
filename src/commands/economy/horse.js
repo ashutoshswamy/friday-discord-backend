@@ -8,11 +8,11 @@ const { checkCooldown } = require('../../utils/cooldowns');
 const { EMOJIS } = require('../../utils/emojis');
 
 const HORSES = [
- { id: 1, name: 'Thunderbolt',  emoji: '⚡', odds: 1.8, winChance: 0.38, label: 'Favourite'  },
- { id: 2, name: 'Silver Arrow', emoji: '🪄', odds: 2.5, winChance: 0.25, label: 'Contender'  },
- { id: 3, name: 'Dark Phantom', emoji: '🌑', odds: 3.5, winChance: 0.17, label: 'Longshot'   },
- { id: 4, name: 'Lucky Charm',  emoji: '🍀', odds: 4.5, winChance: 0.12, label: 'Outsider'   },
- { id: 5, name: 'Iron Hoof',    emoji: '🔩', odds: 6.0, winChance: 0.08, label: 'Dark Horse'  },
+ { id: 1, name: 'Thunderbolt',  odds: 1.8, winChance: 0.38, label: 'Favourite'  },
+ { id: 2, name: 'Silver Arrow', odds: 2.5, winChance: 0.25, label: 'Contender'  },
+ { id: 3, name: 'Dark Phantom', odds: 3.5, winChance: 0.17, label: 'Longshot'   },
+ { id: 4, name: 'Lucky Charm',  odds: 4.5, winChance: 0.12, label: 'Outsider'   },
+ { id: 5, name: 'Iron Hoof',    odds: 6.0, winChance: 0.08, label: 'Dark Horse'  },
 ];
 
 const RACE_EVENTS = [
@@ -38,8 +38,8 @@ function pickWinner() {
 
 function generateRaceNarrative(pickedHorse, winner) {
  const events = RACE_EVENTS.sort(() => Math.random() - 0.5).slice(0, 3);
- const lines = events.map(e => `• ${e.replace('{name}', `**${pickedHorse.emoji} ${pickedHorse.name}**`)}`);
- lines.push(`🏁 **${winner.emoji} ${winner.name}** crosses the finish line first!`);
+ const lines = events.map(e => `• ${e.replace('{name}', `**${pickedHorse.name}**`)}`);
+ lines.push(`**${winner.name}** crosses the finish line first!`);
  return lines.join('\n');
 }
 
@@ -93,12 +93,12 @@ module.exports = {
    const color = playerWon ? 0xFFD700 : 0xFF3333;
 
    const horseListLines = HORSES.map(h =>
-    `${h.id === picked.id ? '**→** ' : '     '} #${h.id} ${h.emoji} **${h.name}** — ${h.odds}× odds *(${h.label})*`
+    `${h.id === picked.id ? '**→** ' : '     '} #${h.id} **${h.name}** — ${h.odds}× odds *(${h.label})*`
    ).join('\n');
 
    const resultLine = playerWon
-    ? `🏆 **Your horse won!** You collected ${EMOJIS.coin} **${payout.toLocaleString()}** coins at **${picked.odds}×** odds!`
-    : `💸 **${winner.emoji} ${winner.name}** won the race. You lost ${EMOJIS.coin} **${bet.toLocaleString()}** coins.`;
+    ? `**Your horse won!** You collected ${EMOJIS.coin} **${payout.toLocaleString()}** coins at **${picked.odds}×** odds!`
+    : `**${winner.name}** won the race. You lost ${EMOJIS.coin} **${bet.toLocaleString()}** coins.`;
 
    const container = new ContainerBuilder()
     .setAccentColor(color)
@@ -106,7 +106,7 @@ module.exports = {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## 🏇 Horse Race\n**Your Pick:** #${picked.id} ${picked.emoji} **${picked.name}** (${picked.odds}× odds)`
+        `## Horse Race\n**Your Pick:** #${picked.id} **${picked.name}** (${picked.odds}× odds)`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))

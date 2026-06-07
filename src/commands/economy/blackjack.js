@@ -17,17 +17,10 @@ const VALUES = [
   { name: 'A', val: 11 }
 ];
 
-const SUIT_EMOJIS = {
-  '♠': '♠️',
-  '♥': '♥️',
-  '♦': '♦️',
-  '♣': '♣️'
-};
-
 function drawCard() {
   const suit = SUITS[Math.floor(Math.random() * SUITS.length)];
   const cardValue = VALUES[Math.floor(Math.random() * VALUES.length)];
-  return { ...cardValue, suit, display: `${cardValue.name}${SUIT_EMOJIS[suit] || suit}` };
+  return { ...cardValue, suit, display: `${cardValue.name}${suit}` };
 }
 
 function calculateHand(hand) {
@@ -42,9 +35,9 @@ function calculateHand(hand) {
 
 function formatHand(hand, hideSecond = false) {
   if (hideSecond) {
-    return `\`[ ${hand[0].name}${SUIT_EMOJIS[hand[0].suit] || hand[0].suit} ]\` \`[ 🎴 Hidden ]\``;
+    return `\`[ ${hand[0].name}${hand[0].suit} ]\` \`[ Hidden ]\``;
   }
-  return hand.map(c => `\`[ ${c.name}${SUIT_EMOJIS[c.suit] || c.suit} ]\``).join(' ');
+  return hand.map(c => `\`[ ${c.name}${c.suit} ]\``).join(' ');
 }
 
 module.exports = {

@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder,
  ThumbnailBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -59,8 +60,8 @@ module.exports = {
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `**<:coin:1512926963239489606> Coins:** **${profile ? profile.coins.toLocaleString() : '100'}**\n` +
- `**⭐ Level:** **${profile ? profile.level : '1'}** (XP: \`${profile ? profile.xp.toLocaleString() : '0'}\`)\n` +
+ `**${EMOJIS.coin} Coins:** **${profile ? profile.coins.toLocaleString() : '100'}**\n` +
+ `**Level:** **${profile ? profile.level : '1'}** (XP: \`${profile ? profile.xp.toLocaleString() : '0'}\`)\n` +
  `**Warnings:** **${warnings.length}**`
  )
  )

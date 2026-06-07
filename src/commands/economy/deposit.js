@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -36,7 +37,7 @@ module.exports = {
 
  if (amount === 0) return interaction.editReply({ content: 'You do not have any coins in your wallet to deposit!', ephemeral: true });
  if (profile.coins < amount) {
- return interaction.editReply({ content: `Insufficient wallet balance! You only possess <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins.`, ephemeral: true });
+ return interaction.editReply({ content: `Insufficient wallet balance! You only possess ${EMOJIS.coin} **${profile.coins.toLocaleString()}** coins.`, ephemeral: true });
  }
 
  const result = await db.depositCoins(guild.id, user.id, amount);
@@ -47,7 +48,7 @@ module.exports = {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Bank Vault Deposit\nSuccessfully deposited **<:coin:1512926963239489606> ${amount.toLocaleString()}** coins into your vault!`
+ `## Bank Vault Deposit\nSuccessfully deposited **${EMOJIS.coin} ${amount.toLocaleString()}** coins into your vault!`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -55,8 +56,8 @@ module.exports = {
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `**<:coin:1512926963239489606> Wallet Balance:** <:coin:1512926963239489606> **${result.coins.toLocaleString()}** coins\n` +
- `**Vault Balance:** <:coin:1512926963239489606> **${result.bank.toLocaleString()}** coins`
+ `**${EMOJIS.coin} Wallet Balance:** ${EMOJIS.coin} **${result.coins.toLocaleString()}** coins\n` +
+ `**Vault Balance:** ${EMOJIS.coin} **${result.bank.toLocaleString()}** coins`
  )
  );
 

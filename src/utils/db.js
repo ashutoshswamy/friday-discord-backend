@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { EMOJIS } = require('./emojis');
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
@@ -66,7 +67,7 @@ const DEFAULT_SHOP_ITEMS = [
     {
         name: 'Energy Drink',
         cost: 180,
-        description: 'Recharging gamer energy drink. Restores stamina and awards <:coin:1512926963239489606>300 coins!',
+        description: `Recharging gamer energy drink. Restores stamina and awards ${EMOJIS.coin}300 coins!`,
         roleRewardId: null,
         actionType: 'COINS',
         actionValue: 300
@@ -1253,7 +1254,7 @@ module.exports = {
         // Check buyer balance before attempting
         const buyerProfile = await this.getProfile(guildId, buyerId);
         if (buyerProfile.coins < listing.price) {
-            return { success: false, reason: `Insufficient funds! Requires <:coin:1512926963239489606> ${listing.price.toLocaleString()} coins.` };
+            return { success: false, reason: `Insufficient funds! Requires ${EMOJIS.coin} ${listing.price.toLocaleString()} coins.` };
         }
 
         // Delete listing FIRST — this is the atomic guard against double-purchase.
@@ -2384,27 +2385,27 @@ module.exports = {
         BT: { symbol: 'BT', name: 'BT Group plc', market: 'LSE', basePrice: 1.50, currency: '£' },
         LSEG: { symbol: 'LSEG', name: 'London Stock Exchange Group plc', market: 'LSE', basePrice: 100, currency: '£' },
 
-        // CRYPTO (Global - <:coin:1512926963239489606>)
-        BTC: { symbol: 'BTC', name: 'Bitcoin', market: 'CRYPTO', basePrice: 65000, currency: '<:coin:1512926963239489606>' },
-        ETH: { symbol: 'ETH', name: 'Ethereum', market: 'CRYPTO', basePrice: 3500, currency: '<:coin:1512926963239489606>' },
-        BNB: { symbol: 'BNB', name: 'BNB Coin', market: 'CRYPTO', basePrice: 580, currency: '<:coin:1512926963239489606>' },
-        SOL: { symbol: 'SOL', name: 'Solana', market: 'CRYPTO', basePrice: 150, currency: '<:coin:1512926963239489606>' },
-        XRP: { symbol: 'XRP', name: 'Ripple', market: 'CRYPTO', basePrice: 0.50, currency: '<:coin:1512926963239489606>' },
-        ADA: { symbol: 'ADA', name: 'Cardano', market: 'CRYPTO', basePrice: 0.45, currency: '<:coin:1512926963239489606>' },
-        DOGE: { symbol: 'DOGE', name: 'Dogecoin', market: 'CRYPTO', basePrice: 0.15, currency: '<:coin:1512926963239489606>' },
-        SHIB: { symbol: 'SHIB', name: 'Shiba Inu', market: 'CRYPTO', basePrice: 0.000025, currency: '<:coin:1512926963239489606>' },
-        DOT: { symbol: 'DOT', name: 'Polkadot', market: 'CRYPTO', basePrice: 6.50, currency: '<:coin:1512926963239489606>' },
-        MATIC: { symbol: 'MATIC', name: 'Polygon', market: 'CRYPTO', basePrice: 0.70, currency: '<:coin:1512926963239489606>' },
-        LINK: { symbol: 'LINK', name: 'Chainlink', market: 'CRYPTO', basePrice: 16.00, currency: '<:coin:1512926963239489606>' },
-        LTC: { symbol: 'LTC', name: 'Litecoin', market: 'CRYPTO', basePrice: 85.00, currency: '<:coin:1512926963239489606>' },
-        AVAX: { symbol: 'AVAX', name: 'Avalanche', market: 'CRYPTO', basePrice: 35.00, currency: '<:coin:1512926963239489606>' },
-        UNI: { symbol: 'UNI', name: 'Uniswap', market: 'CRYPTO', basePrice: 7.50, currency: '<:coin:1512926963239489606>' },
-        TRX: { symbol: 'TRX', name: 'TRON', market: 'CRYPTO', basePrice: 0.12, currency: '<:coin:1512926963239489606>' },
-        ATOM: { symbol: 'ATOM', name: 'Cosmos', market: 'CRYPTO', basePrice: 8.50, currency: '<:coin:1512926963239489606>' },
-        ETC: { symbol: 'ETC', name: 'Ethereum Classic', market: 'CRYPTO', basePrice: 28.00, currency: '<:coin:1512926963239489606>' },
-        XLM: { symbol: 'XLM', name: 'Stellar Lumens', market: 'CRYPTO', basePrice: 0.11, currency: '<:coin:1512926963239489606>' },
-        NEAR: { symbol: 'NEAR', name: 'Near Protocol', market: 'CRYPTO', basePrice: 6.00, currency: '<:coin:1512926963239489606>' },
-        FIL: { symbol: 'FIL', name: 'Filecoin', market: 'CRYPTO', basePrice: 5.50, currency: '<:coin:1512926963239489606>' },
+        // CRYPTO (Global - ${EMOJIS.coin})
+        BTC: { symbol: 'BTC', name: 'Bitcoin', market: 'CRYPTO', basePrice: 65000, currency: EMOJIS.coin },
+        ETH: { symbol: 'ETH', name: 'Ethereum', market: 'CRYPTO', basePrice: 3500, currency: EMOJIS.coin },
+        BNB: { symbol: 'BNB', name: 'BNB Coin', market: 'CRYPTO', basePrice: 580, currency: EMOJIS.coin },
+        SOL: { symbol: 'SOL', name: 'Solana', market: 'CRYPTO', basePrice: 150, currency: EMOJIS.coin },
+        XRP: { symbol: 'XRP', name: 'Ripple', market: 'CRYPTO', basePrice: 0.50, currency: EMOJIS.coin },
+        ADA: { symbol: 'ADA', name: 'Cardano', market: 'CRYPTO', basePrice: 0.45, currency: EMOJIS.coin },
+        DOGE: { symbol: 'DOGE', name: 'Dogecoin', market: 'CRYPTO', basePrice: 0.15, currency: EMOJIS.coin },
+        SHIB: { symbol: 'SHIB', name: 'Shiba Inu', market: 'CRYPTO', basePrice: 0.000025, currency: EMOJIS.coin },
+        DOT: { symbol: 'DOT', name: 'Polkadot', market: 'CRYPTO', basePrice: 6.50, currency: EMOJIS.coin },
+        MATIC: { symbol: 'MATIC', name: 'Polygon', market: 'CRYPTO', basePrice: 0.70, currency: EMOJIS.coin },
+        LINK: { symbol: 'LINK', name: 'Chainlink', market: 'CRYPTO', basePrice: 16.00, currency: EMOJIS.coin },
+        LTC: { symbol: 'LTC', name: 'Litecoin', market: 'CRYPTO', basePrice: 85.00, currency: EMOJIS.coin },
+        AVAX: { symbol: 'AVAX', name: 'Avalanche', market: 'CRYPTO', basePrice: 35.00, currency: EMOJIS.coin },
+        UNI: { symbol: 'UNI', name: 'Uniswap', market: 'CRYPTO', basePrice: 7.50, currency: EMOJIS.coin },
+        TRX: { symbol: 'TRX', name: 'TRON', market: 'CRYPTO', basePrice: 0.12, currency: EMOJIS.coin },
+        ATOM: { symbol: 'ATOM', name: 'Cosmos', market: 'CRYPTO', basePrice: 8.50, currency: EMOJIS.coin },
+        ETC: { symbol: 'ETC', name: 'Ethereum Classic', market: 'CRYPTO', basePrice: 28.00, currency: EMOJIS.coin },
+        XLM: { symbol: 'XLM', name: 'Stellar Lumens', market: 'CRYPTO', basePrice: 0.11, currency: EMOJIS.coin },
+        NEAR: { symbol: 'NEAR', name: 'Near Protocol', market: 'CRYPTO', basePrice: 6.00, currency: EMOJIS.coin },
+        FIL: { symbol: 'FIL', name: 'Filecoin', market: 'CRYPTO', basePrice: 5.50, currency: EMOJIS.coin },
 
         // TYO (Tokyo, Japan - ¥)
         SONY: { symbol: 'SONY', name: 'Sony Group Corp.', market: 'TYO', basePrice: 13000, currency: '¥' },

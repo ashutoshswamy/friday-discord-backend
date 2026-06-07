@@ -4,6 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize,
  ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 const cooldowns = new Map();
@@ -91,7 +92,7 @@ module.exports = {
  const coinGain = Math.floor(Math.random() * 351) + 150;
  await db.updateCoins(guild.id, user.id, coinGain);
  accentColor = 0x00FF66;
- resultText = `**Bingo!**\nYou carefully searched the **${locObj.name}** and found a stash of spare coins!\nAdded **<:coin:1512926963239489606> ${coinGain.toLocaleString()} coins** to your wallet.`;
+ resultText = `**Bingo!**\nYou carefully searched the **${locObj.name}** and found a stash of spare coins!\nAdded **${EMOJIS.coin} ${coinGain.toLocaleString()} coins** to your wallet.`;
  } else if (roll < 0.60) {
  const items = ["Silver Ring", "Common Worm", "Lootbox"];
  const foundItem = items[Math.floor(Math.random() * items.length)];
@@ -107,7 +108,7 @@ module.exports = {
  coinLoss = Math.min(coinLoss, uProfile.coins);
  await db.updateCoins(guild.id, user.id, -coinLoss);
  accentColor = 0xFF3333;
- resultText = `**OUCH!**\nWhile searching the **${locObj.name}**, you were caught by angry security!\nYou lost **<:coin:1512926963239489606> ${coinLoss.toLocaleString()} coins** while running away.`;
+ resultText = `**OUCH!**\nWhile searching the **${locObj.name}**, you were caught by angry security!\nYou lost **${EMOJIS.coin} ${coinLoss.toLocaleString()} coins** while running away.`;
  }
 
  const resultContainer = new ContainerBuilder()

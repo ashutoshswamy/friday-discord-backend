@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -39,7 +40,7 @@ module.exports = {
 
  if (senderProfile.coins < amount) {
  return interaction.editReply({
- content: `Insufficient wallet balance! You only possess <:coin:1512926963239489606> **${senderProfile.coins.toLocaleString()}** coins but tried to gift <:coin:1512926963239489606> **${amount.toLocaleString()}**.`,
+ content: `Insufficient wallet balance! You only possess ${EMOJIS.coin} **${senderProfile.coins.toLocaleString()}** coins but tried to gift ${EMOJIS.coin} **${amount.toLocaleString()}**.`,
  ephemeral: true
  });
  }
@@ -48,7 +49,7 @@ module.exports = {
  await db.updateCoins(guild.id, targetUser.id, amount);
 
  titleText = ' Coin Gift Transferred';
- detailText = `**From:** <@${user.id}>\n**To:** <@${targetUser.id}>\n**Amount:** <:coin:1512926963239489606> **${amount.toLocaleString()}** coins`;
+ detailText = `**From:** <@${user.id}>\n**To:** <@${targetUser.id}>\n**Amount:** ${EMOJIS.coin} **${amount.toLocaleString()}** coins`;
 
  } else if (subcommand === 'item') {
  const itemName = options.getString('name').trim();

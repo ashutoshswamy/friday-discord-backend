@@ -7,7 +7,7 @@ const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 const { EMOJIS } = require('../../utils/emojis');
 
-const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+const DICE_FACES = ['1', '2', '3', '4', '5', '6'];
 
 function rollDie() {
  const value = Math.floor(Math.random() * 6) + 1;
@@ -77,7 +77,7 @@ module.exports = {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## 🎲 Dice Roll\n${resultText}`
+        `## Dice Roll\n${resultText}`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))

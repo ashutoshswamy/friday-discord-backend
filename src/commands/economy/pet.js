@@ -39,7 +39,7 @@ module.exports = {
  opt.setName('method')
  .setDescription('Choose feed method: Pay 100 coins or feed a Worm from your inventory')
  .addChoices(
- { name: '<:coin:1512926963239489606> Pay 100 coins (Restores 25 hunger)', value: 'coins' },
+ { name: `${EMOJIS.coin} Pay 100 coins (Restores 25 hunger)`, value: 'coins' },
  { name: ' Feed "Common Worm" (Restores 50 hunger)', value: 'worm' }
  )
  .setRequired(true)))
@@ -329,7 +329,7 @@ module.exports = {
  const confirmContainer = new ContainerBuilder()
   .setAccentColor(0xFF4444)
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-   `## ⚠️ Release ${pet.name}?\nThis is **permanent** — you will lose your pet and their progress.\n\nAre you sure?`
+   `## Release ${pet.name}?\nThis is **permanent** — you will lose your pet and their progress.\n\nAre you sure?`
   ))
   .addActionRowComponents(
    new ActionRowBuilder().addComponents(

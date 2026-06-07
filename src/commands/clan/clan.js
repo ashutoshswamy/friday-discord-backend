@@ -62,7 +62,7 @@ module.exports = {
     if (name.length < 2 || name.length > 20) return reply('Clan name must be 2–20 characters.');
 
     const result = await db.createClan(guild.id, user.id, name);
-    if (!result.success) return reply(`❌ ${result.reason}`);
+    if (!result.success) return reply(result.reason);
 
     return replyContainer(new ContainerBuilder()
      .setAccentColor(0x00FF99)
@@ -122,7 +122,7 @@ module.exports = {
 
     pendingInvites.delete(inviteKey);
     const result = await db.joinClan(guild.id, user.id, invite.clanId);
-    if (!result.success) return reply(`❌ ${result.reason}`);
+    if (!result.success) return reply(result.reason);
 
     return replyContainer(new ContainerBuilder()
      .setAccentColor(0x00FF99)
@@ -177,7 +177,7 @@ module.exports = {
     if (!clan) return reply(nameInput ? `Clan **${nameInput}** not found.` : 'You are not in a clan.');
 
     const memberList = clan.members.slice(0, 10)
-     .map(m => m.userId === clan.ownerId ? `👑 <@${m.userId}>` : `• <@${m.userId}>`)
+     .map(m => m.userId === clan.ownerId ? `[Owner] <@${m.userId}>` : `• <@${m.userId}>`)
      .join('\n') || 'No members.';
 
     return replyContainer(new ContainerBuilder()
@@ -205,7 +205,7 @@ module.exports = {
     if (!myClan) return reply('You are not in a clan.');
 
     const result = await db.depositToClan(guild.id, myClan.id, user.id, amount);
-    if (!result.success) return reply(`❌ ${result.reason}`);
+    if (!result.success) return reply(result.reason);
 
     return replyContainer(new ContainerBuilder()
      .setAccentColor(0x00FF99)

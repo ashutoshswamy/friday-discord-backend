@@ -96,7 +96,7 @@ module.exports = {
      .setStyle(ButtonStyle.Secondary)
    );
 
-   const diffEmoji = diff === 'easy' ? '🟢' : diff === 'medium' ? '🟡' : '🔴';
+   const diffLabel = diff.charAt(0).toUpperCase() + diff.slice(1);
 
    const buildPanel = (disabled = false, selectedIdx = -1, reveal = false) => {
     const container = new ContainerBuilder()
@@ -105,7 +105,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## Trivia — ${category.label}\n${diffEmoji} **${diff.charAt(0).toUpperCase() + diff.slice(1)}** · ${EMOJIS.coin} ${coinReward} coins + ${xpReward} XP\n\n**${question}**`
+         `## Trivia — ${category.label}\n**${diffLabel}** · ${EMOJIS.coin} ${coinReward} coins + ${xpReward} XP\n\n**${question}**`
         )
        )
        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -120,7 +120,7 @@ module.exports = {
 
     if (reveal) {
      container.addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(`✅ **Correct answer:** ${BUTTON_LABELS[correctIndex]}: **${correct}**`)
+      new TextDisplayBuilder().setContent(`**Correct answer:** ${BUTTON_LABELS[correctIndex]}: **${correct}**`)
      );
     }
 
@@ -161,7 +161,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## ${isCorrect ? '✅ Correct!' : '❌ Wrong!'}\n**${question}**`
+         `## ${isCorrect ? 'Correct!' : 'Wrong!'}\n**${question}**`
         )
        )
        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -184,7 +184,7 @@ module.exports = {
       .setAccentColor(0x6B7280)
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## Time's Up!\n**${question}**\n\n✅ **Correct answer:** ${BUTTON_LABELS[correctIndex]}: **${correct}**`
+        `## Time's Up!\n**${question}**\n\n**Correct answer:** ${BUTTON_LABELS[correctIndex]}: **${correct}**`
        )
       );
      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [timeoutContainer] }).catch(() => {});

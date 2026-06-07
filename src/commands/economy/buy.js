@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -37,7 +38,7 @@ module.exports = {
  }
  }
 
- let detailText = `**Cost Paid:** <:coin:1512926963239489606> **${result.cost.toLocaleString()}** coins\n**Item Added:** **${itemName}** → your inventory`;
+ let detailText = `**Cost Paid:** ${EMOJIS.coin} **${result.cost.toLocaleString()}** coins\n**Item Added:** **${itemName}** → your inventory`;
 
  if (result.roleRewardId) {
  detailText += `\n**Role Reward:** ${roleGranted ? `**${roleText}** granted!` : `Failed to award **${roleText}** (bot role too low)`}`;

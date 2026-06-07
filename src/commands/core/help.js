@@ -18,12 +18,12 @@ const pages = {
  { name: ' Stocks & Trading', value: 'Real-time global stock quotes (NASDAQ/NSE/CRYPTO), long-term share investments, 5× leveraged intraday long/short positions.' },
  { name: ' Pets & Leveling', value: 'Companion adoption, training, rename, release, pet battles, real-time hunger/energy decay, visual rank cards, voice XP trackers.' },
  { name: ' Social & Trivia', value: 'Profile cards, bio/tagline, reputation, marriage proposals, trivia questions for coins & XP.' },
- { name: '🏰 Clans', value: 'Create clans, invite members, treasury deposits, clan leaderboards.' },
+ { name: 'Clans', value: 'Create clans, invite members, treasury deposits, clan leaderboards.' },
  { name: ' Fun & Text', value: 'SpongeBob mock, text reverse, large ASCII art block letters.' },
  { name: ' Moderation & AutoMod', value: 'Warning log indexes, time-out silences, kick/ban actions, automated chat content spam blockers.' },
  { name: ' Onboarding & Utility', value: 'Onboarding cards, components reaction role boards, support portal helpdesks, weather alerts.' },
  { name: ' Giveaways & Events', value: 'Draw raffles, scheduler RSVP coordinates, voice room lockdown overrides, streaming alerts.' },
- { name: '📊 Analytics', value: 'Server economy overview, top spenders leaderboard, per-member activity reports (Admin).' }
+ { name: 'Analytics', value: 'Server economy overview, top spenders leaderboard, per-member activity reports (Admin).' }
  ]
  },
  help_core: {
@@ -192,7 +192,7 @@ const pages = {
  ]
  },
  help_social: {
- title: '👤 Social, Profiles & Trivia',
+ title: 'Social, Profiles & Trivia',
  accentColor: 0xFF69B4,
  description: 'Profile cards, personal bios, reputation, marriage, and trivia quiz rewards.',
  fields: [
@@ -205,7 +205,7 @@ const pages = {
  ]
  },
  help_clan: {
- title: '🏰 Clans',
+ title: 'Clans',
  accentColor: 0x8B5CF6,
  description: 'Create and manage a server clan, build your treasury, and climb the leaderboard.',
  fields: [
@@ -220,7 +220,7 @@ const pages = {
  ]
  },
  help_fun: {
- title: '🎭 Fun & Text Commands',
+ title: 'Fun & Text Commands',
  accentColor: 0xF97316,
  description: 'Text transformation tools for laughs and creativity.',
  fields: [
@@ -230,7 +230,7 @@ const pages = {
  ]
  },
  help_analytics: {
- title: '📊 Server Analytics (Admin)',
+ title: 'Server Analytics (Admin)',
  accentColor: 0x06B6D4,
  description: 'Economy telemetry and member activity inspection tools. Admin only.',
  fields: [

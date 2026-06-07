@@ -8,7 +8,7 @@ const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 const { EMOJIS } = require('../../utils/emojis');
 
-const SUITS = ['♠️', '♥️', '♦️', '♣️'];
+const SUITS = ['♠', '♥', '♦', '♣'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 const RANK_VALUES = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
 
@@ -66,7 +66,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🃏 High-Low\n${status || `Current card: ${currentCard.display}\nWill the next card be **Higher** or **Lower**?${chainStr}`}`
+         `## High-Low\n${status || `Current card: ${currentCard.display}\nWill the next card be **Higher** or **Lower**?${chainStr}`}`
         )
        )
        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -83,9 +83,9 @@ module.exports = {
     if (!disabled) {
      container.addActionRowComponents(
       new ActionRowBuilder().addComponents(
-       new ButtonBuilder().setCustomId('hl_higher').setLabel('Higher 📈').setStyle(ButtonStyle.Success),
-       new ButtonBuilder().setCustomId('hl_lower').setLabel('Lower 📉').setStyle(ButtonStyle.Danger),
-       new ButtonBuilder().setCustomId('hl_cashout').setLabel('Cash Out 💰').setStyle(ButtonStyle.Secondary).setDisabled(chain === 0)
+       new ButtonBuilder().setCustomId('hl_higher').setLabel('Higher').setStyle(ButtonStyle.Success),
+       new ButtonBuilder().setCustomId('hl_lower').setLabel('Lower').setStyle(ButtonStyle.Danger),
+       new ButtonBuilder().setCustomId('hl_cashout').setLabel('Cash Out').setStyle(ButtonStyle.Secondary).setDisabled(chain === 0)
       )
      );
     }
@@ -132,7 +132,7 @@ module.exports = {
        new SectionBuilder()
         .addTextDisplayComponents(
          new TextDisplayBuilder().setContent(
-          `## ❌ Wrong!\nYou guessed **${guessedHigher ? 'Higher' : 'Lower'}** but the next card was ${nextCard.display} — **${actuallyHigher ? 'Higher' : 'Lower'}**.\n` +
+          `## Wrong!\nYou guessed **${guessedHigher ? 'Higher' : 'Lower'}** but the next card was ${nextCard.display} — **${actuallyHigher ? 'Higher' : 'Lower'}**.\n` +
           `You lost ${EMOJIS.coin} **${bet.toLocaleString()}** coins.`
          )
         )
@@ -149,7 +149,7 @@ module.exports = {
      return;
     }
 
-    await i.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildPanel(`✅ Correct! Next card was ${nextCard.display}. Keep going or cash out!`, 0x00FF99)] });
+    await i.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildPanel(`Correct! Next card was ${nextCard.display}. Keep going or cash out!`, 0x00FF99)] });
    });
 
    collector.on('end', async (_, reason) => {
@@ -167,7 +167,7 @@ module.exports = {
     const finalProfile = await db.getProfile(guild.id, user.id);
 
     const isMaxChain = reason === 'maxchain';
-    const title = isMaxChain ? '🏆 MAX CHAIN!' : '💰 Cashed Out!';
+    const title = isMaxChain ? 'MAX CHAIN!' : 'Cashed Out!';
     const msg = isMaxChain
      ? `Max chain reached! Collected ${EMOJIS.coin} **${payout.toLocaleString()}** coins at **${multiplier}×** multiplier!`
      : `Cashed out at chain **${chain}** with **${multiplier}×** multiplier. Won ${EMOJIS.coin} **${payout.toLocaleString()}** coins!`;

@@ -6,6 +6,7 @@ const {
  StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
  MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 
@@ -74,9 +75,9 @@ module.exports = {
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `**Bet Space:** \`${betLabel}\`\n` +
- `**Bet Amount:** <:coin:1512926963239489606> **${bet.toLocaleString()}**\n` +
- `**Payout:** ${isWin ? `<:coin:1512926963239489606> **+${winnings.toLocaleString()}**` : '<:coin:1512926963239489606> **0**'}\n` +
- `**Wallet:** <:coin:1512926963239489606> **${finalCoins.toLocaleString()}**`
+ `**Bet Amount:** ${EMOJIS.coin} **${bet.toLocaleString()}**\n` +
+ `**Payout:** ${isWin ? `${EMOJIS.coin} **+${winnings.toLocaleString()}**` : `${EMOJIS.coin} **0**`}\n` +
+ `**Wallet:** ${EMOJIS.coin} **${finalCoins.toLocaleString()}**`
  )
  )
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
@@ -89,7 +90,7 @@ module.exports = {
  const profile = await db.getProfile(guild.id, user.id);
  if (profile.coins < bet) {
  return interaction.editReply({
- content: `Insufficient coins. Your wallet has <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins.`,
+ content: `Insufficient coins. Your wallet has ${EMOJIS.coin} **${profile.coins.toLocaleString()}** coins.`,
  ephemeral: true
  });
  }
@@ -148,7 +149,7 @@ module.exports = {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Roulette Table\n**Bet:** <:coin:1512926963239489606> **${bet.toLocaleString()}** coins\n\n` +
+ `## Roulette Table\n**Bet:** ${EMOJIS.coin} **${bet.toLocaleString()}** coins\n\n` +
  `Choose a color or pick a specific number to place your bet.\n` +
  `Red / Black pays **2×** · Green / Numbers pay **35×**`
  )

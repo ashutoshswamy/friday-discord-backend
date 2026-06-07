@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -46,7 +47,7 @@ module.exports = {
  new TextDisplayBuilder().setContent(
  `**Sender:** ${user}\n` +
  `**Recipient:** ${targetUser}\n` +
- `**Amount:** <:coin:1512926963239489606> **${amount.toLocaleString()}**`
+ `**Amount:** ${EMOJIS.coin} **${amount.toLocaleString()}**`
  )
  );
 

@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 const SELL_CATALOG = {
@@ -106,10 +107,10 @@ module.exports = {
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `**Unit Price:** <:coin:1512926963239489606> **${baseValue.toLocaleString()}** coins\n` +
+ `**Unit Price:** ${EMOJIS.coin} **${baseValue.toLocaleString()}** coins\n` +
  `**Total Sold:** **${removedCount}×**\n` +
- `**Earned:** <:coin:1512926963239489606> **+${totalPayout.toLocaleString()}** coins\n` +
- `**New Wallet:** <:coin:1512926963239489606> **${newWallet.toLocaleString()}** coins`
+ `**Earned:** ${EMOJIS.coin} **+${totalPayout.toLocaleString()}** coins\n` +
+ `**New Wallet:** ${EMOJIS.coin} **${newWallet.toLocaleString()}** coins`
  )
  );
 

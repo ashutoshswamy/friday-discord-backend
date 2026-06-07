@@ -40,7 +40,7 @@ module.exports = {
  .setRequired(false)
  .addChoices(
  { name: ' Grant XP Boost', value: 'XP' },
- { name: '<:coin:1512926963239489606> Grant Wallet Coins Cache', value: 'COINS' }
+ { name: `${EMOJIS.coin} Grant Wallet Coins Cache`, value: 'COINS' }
  ))
  .addIntegerOption(opt =>
  opt.setName('action_value')

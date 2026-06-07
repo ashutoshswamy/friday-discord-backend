@@ -5,6 +5,7 @@ const {
  ModalBuilder, TextInputBuilder, TextInputStyle,
  ComponentType, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -38,28 +39,28 @@ module.exports = {
   function buildTradePanel(expired = false) {
    const senderItems = state.sender.items.length ? state.sender.items.map(i => `**${i}**`).join(', ') : '—';
    const receiverItems = state.receiver.items.length ? state.receiver.items.map(i => `**${i}**`).join(', ') : '—';
-   const senderStatus = state.sender.confirmed ? '✅ Confirmed' : '⏳ Pending';
-   const receiverStatus = state.receiver.confirmed ? '✅ Confirmed' : '⏳ Pending';
+   const senderStatus = state.sender.confirmed ? 'Confirmed' : 'Pending';
+   const receiverStatus = state.receiver.confirmed ? 'Confirmed' : 'Pending';
 
    const container = new ContainerBuilder()
     .setAccentColor(0x8B5CF6)
     .addTextDisplayComponents(
-     new TextDisplayBuilder().setContent(`## ⚡ Trade Session\n<@${user.id}> ↔ <@${targetUser.id}>`)
+     new TextDisplayBuilder().setContent(`## Trade Session\n<@${user.id}> ↔ <@${targetUser.id}>`)
     )
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(
       `**<@${user.id}>'s Offer** — ${senderStatus}\n` +
-      `<:coin:1512926963239489606> **${state.sender.coins.toLocaleString()}** coins\n` +
-      `📦 Items: ${senderItems}`
+      `${EMOJIS.coin} **${state.sender.coins.toLocaleString()}** coins\n` +
+      `Items: ${senderItems}`
      )
     )
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(
       `**<@${targetUser.id}>'s Offer** — ${receiverStatus}\n` +
-      `<:coin:1512926963239489606> **${state.receiver.coins.toLocaleString()}** coins\n` +
-      `📦 Items: ${receiverItems}`
+      `${EMOJIS.coin} **${state.receiver.coins.toLocaleString()}** coins\n` +
+      `Items: ${receiverItems}`
      )
     )
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
@@ -67,10 +68,10 @@ module.exports = {
    if (!expired) {
     container.addActionRowComponents(
      new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('trade_add_coins').setLabel('Add Coins').setStyle(ButtonStyle.Secondary).setEmoji('🪙'),
-      new ButtonBuilder().setCustomId('trade_add_item').setLabel('Add Item').setStyle(ButtonStyle.Secondary).setEmoji('📦'),
-      new ButtonBuilder().setCustomId('trade_confirm').setLabel('Confirm').setStyle(ButtonStyle.Success).setEmoji('✅'),
-      new ButtonBuilder().setCustomId('trade_cancel').setLabel('Cancel').setStyle(ButtonStyle.Danger).setEmoji('✖️')
+      new ButtonBuilder().setCustomId('trade_add_coins').setLabel('Add Coins').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('trade_add_item').setLabel('Add Item').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('trade_confirm').setLabel('Confirm').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('trade_cancel').setLabel('Cancel').setStyle(ButtonStyle.Danger)
      )
     );
    }
@@ -114,7 +115,7 @@ module.exports = {
        .setAccentColor(0xFF4444)
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## ✖️ Trade Cancelled\n<@${i.user.id}> has cancelled this trade session.`
+         `## Trade Cancelled\n<@${i.user.id}> has cancelled this trade session.`
         )
        )
      ]
@@ -144,7 +145,7 @@ module.exports = {
       components: [
        new ContainerBuilder().setAccentColor(0xFF4444)
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-         `## ❌ Trade Failed\n<@${user.id}> no longer has enough coins to fulfil their offer.`
+         `## Trade Failed\n<@${user.id}> no longer has enough coins to fulfil their offer.`
         ))
       ]
      });
@@ -155,7 +156,7 @@ module.exports = {
       components: [
        new ContainerBuilder().setAccentColor(0xFF4444)
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-         `## ❌ Trade Failed\n<@${targetUser.id}> no longer has enough coins to fulfil their offer.`
+         `## Trade Failed\n<@${targetUser.id}> no longer has enough coins to fulfil their offer.`
         ))
       ]
      });
@@ -167,7 +168,7 @@ module.exports = {
        components: [
         new ContainerBuilder().setAccentColor(0xFF4444)
          .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-          `## ❌ Trade Failed\n<@${user.id}> no longer has **${item}** in their inventory.`
+          `## Trade Failed\n<@${user.id}> no longer has **${item}** in their inventory.`
          ))
        ]
       });
@@ -180,7 +181,7 @@ module.exports = {
        components: [
         new ContainerBuilder().setAccentColor(0xFF4444)
          .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-          `## ❌ Trade Failed\n<@${targetUser.id}> no longer has **${item}** in their inventory.`
+          `## Trade Failed\n<@${targetUser.id}> no longer has **${item}** in their inventory.`
          ))
        ]
       });
@@ -206,11 +207,11 @@ module.exports = {
     }
 
     const senderGave = [
-     ...(state.sender.coins > 0 ? [`<:coin:1512926963239489606> ${state.sender.coins.toLocaleString()} coins`] : []),
+     ...(state.sender.coins > 0 ? [`${EMOJIS.coin} ${state.sender.coins.toLocaleString()} coins`] : []),
      ...state.sender.items.map(it => `**${it}**`)
     ];
     const receiverGave = [
-     ...(state.receiver.coins > 0 ? [`<:coin:1512926963239489606> ${state.receiver.coins.toLocaleString()} coins`] : []),
+     ...(state.receiver.coins > 0 ? [`${EMOJIS.coin} ${state.receiver.coins.toLocaleString()} coins`] : []),
      ...state.receiver.items.map(it => `**${it}**`)
     ];
 
@@ -220,7 +221,7 @@ module.exports = {
       new ContainerBuilder()
        .setAccentColor(0x00FF99)
        .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(`## ✅ Trade Executed Successfully`)
+        new TextDisplayBuilder().setContent(`## Trade Executed`)
        )
        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
        .addTextDisplayComponents(
@@ -268,7 +269,7 @@ module.exports = {
      const profile = await db.getProfile(guild.id, i.user.id);
      if (profile.coins < amount) {
       return modalSubmit.reply({
-       content: `Insufficient balance. You only have <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins.`,
+       content: `Insufficient balance. You only have ${EMOJIS.coin} **${profile.coins.toLocaleString()}** coins.`,
        ephemeral: true
       });
      }

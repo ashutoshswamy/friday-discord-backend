@@ -20,7 +20,7 @@ function formatMs(ms) {
 
 function cooldownLine(label, remainingMs) {
  const fmt = formatMs(remainingMs);
- return fmt ? `🔴 **${label}** — ${fmt} remaining` : `🟢 **${label}** — Ready`;
+ return fmt ? `**${label}** — ${fmt} remaining` : `**${label}** — Ready`;
 }
 
 module.exports = {

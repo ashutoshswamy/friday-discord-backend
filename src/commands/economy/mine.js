@@ -8,15 +8,15 @@ const db = require('../../utils/db');
 const cooldowns = new Map();
 
 const LOOT_CHANCES = [
- { name: 'Coal',          chance: 0.30, msg: '⛏️ You chipped away at the cave wall and extracted a rough chunk of **Coal**.' },
- { name: 'Iron Ore',      chance: 0.52, msg: '🪨 Your pickaxe struck a vein — you pried out a solid chunk of **Iron Ore**.' },
- { name: 'Gold Ore',      chance: 0.68, msg: '✨ A glint in the stone caught your eye — you pulled free a chunk of **Gold Ore**!' },
- { name: 'Quartz Crystal',chance: 0.80, msg: '🔷 You uncovered a sparkling **Quartz Crystal** embedded deep in the rock face.' },
- { name: 'Emerald',       chance: 0.89, msg: '💚 **NICE FIND!** A brilliant green **Emerald** rolled out from a crack in the stone!' },
- { name: 'Ruby Shard',    chance: 0.95, msg: '🔴 **RARE!** A deep crimson **Ruby Shard** shattered free from the rock wall!' },
- { name: 'Diamond Ore',   chance: 0.985, msg: '💎 **JACKPOT!** You unearthed a priceless chunk of **Diamond Ore** buried in the deep rock!' },
- { name: 'Crystal Shard', chance: 0.997, msg: '🔮 **ULTRA RARE!** A luminous **Crystal Shard** pulsed with strange energy as you pried it free!' },
- { name: 'Mythril Core',  chance: 1.00,  msg: '⚡ **LEGENDARY!** Deep in the earth you discovered a **Mythril Core** — a near-mythical mineral of impossible purity!' }
+ { name: 'Coal',          chance: 0.30, msg: 'You chipped away at the cave wall and extracted a rough chunk of **Coal**.' },
+ { name: 'Iron Ore',      chance: 0.52, msg: 'Your pickaxe struck a vein — you pried out a solid chunk of **Iron Ore**.' },
+ { name: 'Gold Ore',      chance: 0.68, msg: 'A glint in the stone caught your eye — you pulled free a chunk of **Gold Ore**!' },
+ { name: 'Quartz Crystal',chance: 0.80, msg: 'You uncovered a sparkling **Quartz Crystal** embedded deep in the rock face.' },
+ { name: 'Emerald',       chance: 0.89, msg: '**NICE FIND!** A brilliant green **Emerald** rolled out from a crack in the stone!' },
+ { name: 'Ruby Shard',    chance: 0.95, msg: '**RARE!** A deep crimson **Ruby Shard** shattered free from the rock wall!' },
+ { name: 'Diamond Ore',   chance: 0.985, msg: '**JACKPOT!** You unearthed a priceless chunk of **Diamond Ore** buried in the deep rock!' },
+ { name: 'Crystal Shard', chance: 0.997, msg: '**ULTRA RARE!** A luminous **Crystal Shard** pulsed with strange energy as you pried it free!' },
+ { name: 'Mythril Core',  chance: 1.00,  msg: '**LEGENDARY!** Deep in the earth you discovered a **Mythril Core** — a near-mythical mineral of impossible purity!' }
 ];
 
 module.exports = {
@@ -56,7 +56,7 @@ module.exports = {
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
-       new TextDisplayBuilder().setContent(`## ⛏️ Mining Expedition\n${reward.msg}`)
+       new TextDisplayBuilder().setContent(`## Mining Expedition\n${reward.msg}`)
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
     )

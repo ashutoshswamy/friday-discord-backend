@@ -30,7 +30,7 @@ module.exports = {
     const botErrContainer = new ContainerBuilder()
       .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent('❌ Bots do not accumulate XP or levels!')
+        new TextDisplayBuilder().setContent('Bots do not accumulate XP or levels!')
       );
     return interaction.reply({
       flags: MessageFlags.IsComponentsV2,
@@ -47,7 +47,7 @@ module.exports = {
     const noProfileContainer = new ContainerBuilder()
       .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent('❌ Failed to load level profile.')
+        new TextDisplayBuilder().setContent('Failed to load level profile.')
       );
     return interaction.editReply({
       flags: MessageFlags.IsComponentsV2,
@@ -91,7 +91,7 @@ module.exports = {
   const errContainer = new ContainerBuilder()
     .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('❌ An error occurred while retrieving rank statistics.')
+      new TextDisplayBuilder().setContent('An error occurred while retrieving rank statistics.')
     );
   await interaction.editReply({
     flags: MessageFlags.IsComponentsV2,

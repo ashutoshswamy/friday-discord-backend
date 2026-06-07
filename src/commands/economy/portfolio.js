@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -77,7 +78,7 @@ module.exports = {
  const sign = p.pnl >= 0 ? '+' : '';
  const pnlColor = p.pnl >= 0 ? ' `+' : ' `';
  const typeEmoji = p.type === 'LONG' ? '' : '';
- intradayStr += `• **${p.symbol}** | ${typeEmoji} **${p.type}** (${p.leverage}x)\n Margin: \`<:coin:1512926963239489606> ${p.margin.toLocaleString()}\` | Entry: \`${p.currency}${p.entryPrice.toFixed(2)}\` | Cur: \`${p.currency}${p.currentPrice.toFixed(2)}\`\n PnL: ${pnlColor}${p.pnl.toFixed(2)} (${sign}${p.pnlPercent.toFixed(2)}%)\` | Return: **<:coin:1512926963239489606> ${p.currentValue.toFixed(2)}**\n\n`;
+ intradayStr += `• **${p.symbol}** | ${typeEmoji} **${p.type}** (${p.leverage}x)\n Margin: \`${EMOJIS.coin} ${p.margin.toLocaleString()}\` | Entry: \`${p.currency}${p.entryPrice.toFixed(2)}\` | Cur: \`${p.currency}${p.currentPrice.toFixed(2)}\`\n PnL: ${pnlColor}${p.pnl.toFixed(2)} (${sign}${p.pnlPercent.toFixed(2)}%)\` | Return: **${EMOJIS.coin} ${p.currentValue.toFixed(2)}**\n\n`;
  }
  } else {
  intradayStr = '*No active intraday positions. Open trades using `/portfolio open`.*\n\n';
@@ -90,8 +91,8 @@ module.exports = {
  const pnlSign = overallPnL >= 0 ? '+' : '';
 
  const summaryText =
- `• Total Invested: **<:coin:1512926963239489606> ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** coins\n` +
- `• Current Value: **<:coin:1512926963239489606> ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** coins\n` +
+ `• Total Invested: **${EMOJIS.coin} ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** coins\n` +
+ `• Current Value: **${EMOJIS.coin} ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** coins\n` +
  `• Unrealized PnL: **${overallPnL >= 0 ? '' : ''} ${pnlSign}${overallPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pnlSign}${overallPnLPercent.toFixed(2)}%)**`;
 
  const container = new ContainerBuilder()
@@ -152,7 +153,7 @@ module.exports = {
  `**Symbol:** **${result.symbol}**\n` +
  `**Order Type:** ${result.type === 'LONG' ? ' LONG' : ' SHORT'}\n` +
  `**Leverage:** **${result.leverage}x**\n` +
- `**Margin Collateral:** <:coin:1512926963239489606> **${result.margin.toLocaleString()}** coins\n` +
+ `**Margin Collateral:** ${EMOJIS.coin} **${result.margin.toLocaleString()}** coins\n` +
  `**Entry Price:** ${result.currency}${result.entryPrice.toLocaleString()}\n` +
  `**Position Size:** \`${result.shares.toFixed(4)}\` shares`
  )
@@ -196,10 +197,10 @@ module.exports = {
  `**Order Type:** ${result.type === 'LONG' ? ' LONG' : ' SHORT'}\n` +
  `**Entry Price:** ${result.currency}${result.entryPrice.toFixed(2)}\n` +
  `**Settlement Price:** ${result.currency}${result.exitPrice.toFixed(2)}\n` +
- `**Initial Margin:** <:coin:1512926963239489606> **${result.margin.toLocaleString()}** coins\n` +
+ `**Initial Margin:** ${EMOJIS.coin} **${result.margin.toLocaleString()}** coins\n` +
  `**Realized PnL:** **${result.pnl >= 0 ? '' : ''} ${pnlSign}${result.pnl.toFixed(2)} (${pnlSign}${pnlPercent.toFixed(2)}%)**\n` +
- `**Cash Returned:** <:coin:1512926963239489606> **${result.totalReturn.toFixed(2)}** coins\n` +
- `**New Wallet:** <:coin:1512926963239489606> **${result.newBalance.toLocaleString()}** coins`
+ `**Cash Returned:** ${EMOJIS.coin} **${result.totalReturn.toFixed(2)}** coins\n` +
+ `**New Wallet:** ${EMOJIS.coin} **${result.newBalance.toLocaleString()}** coins`
  )
  )
  .addTextDisplayComponents(

@@ -49,7 +49,7 @@ module.exports = {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## ⭐ Rep Given!\n<@${user.id}> gave a reputation point to <@${target.id}>!`
+        `## Rep Given!\n<@${user.id}> gave a reputation point to <@${target.id}>!`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(target.displayAvatarURL({ forceStatic: true })))
@@ -57,7 +57,7 @@ module.exports = {
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(
-      `**${target.username}'s Total Rep:** ⭐ **${result.newRepCount.toLocaleString()}**\n` +
+      `**${target.username}'s Total Rep:** **${result.newRepCount.toLocaleString()}**\n` +
       `-# You can give rep again in 24 hours`
      )
     );

@@ -4,6 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize,
  ActionRowBuilder, StringSelectMenuBuilder, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 const BUILT_IN_CONSUMABLES = new Set([
@@ -40,7 +41,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Energy Boost!\nYou gulped down the **${matchedItem}** and felt a surge of productivity!\nYou earned **<:coin:1512926963239489606> 300 coins** directly in your wallet.`
+ `## Energy Boost!\nYou gulped down the **${matchedItem}** and felt a surge of productivity!\nYou earned **${EMOJIS.coin} 300 coins** directly in your wallet.`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -55,7 +56,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
  if (roll < 0.10) {
  await db.updateCoins(guild.id, user.id, 2500);
  prizeTitle = ' JACKPOT WINNER!';
- prizeDesc = `You hit the **SUPER JACKPOT**!\nYou won a massive **<:coin:1512926963239489606> 2,500 coins** directly in your wallet!`;
+ prizeDesc = `You hit the **SUPER JACKPOT**!\nYou won a massive **${EMOJIS.coin} 2,500 coins** directly in your wallet!`;
  } else if (roll < 0.30) {
  await db.addItemToInventory(guild.id, user.id, 'Silver Ring');
  prizeTitle = ' Rare Item!';
@@ -68,8 +69,8 @@ async function processItem(guild, user, matchedItem, shopItems) {
  } else {
  const coinGain = Math.floor(Math.random() * 401) + 200;
  await db.updateCoins(guild.id, user.id, coinGain);
- prizeTitle = '<:coin:1512926963239489606> Coin Cache!';
- prizeDesc = `The chest opened to reveal spare coins!\nYou pocketed **<:coin:1512926963239489606> ${coinGain.toLocaleString()} coins** in your wallet.`;
+ prizeTitle = `${EMOJIS.coin} Coin Cache!`;
+ prizeDesc = `The chest opened to reveal spare coins!\nYou pocketed **${EMOJIS.coin} ${coinGain.toLocaleString()} coins** in your wallet.`;
  }
 
  return {
@@ -112,7 +113,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## <:coin:1512926963239489606> BOOM! Coin Bomb!\nThe **Coin Bomb** detonated and showered you in cash!\nYou collected **<:coin:1512926963239489606> ${coinGain.toLocaleString()} coins** in your wallet.`
+        `## ${EMOJIS.coin} BOOM! Coin Bomb!\nThe **Coin Bomb** detonated and showered you in cash!\nYou collected **${EMOJIS.coin} ${coinGain.toLocaleString()} coins** in your wallet.`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -130,7 +131,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## Work Gloves Equipped!\nYou slipped on the **Work Gloves** and got straight to work!\nYou earned **<:coin:1512926963239489606> 500 coins** as a bonus payout.`
+        `## Work Gloves Equipped!\nYou slipped on the **Work Gloves** and got straight to work!\nYou earned **${EMOJIS.coin} 500 coins** as a bonus payout.`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -149,7 +150,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
   } else if (roll < 0.15) {
    await db.updateCoins(guild.id, user.id, 5000);
    prizeTitle = ' MEGA JACKPOT!';
-   prizeDesc = `A torrent of coins erupted from the **Mystery Crate**!\nYou pocketed **<:coin:1512926963239489606> 5,000 coins** directly!`;
+   prizeDesc = `A torrent of coins erupted from the **Mystery Crate**!\nYou pocketed **${EMOJIS.coin} 5,000 coins** directly!`;
   } else if (roll < 0.35) {
    await db.addItemToInventory(guild.id, user.id, 'Rare Gem');
    prizeTitle = ' Rare Gem!';
@@ -162,8 +163,8 @@ async function processItem(guild, user, matchedItem, shopItems) {
   } else {
    const coinGain = Math.floor(Math.random() * 1501) + 500;
    await db.updateCoins(guild.id, user.id, coinGain);
-   prizeTitle = '<:coin:1512926963239489606> Coin Cache!';
-   prizeDesc = `Coins spilled out everywhere!\nYou grabbed **<:coin:1512926963239489606> ${coinGain.toLocaleString()} coins** from the crate!`;
+   prizeTitle = `${EMOJIS.coin} Coin Cache!`;
+   prizeDesc = `Coins spilled out everywhere!\nYou grabbed **${EMOJIS.coin} ${coinGain.toLocaleString()} coins** from the crate!`;
   }
 
   return {
@@ -208,7 +209,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## <:coin:1512926963239489606> Used ${customConsumable.name}!\nYou consumed **${customConsumable.name}**!\nYou received **<:coin:1512926963239489606> ${actionValue.toLocaleString()} coins** in your wallet.`
+ `## ${EMOJIS.coin} Used ${customConsumable.name}!\nYou consumed **${customConsumable.name}**!\nYou received **${EMOJIS.coin} ${actionValue.toLocaleString()} coins** in your wallet.`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))

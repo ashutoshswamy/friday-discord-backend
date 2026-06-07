@@ -4,6 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize,
  ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 const { JOBS, TIER_LABELS, TIER_COLORS, getJobByKey } = require('../../utils/jobs');
 
@@ -16,7 +17,7 @@ function buildTierContainer(tier) {
  const accentColor = parseInt(TIER_COLORS[tier].replace('#', ''), 16);
 
  const jobsText = jobs.map(j =>
- `**${j.emoji} ${j.name}**\n*${j.description}*\n<:coin:1512926963239489606> **${j.minPay.toLocaleString()}–${j.maxPay.toLocaleString()}**/shift${j.xpBonus > 0 ? ` · **+${j.xpBonus.toLocaleString()} XP**` : ''}`
+ `**${j.emoji} ${j.name}**\n*${j.description}*\n${EMOJIS.coin} **${j.minPay.toLocaleString()}–${j.maxPay.toLocaleString()}**/shift${j.xpBonus > 0 ? ` · **+${j.xpBonus.toLocaleString()} XP**` : ''}`
  ).join('\n\n');
 
  return new ContainerBuilder()
@@ -175,7 +176,7 @@ module.exports = {
  new TextDisplayBuilder().setContent(
  `**Position:** ${job.emoji} ${job.name}\n` +
  `**Tier:** ${TIER_LABELS[job.tier]} (Tier ${job.tier})\n` +
- `**Pay Range:** <:coin:1512926963239489606> ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()} per /work shift\n` +
+ `**Pay Range:** ${EMOJIS.coin} ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()} per /work shift\n` +
  `**XP Bonus:** ${job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP per shift` : 'None'}\n` +
  `**Required Level:**Level ${job.levelRequired}+`
  )
@@ -270,10 +271,10 @@ module.exports = {
  profileText =
  `**Position:** ${job.emoji} ${job.name}\n` +
  `**Tier:** ${TIER_LABELS[job.tier]} (Tier ${job.tier})\n` +
- `**Pay Range:** <:coin:1512926963239489606> ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()}/shift\n` +
+ `**Pay Range:** ${EMOJIS.coin} ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()}/shift\n` +
  `**XP Bonus:** ${job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP/shift` : 'None'}\n` +
  `**Employed:** ${appliedDate}\n` +
- `**Wallet:** <:coin:1512926963239489606> ${profile.coins.toLocaleString()} coins`;
+ `**Wallet:** ${EMOJIS.coin} ${profile.coins.toLocaleString()} coins`;
  } else {
  profileText = `**Status:**Unemployed — generic /work pay applies\nUse \`/job apply\` to start earning better pay!`;
  }

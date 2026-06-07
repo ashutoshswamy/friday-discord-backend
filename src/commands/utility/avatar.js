@@ -23,7 +23,7 @@ module.exports = {
  const downloadUrl = targetUser.displayAvatarURL({ forceStatic: true, size: 2048 });
 
  const pngBtn = new ButtonBuilder()
- .setLabel('⬇ Download PNG')
+ .setLabel('Download PNG')
  .setStyle(ButtonStyle.Link)
  .setURL(downloadUrl);
 

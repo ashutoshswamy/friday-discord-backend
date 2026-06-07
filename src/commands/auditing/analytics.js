@@ -125,7 +125,7 @@ module.exports = {
        `**Pet:** ${pet ? `${pet.name} (Lv.${pet.level} ${pet.type})` : 'None'}\n` +
        `**Clan:** ${clan ? clan.name : 'None'}\n` +
        `**Rep:** ${social.repCount}\n` +
-       `**Work Ready:** ${workReady ? '✅' : '❌'} · **Daily Ready:** ${dailyReady ? '✅' : '❌'}`
+       `**Work Ready:** ${workReady ? 'Yes' : 'No'} · **Daily Ready:** ${dailyReady ? 'Yes' : 'No'}`
       )
      )
      .addTextDisplayComponents(

@@ -25,7 +25,7 @@ module.exports = {
  const downloadUrl = guild.iconURL({ forceStatic: true, size: 2048 });
 
  const downloadBtn = new ButtonBuilder()
- .setLabel('⬇ Download PNG')
+ .setLabel('Download PNG')
  .setStyle(ButtonStyle.Link)
  .setURL(downloadUrl);
 

@@ -27,9 +27,9 @@ const BASE_THEMES = {
 
 // Medal gradients: gold, silver, bronze
 const MEDALS = [
-  { label: '🥇', top: '#FFD700', bot: '#B8860B', glow: '#FFD70055' },
-  { label: '🥈', top: '#E8E8E8', bot: '#A0A0A0', glow: '#C0C0C055' },
-  { label: '🥉', top: '#F0A060', bot: '#8B4513', glow: '#CD7F3255' },
+  { top: '#FFD700', bot: '#B8860B', glow: '#FFD70055' },
+  { top: '#E8E8E8', bot: '#A0A0A0', glow: '#C0C0C055' },
+  { top: '#F0A060', bot: '#8B4513', glow: '#CD7F3255' },
 ];
 
 function hexAlpha(hex, alpha) {
@@ -68,7 +68,7 @@ module.exports = {
     const emptyContainer = new ContainerBuilder()
       .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent('❌ No rank profiles yet. Chat to start earning XP!')
+        new TextDisplayBuilder().setContent('No rank profiles yet. Chat to start earning XP!')
       );
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [emptyContainer] });
   }
@@ -78,7 +78,7 @@ module.exports = {
     const emptyContainer = new ContainerBuilder()
       .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent('❌ No economy profiles yet. Start working to earn coins!')
+        new TextDisplayBuilder().setContent('No economy profiles yet. Start working to earn coins!')
       );
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [emptyContainer] });
   }
@@ -494,7 +494,7 @@ module.exports = {
   const errContainer = new ContainerBuilder()
     .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('❌ Failed to render the leaderboard card.')
+      new TextDisplayBuilder().setContent('Failed to render the leaderboard card.')
     );
   const errMsg = { flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true };
   if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => null);

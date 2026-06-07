@@ -7,7 +7,7 @@ const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 const { EMOJIS } = require('../../utils/emojis');
 
-const SYMBOLS = ['7️⃣', '🎰', '💎', '🍒', '⭐', '🔔', '🍇'];
+const SYMBOLS = ['7', 'BAR', 'GEM', 'CHY', 'STR', 'BEL', 'GRP'];
 
 module.exports = {
   data: new SlashCommandBuilder()

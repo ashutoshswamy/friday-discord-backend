@@ -94,13 +94,13 @@ module.exports = {
     coinChange = Math.floor(Math.random() * (crime.rewardMax - crime.rewardMin + 1)) + crime.rewardMin;
     await db.updateCoins(guild.id, user.id, coinChange);
     const msg = crime.successMsgs[Math.floor(Math.random() * crime.successMsgs.length)];
-    resultText = `✅ **Success!** ${msg}\n\nYou pocketed ${EMOJIS.coin} **${coinChange.toLocaleString()}** coins.`;
+    resultText = `**Success!** ${msg}\n\nYou pocketed ${EMOJIS.coin} **${coinChange.toLocaleString()}** coins.`;
     color = 0x00FF66;
    } else {
     coinChange = -Math.min(crime.failFine, profile.coins);
     await db.updateCoins(guild.id, user.id, coinChange);
     const msg = crime.failMsgs[Math.floor(Math.random() * crime.failMsgs.length)];
-    resultText = `❌ **Caught!** ${msg}\n\nPenalty: ${EMOJIS.coin} **${Math.abs(coinChange).toLocaleString()}** coins fined.`;
+    resultText = `**Caught!** ${msg}\n\nPenalty: ${EMOJIS.coin} **${Math.abs(coinChange).toLocaleString()}** coins fined.`;
     color = 0xFF3333;
    }
 

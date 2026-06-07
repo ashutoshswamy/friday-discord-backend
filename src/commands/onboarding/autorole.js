@@ -36,7 +36,7 @@ module.exports = {
   const container = new ContainerBuilder()
     .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('❌ You must specify a `role` to allocate automatically!')
+      new TextDisplayBuilder().setContent('You must specify a `role` to allocate automatically!')
     );
   return interaction.editReply({ 
     flags: MessageFlags.IsComponentsV2, 
@@ -50,7 +50,7 @@ module.exports = {
   const container = new ContainerBuilder()
     .setAccentColor(0x10B981)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(`✅ Successfully set **${role.name}** as the server AutoRole! All joining members will automatically receive this role.`)
+      new TextDisplayBuilder().setContent(`Successfully set **${role.name}** as the server AutoRole! All joining members will automatically receive this role.`)
     );
   return interaction.editReply({ 
     flags: MessageFlags.IsComponentsV2, 
@@ -65,7 +65,7 @@ module.exports = {
   const container = new ContainerBuilder()
     .setAccentColor(0x10B981)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('✅ Successfully disabled the server join AutoRole system.')
+      new TextDisplayBuilder().setContent('Successfully disabled the server join AutoRole system.')
     );
   return interaction.editReply({ 
     flags: MessageFlags.IsComponentsV2, 
@@ -78,7 +78,7 @@ module.exports = {
   const errContainer = new ContainerBuilder()
     .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('❌ Failed to save AutoRole onboarding settings. Check database connection.')
+      new TextDisplayBuilder().setContent('Failed to save AutoRole onboarding settings. Check database connection.')
     );
   const errMsg = { 
     flags: MessageFlags.IsComponentsV2, 

@@ -4,6 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize,
  MediaGalleryBuilder, MediaGalleryItemBuilder, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -64,7 +65,7 @@ module.exports = {
  const subcommand = interaction.options.getSubcommand();
  const symbol = interaction.options.getString('symbol')?.toUpperCase();
 
- const getFlag = mkt => mkt === 'NASDAQ' ? '[US]' : mkt === 'NSE' ? '[IN]' : mkt === 'LSE' ? '[UK]' : mkt === 'CRYPTO' ? '<:coin:1512926963239489606>' : mkt === 'TYO' ? '[JP]' : '[AU]';
+ const getFlag = mkt => mkt === 'NASDAQ' ? '[US]' : mkt === 'NSE' ? '[IN]' : mkt === 'LSE' ? '[UK]' : mkt === 'CRYPTO' ? EMOJIS.coin : mkt === 'TYO' ? '[JP]' : '[AU]';
 
  try {
  if (subcommand === 'list') {
@@ -85,8 +86,7 @@ module.exports = {
  if (mktQuotes.length === 0) continue;
  const flag = getFlag(mkt);
  const preview = mktQuotes.slice(0, 3).map(q => {
- const trendIcon = q.changePercent >= 0 ? '📈' : '📉';
- return `• **${q.symbol}**: **${q.currency}${q.price.toLocaleString()}** (${trendIcon} \`${q.changePercent >= 0 ? '+' : ''}${q.changePercent}%\`)`;
+ return `• **${q.symbol}**: **${q.currency}${q.price.toLocaleString()}** (\`${q.changePercent >= 0 ? '+' : ''}${q.changePercent}%\`)`;
  }).join('\n');
  const remaining = mktQuotes.length - 3;
  marketSummary += `**${flag} ${mkt}**\n${preview}${remaining > 0 ? `\n*...and ${remaining} more assets.*` : ''}\n\n`;
@@ -115,8 +115,7 @@ module.exports = {
  const chunkSize = 10;
  let listStr = '';
  for (const q of mktQuotes) {
- const trendIcon = q.changePercent >= 0 ? '📈' : '📉';
- listStr += `• **${q.symbol}** (${q.name})\n Price: **${q.currency}${q.price.toLocaleString()}** | 24h: ${trendIcon} \`${q.changePercent >= 0 ? '+' : ''}${q.changePercent}%\`\n\n`;
+ listStr += `• **${q.symbol}** (${q.name})\n Price: **${q.currency}${q.price.toLocaleString()}** | 24h: \`${q.changePercent >= 0 ? '+' : ''}${q.changePercent}%\`\n\n`;
  }
 
  const container = new ContainerBuilder()
@@ -141,7 +140,6 @@ module.exports = {
  return interaction.editReply({ content: `Stock symbol **${symbol}** not found in the global catalog.`, ephemeral: true });
  }
 
- const trendIcon = quote.changePercent >= 0 ? '📈' : '📉';
  const trendText = quote.changePercent >= 0 ? `+${quote.changePercent}%` : `${quote.changePercent}%`;
  const isUp = quote.changePercent >= 0;
  const accentColor = isUp ? 0x00FF66 : 0xFF3333;
@@ -201,7 +199,7 @@ module.exports = {
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `**Current Price:** **${quote.currency}${quote.price.toLocaleString()}**\n` +
- `**24h Change:** **${trendIcon} ${trendText}**\n` +
+ `**24h Change:** **${trendText}**\n` +
  `**Reference Price:** ${quote.currency}${quote.basePrice.toLocaleString()}\n` +
  `**Currency:** \`${quote.currency}\`\n` +
  `**Last Updated:** <t:${Math.floor(Date.now() / 1000)}:R>`
@@ -245,8 +243,8 @@ module.exports = {
  `**Asset Symbol:** **${result.symbol}**\n` +
  `**Price/Share:** ${result.currency}${result.price.toLocaleString()}\n` +
  `**Shares Bought:** **${result.shares}**\n` +
- `**Total Cost:** <:coin:1512926963239489606> **${result.cost.toLocaleString()}** coins\n` +
- `**Remaining Wallet:** <:coin:1512926963239489606> **${result.newBalance.toLocaleString()}** coins`
+ `**Total Cost:** ${EMOJIS.coin} **${result.cost.toLocaleString()}** coins\n` +
+ `**Remaining Wallet:** ${EMOJIS.coin} **${result.newBalance.toLocaleString()}** coins`
  )
  )
  .addTextDisplayComponents(
@@ -277,8 +275,8 @@ module.exports = {
  `**Asset Symbol:** **${result.symbol}**\n` +
  `**Price/Share:** ${result.currency}${result.price.toLocaleString()}\n` +
  `**Shares Sold:** **${result.shares}**\n` +
- `**Total Revenue:** <:coin:1512926963239489606> **${result.revenue.toLocaleString()}** coins\n` +
- `**New Wallet Balance:** <:coin:1512926963239489606> **${result.newBalance.toLocaleString()}** coins`
+ `**Total Revenue:** ${EMOJIS.coin} **${result.revenue.toLocaleString()}** coins\n` +
+ `**New Wallet Balance:** ${EMOJIS.coin} **${result.newBalance.toLocaleString()}** coins`
  )
  )
  .addTextDisplayComponents(

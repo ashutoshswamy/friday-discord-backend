@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -58,7 +59,7 @@ module.exports = {
 
  const listingsText = listings.map(listing =>
  `**Listing #${listing.id}: ${listing.itemName}**\n` +
- `• Price: <:coin:1512926963239489606> \`${listing.price.toLocaleString()}\` coins\n` +
+ `• Price: ${EMOJIS.coin} \`${listing.price.toLocaleString()}\` coins\n` +
  `• Seller: <@${listing.sellerId}>\n` +
  `• Posted: <t:${Math.floor(new Date(listing.createdAt).getTime() / 1000)}:R>`
  ).join('\n\n');
@@ -116,7 +117,7 @@ module.exports = {
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `**Item Listed:** **${matchedItem}**\n` +
- `**Price Set:** <:coin:1512926963239489606> **${price.toLocaleString()}** coins\n` +
+ `**Price Set:** ${EMOJIS.coin} **${price.toLocaleString()}** coins\n` +
  `**Seller:** <@${user.id}>`
  )
  );
@@ -150,7 +151,7 @@ module.exports = {
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `**Item Acquired:** **${result.itemName}**\n` +
- `**Price Paid:** <:coin:1512926963239489606> **${result.price.toLocaleString()}** coins\n` +
+ `**Price Paid:** ${EMOJIS.coin} **${result.price.toLocaleString()}** coins\n` +
  `**Seller Compensated:** <@${result.sellerId}>`
  )
  );

@@ -3,6 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -53,7 +54,7 @@ module.exports = {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## <:coin:1512926963239489606> Currency Balance Adjusted\n${actionVerb} **${amount.toLocaleString()}** coins ${action === 'add' ? 'into' : 'from'} ${targetUser}'s wallet.`
+ `## ${EMOJIS.coin} Currency Balance Adjusted\n${actionVerb} **${amount.toLocaleString()}** coins ${action === 'add' ? 'into' : 'from'} ${targetUser}'s wallet.`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
@@ -62,9 +63,9 @@ module.exports = {
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `**Action:** ${actionIcon} **${actionVerb}**\n` +
- `**Amount:** <:coin:1512926963239489606> **${amount.toLocaleString()}** coins\n` +
+ `**Amount:** ${EMOJIS.coin} **${amount.toLocaleString()}** coins\n` +
  `**Target:** ${targetUser}\n` +
- `**New Wallet Balance:** <:coin:1512926963239489606> **${newBalance.toLocaleString()}** coins`
+ `**New Wallet Balance:** ${EMOJIS.coin} **${newBalance.toLocaleString()}** coins`
  )
  );
 

@@ -27,7 +27,7 @@ module.exports = {
  }).sort((a, b) => b.minutes - a.minutes).slice(0, 10);
 
  const rankLines = voiceRanks.map((entry, index) => {
- const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `\`#${index + 1}\``;
+ const medal = index === 0 ? '`#1`' : index === 1 ? '`#2`' : index === 2 ? '`#3`' : `\`#${index + 1}\``;
  const hours = Math.floor(entry.minutes / 60);
  const remainingMinutes = entry.minutes % 60;
  const displayTime = hours > 0 ? `${hours}h ${remainingMinutes}m` : `${remainingMinutes}m`;

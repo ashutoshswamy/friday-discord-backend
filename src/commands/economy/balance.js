@@ -4,6 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize,
  ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
+const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 const SELLABLE_ITEMS = {
@@ -61,11 +62,11 @@ async function buildBalanceContainer(guild, targetUser) {
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `**Active Wallet:** <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins\n` +
- `**Bank Vault:** <:coin:1512926963239489606> **${(profile.bank || 0).toLocaleString()}** coins\n` +
- `**Stock Portfolio:** <:coin:1512926963239489606> **${totalStockAssets.toLocaleString()}** coins\n` +
- `**Inventory Assets:** <:coin:1512926963239489606> **${inventoryValue.toLocaleString()}** coins\n` +
- `**Net Worth:** <:coin:1512926963239489606> **${netWorth.toLocaleString()}** coins`
+ `**Active Wallet:** ${EMOJIS.coin} **${profile.coins.toLocaleString()}** coins\n` +
+ `**Bank Vault:** ${EMOJIS.coin} **${(profile.bank || 0).toLocaleString()}** coins\n` +
+ `**Stock Portfolio:** ${EMOJIS.coin} **${totalStockAssets.toLocaleString()}** coins\n` +
+ `**Inventory Assets:** ${EMOJIS.coin} **${inventoryValue.toLocaleString()}** coins\n` +
+ `**Net Worth:** ${EMOJIS.coin} **${netWorth.toLocaleString()}** coins`
  )
  );
 

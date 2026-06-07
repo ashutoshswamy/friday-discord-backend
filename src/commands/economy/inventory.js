@@ -89,7 +89,7 @@ module.exports = {
             const botErrContainer = new ContainerBuilder()
                 .setAccentColor(0xEF4444)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent('❌ Bots do not maintain item inventories.')
+                    new TextDisplayBuilder().setContent('Bots do not maintain item inventories.')
                 );
             return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [botErrContainer] });
         }
@@ -179,7 +179,7 @@ module.exports = {
                         const noJunkContainer = new ContainerBuilder()
                             .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent('❌ You have no junk items to sell (Common Worm, Junk Seaweed, Old Boot).')
+                                new TextDisplayBuilder().setContent('You have no junk items to sell (Common Worm, Junk Seaweed, Old Boot).')
                             );
                         return i.followUp({ flags: MessageFlags.IsComponentsV2, components: [noJunkContainer], ephemeral: true });
                     }
@@ -224,7 +224,7 @@ module.exports = {
                     const useInfoContainer = new ContainerBuilder()
                         .setAccentColor(0x3B82F6)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('ℹ️ Use `/use [item]` to consume items from your inventory!')
+                            new TextDisplayBuilder().setContent('Use `/use [item]` to consume items from your inventory!')
                         );
                     await i.reply({ flags: MessageFlags.IsComponentsV2, components: [useInfoContainer], ephemeral: true });
 
@@ -238,7 +238,7 @@ module.exports = {
                         const errContainer = new ContainerBuilder()
                             .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`❌ **${itemName}** cannot be sold.`)
+                                new TextDisplayBuilder().setContent(`**${itemName}** cannot be sold.`)
                             );
                         return i.followUp({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                     }
@@ -250,7 +250,7 @@ module.exports = {
                         const errContainer = new ContainerBuilder()
                             .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`❌ You don't have **${itemName}** in your inventory.`)
+                                new TextDisplayBuilder().setContent(`You don't have **${itemName}** in your inventory.`)
                             );
                         return i.followUp({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                     }
@@ -311,7 +311,7 @@ module.exports = {
                         currentItems.forEach(name => { currentCounts[name] = (currentCounts[name] || 0) + 1; });
                         const refreshedSellable = Object.keys(currentCounts).filter(n => SELLABLE_ITEMS[n.toLowerCase()] !== undefined);
 
-                        const refreshedContainer = buildInventoryContainer(user, currentCounts, currentItems, '❌ Transaction cancelled.', sellBtn, useBtn, refreshedSellable);
+                        const refreshedContainer = buildInventoryContainer(user, currentCounts, currentItems, 'Transaction cancelled.', sellBtn, useBtn, refreshedSellable);
 
                         if (refreshedSellable.length > 0) {
                             const sellOptions = refreshedSellable.slice(0, 25).map(name => ({
@@ -340,7 +340,7 @@ module.exports = {
                         const errContainer = new ContainerBuilder()
                             .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`❌ **${itemName}** cannot be sold.`)
+                                new TextDisplayBuilder().setContent(`**${itemName}** cannot be sold.`)
                             );
                         return i.followUp({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                     }
@@ -357,7 +357,7 @@ module.exports = {
                         const errContainer = new ContainerBuilder()
                             .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`❌ You do not have enough **${itemName}** to sell!`)
+                                new TextDisplayBuilder().setContent(`You do not have enough **${itemName}** to sell!`)
                             );
                         return i.followUp({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                     }
@@ -376,7 +376,7 @@ module.exports = {
                     refreshedItems.forEach(name => { refreshedCounts[name] = (refreshedCounts[name] || 0) + 1; });
                     const refreshedSellable = Object.keys(refreshedCounts).filter(n => SELLABLE_ITEMS[n.toLowerCase()] !== undefined);
 
-                    const extraText = `✅ **Sold ${removedCount}x ${originalItemName}** for ${EMOJIS.coin} **+${totalPayout.toLocaleString()}** coins!`;
+                    const extraText = `**Sold ${removedCount}x ${originalItemName}** for ${EMOJIS.coin} **+${totalPayout.toLocaleString()}** coins!`;
                     const refreshedContainer = buildInventoryContainer(user, refreshedCounts, refreshedItems, extraText, sellBtn, useBtn, refreshedSellable);
 
                     if (refreshedSellable.length > 0) {
