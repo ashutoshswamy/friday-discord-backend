@@ -1,5 +1,5 @@
 const {
- SlashCommandBuilder, PermissionFlagsBits,
+ SlashCommandBuilder,
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
@@ -28,13 +28,6 @@ module.exports = {
  .addSubcommand(sub =>
  sub.setName('status')
  .setDescription('Renders bot diagnostic indicators, memory layouts, and latency.'))
- .addSubcommand(sub =>
- sub.setName('protocol')
- .setDescription('Executes specialized system automation protocol slates (Admin only).')
- .addStringOption(opt =>
- opt.setName('name')
- .setDescription('The protocol slate keyword (e.g. cleanslate)')
- .setRequired(true)))
  .addSubcommand(sub =>
  sub.setName('ask')
  .setDescription('Direct AI conversational query using system\'s persona.')
@@ -116,43 +109,6 @@ module.exports = {
  );
 
  return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [container] });
- }
-
- if (subcommand === 'protocol') {
- if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
- return interaction.reply({
- content: 'Access Denied: Administrator clearance is required to execute protocol slates!',
- ephemeral: true
- });
- }
-
- const protocolName = options.getString('name').trim().toLowerCase();
-
- if (protocolName === 'cleanslate') {
- const container = new ContainerBuilder()
- .setAccentColor(0xFF3333)
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(
- `## Protocol: CLEAN SLATE\n **Executing system clean-slate diagnostics...**`
- )
- )
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(
- `• Auditing active database connections... **[SECURE]**\n` +
- `• Scanning temporary files... **[PURGED]**\n` +
- `• Flushing active gateway sockets... **[OK]**\n\n` +
- `Friday Core has successfully re-aligned system indexes.`
- )
- );
-
- return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [container] });
- } else {
- return interaction.reply({
- content: `Unknown protocol code: \`${protocolName}\`. Try: \`cleanslate\`.`,
- ephemeral: true
- });
- }
  }
 
  if (subcommand === 'ask') {

@@ -32,7 +32,6 @@ const pages = {
  { name: '`/friday summarize`', value: 'Compiles text summaries of the last 50 text channel messages using Gemini.' },
  { name: '`/friday status`', value: 'Monitors real-time server telemetry: uptime, memory heap maps, web-socket connection latency.' },
  { name: '`/friday quote`', value: 'Returns a randomized witty administrative logs system quote.' },
- { name: '`/friday protocol [name]`', value: 'Executes root automation slates (e.g. `cleanslate`) (Admin).' },
  { name: '`/customcmd add [name] [text]`', value: 'Configures custom text command server aliases (Admin).' },
  { name: '`/customcmd embed [name]`', value: 'Creates a custom embed-based command via JSON builder (Admin).' },
  { name: '`/customcmd remove [name]`', value: 'Removes active custom text command server aliases (Admin).' },
