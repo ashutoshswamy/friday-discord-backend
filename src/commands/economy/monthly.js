@@ -10,7 +10,7 @@ const { EMOJIS } = require('../../utils/emojis');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('monthly')
-    .setDescription('Claims your monthly reward of 7,500 server coins.'),
+    .setDescription('Claims your monthly reward of 5,000–15,000 random server coins.'),
 
   async execute(interaction) {
     const { guild, user } = interaction;
@@ -68,7 +68,7 @@ module.exports = {
         )
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
         .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent('-# Tip: Claim `/daily` every day and `/weekly` every week to stack up coins faster!')
+          new TextDisplayBuilder().setContent('-# Tip: Reward is random every month — stack with `/daily` and `/weekly` for maximum coin income!')
         )
         .addActionRowComponents(new ActionRowBuilder().addComponents(workBtn, shopBtn));
 

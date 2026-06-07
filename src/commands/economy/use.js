@@ -6,7 +6,10 @@ const {
 } = require('discord.js');
 const db = require('../../utils/db');
 
-const BUILT_IN_CONSUMABLES = new Set(['pizza', 'energy drink', 'gamer energy drink', 'lootbox', 'prize box']);
+const BUILT_IN_CONSUMABLES = new Set([
+ 'pizza', 'energy drink', 'gamer energy drink', 'lootbox', 'prize box',
+ 'xp potion', 'coin bomb', 'mystery crate', 'work gloves'
+]);
 
 async function processItem(guild, user, matchedItem, shopItems) {
  const normalizedName = matchedItem.toLowerCase();
@@ -80,6 +83,100 @@ async function processItem(guild, user, matchedItem, shopItems) {
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
  )
  };
+ }
+
+ if (normalizedName === 'xp potion') {
+  await db.addXp(guild.id, user.id, 300);
+  return {
+   container: new ContainerBuilder()
+    .setAccentColor(0x00FFCC)
+    .addSectionComponents(
+     new SectionBuilder()
+      .addTextDisplayComponents(
+       new TextDisplayBuilder().setContent(
+        `## XP Surge!\nYou drank the **XP Potion** in one gulp!\nYou gained ** 300 XP** instantly towards your rank.`
+       )
+      )
+      .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+    )
+  };
+ }
+
+ if (normalizedName === 'coin bomb') {
+  const coinGain = Math.floor(Math.random() * 3201) + 800;
+  await db.updateCoins(guild.id, user.id, coinGain);
+  return {
+   container: new ContainerBuilder()
+    .setAccentColor(0xFFD700)
+    .addSectionComponents(
+     new SectionBuilder()
+      .addTextDisplayComponents(
+       new TextDisplayBuilder().setContent(
+        `## <:coin:1512926963239489606> BOOM! Coin Bomb!\nThe **Coin Bomb** detonated and showered you in cash!\nYou collected **<:coin:1512926963239489606> ${coinGain.toLocaleString()} coins** in your wallet.`
+       )
+      )
+      .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+    )
+  };
+ }
+
+ if (normalizedName === 'work gloves') {
+  const coinGain = 500;
+  await db.updateCoins(guild.id, user.id, coinGain);
+  return {
+   container: new ContainerBuilder()
+    .setAccentColor(0xF59E0B)
+    .addSectionComponents(
+     new SectionBuilder()
+      .addTextDisplayComponents(
+       new TextDisplayBuilder().setContent(
+        `## Work Gloves Equipped!\nYou slipped on the **Work Gloves** and got straight to work!\nYou earned **<:coin:1512926963239489606> 500 coins** as a bonus payout.`
+       )
+      )
+      .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+    )
+  };
+ }
+
+ if (normalizedName === 'mystery crate') {
+  const roll = Math.random();
+  let prizeTitle, prizeDesc;
+
+  if (roll < 0.05) {
+   await db.addItemToInventory(guild.id, user.id, 'Legendary Gem');
+   prizeTitle = ' LEGENDARY DROP!';
+   prizeDesc = `The crate burst open with radiant light!\n**Legendary Gem** added to your \`/inventory\` — worth a fortune on the \`/market\`!`;
+  } else if (roll < 0.15) {
+   await db.updateCoins(guild.id, user.id, 5000);
+   prizeTitle = ' MEGA JACKPOT!';
+   prizeDesc = `A torrent of coins erupted from the **Mystery Crate**!\nYou pocketed **<:coin:1512926963239489606> 5,000 coins** directly!`;
+  } else if (roll < 0.35) {
+   await db.addItemToInventory(guild.id, user.id, 'Rare Gem');
+   prizeTitle = ' Rare Gem!';
+   prizeDesc = `A precious gem tumbled out of the crate!\n**Rare Gem** added to your \`/inventory\`!`;
+  } else if (roll < 0.60) {
+   const xpGain = Math.floor(Math.random() * 401) + 200;
+   await db.addXp(guild.id, user.id, xpGain);
+   prizeTitle = ' XP Surge!';
+   prizeDesc = `The crate crackled with energy!\nYou gained ** ${xpGain.toLocaleString()} XP** towards your rank!`;
+  } else {
+   const coinGain = Math.floor(Math.random() * 1501) + 500;
+   await db.updateCoins(guild.id, user.id, coinGain);
+   prizeTitle = '<:coin:1512926963239489606> Coin Cache!';
+   prizeDesc = `Coins spilled out everywhere!\nYou grabbed **<:coin:1512926963239489606> ${coinGain.toLocaleString()} coins** from the crate!`;
+  }
+
+  return {
+   container: new ContainerBuilder()
+    .setAccentColor(0xFF00FF)
+    .addSectionComponents(
+     new SectionBuilder()
+      .addTextDisplayComponents(
+       new TextDisplayBuilder().setContent(`## Mystery Crate: ${prizeTitle}\n${prizeDesc}`)
+      )
+      .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+    )
+  };
  }
 
  const customConsumable = shopItems.find(i => i.name.toLowerCase() === normalizedName);

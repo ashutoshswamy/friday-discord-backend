@@ -8,10 +8,15 @@ const db = require('../../utils/db');
 const cooldowns = new Map();
 
 const DIG_CHANCES = [
- { name: "Common Worm", chance: 0.40, msg: " You dug in the mud and found a wriggling **Common Worm**." },
- { name: "Dirt Fossil", chance: 0.70, msg: " You hit something hard! You excavated a petrified **Dirt Fossil**!" },
- { name: "Ancient Vase", chance: 0.90, msg: " Spectacular! You uncovered a dusty, intact **Ancient Vase** from an old ruin!" },
- { name: "Buried Gold Chest",chance: 1.00, msg: " **JACKPOT!**You struck gold and excavated a locked **Buried Gold Chest**!" }
+ { name: "Common Worm",    chance: 0.28, msg: " You dug in the mud and found a wriggling **Common Worm**." },
+ { name: "Old Coin",       chance: 0.44, msg: " You brushed away dirt to reveal a weathered **Old Coin** from centuries past!" },
+ { name: "Cracked Geode",  chance: 0.58, msg: " You unearthed a rough **Cracked Geode** — crystals sparkle inside!" },
+ { name: "Dirt Fossil",    chance: 0.74, msg: " You hit something hard! You excavated a petrified **Dirt Fossil**!" },
+ { name: "Ancient Vase",   chance: 0.88, msg: " Spectacular! You uncovered a dusty, intact **Ancient Vase** from an old ruin!" },
+ { name: "Sapphire",       chance: 0.95, msg: " **GEM FOUND!** A deep blue **Sapphire** glinted beneath your blade!" },
+ { name: "Ruby",           chance: 0.985, msg: " **PRECIOUS!** You struck a blood-red **Ruby** embedded in a stone vein!" },
+ { name: "Diamond",        chance: 0.997, msg: " **LEGENDARY!** A flawless **Diamond** sits in the palm of your hand!" },
+ { name: "Buried Gold Chest",chance: 1.00, msg: " **JACKPOT!** You struck gold and excavated a locked **Buried Gold Chest**!" }
 ];
 
 module.exports = {

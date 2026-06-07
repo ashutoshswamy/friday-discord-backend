@@ -769,7 +769,7 @@ module.exports = {
             };
         }
 
-        const reward = 1500;
+        const reward = Math.floor(Math.random() * 2501) + 1000;
         const newBalance = profile.coins + reward;
 
         const { data, error } = await supabase
@@ -804,7 +804,7 @@ module.exports = {
             };
         }
 
-        const reward = 7500;
+        const reward = Math.floor(Math.random() * 10001) + 5000;
         const newBalance = profile.coins + reward;
 
         const { data, error } = await supabase

@@ -53,7 +53,10 @@ module.exports = {
  .addStringOption(opt =>
  opt.setName('name')
  .setDescription('The exact name of the item to delete')
- .setRequired(true))),
+ .setRequired(true)))
+ .addSubcommand(sub =>
+ sub.setName('catalog')
+ .setDescription('View all built-in items available for admins to add to the server shop.')),
 
  async execute(interaction) {
  const { guild, options, member, user } = interaction;
@@ -193,6 +196,65 @@ module.exports = {
  });
 
  return;
+ }
+
+ if (subcommand === 'catalog') {
+ const toolsText =
+  `**Tools** *(required for grind commands)*\n` +
+  `• **Hunting Rifle** — required for \`/hunt\` · Suggested price: ${EMOJIS.coin} 500\n` +
+  `• **Fishing Pole** — required for \`/fish\` · Suggested price: ${EMOJIS.coin} 400\n` +
+  `• **Shovel** — required for \`/dig\` · Suggested price: ${EMOJIS.coin} 300`;
+
+ const consumablesText =
+  `**Consumables** *(used via \`/use\`)*\n` +
+  `• **Pizza** — grants 150 XP instantly · Suggested: ${EMOJIS.coin} 800\n` +
+  `• **XP Potion** — grants 300 XP instantly · Suggested: ${EMOJIS.coin} 1,500\n` +
+  `• **Energy Drink** — grants 300 coins to wallet · Suggested: ${EMOJIS.coin} 500\n` +
+  `• **Work Gloves** — grants 500 coins to wallet · Suggested: ${EMOJIS.coin} 800\n` +
+  `• **Coin Bomb** — explodes for 800–4,000 random coins · Suggested: ${EMOJIS.coin} 2,000\n` +
+  `• **Lootbox** — random prize (coins, XP, Silver Ring) · Suggested: ${EMOJIS.coin} 1,200\n` +
+  `• **Mystery Crate** — upgraded lootbox with gem drops · Suggested: ${EMOJIS.coin} 3,500`;
+
+ const collectiblesText =
+  `**Collectibles** *(sell via \`/sell\` or trade on \`/market\`)*\n` +
+  `• **Common Gem** — sell value ${EMOJIS.coin} 750\n` +
+  `• **Rare Gem** — sell value ${EMOJIS.coin} 3,500 · drops from Mystery Crate\n` +
+  `• **Legendary Gem** — sell value ${EMOJIS.coin} 12,000 · rare Mystery Crate drop\n` +
+  `• **Silver Ring** — sell value ${EMOJIS.coin} 1,000 · Lootbox rare drop`;
+
+ const grindDropsText =
+  `**Grind Drops** *(auto-dropped, sell via \`/sell\` or trade via \`/market\`)*\n` +
+  `Hunt: Rabbit · Eagle Feather · Duck · Deer · Deer Antler · Wild Boar · Wolf Pelt · Grizzly Bear · Dragon Scale\n` +
+  `Fish: Clam · Common Bass · Pufferfish · Salmon · Goldfish · Lobster · Tropical Coral Fish · Shark Tooth · Ancient Pearl · Mythical Whale\n` +
+  `Dig: Common Worm · Old Coin · Cracked Geode · Dirt Fossil · Ancient Vase · Sapphire · Ruby · Diamond · Buried Gold Chest`;
+
+ const container = new ContainerBuilder()
+  .setAccentColor(0xFF8C00)
+  .addSectionComponents(
+   new SectionBuilder()
+    .addTextDisplayComponents(
+     new TextDisplayBuilder().setContent(
+      `## Built-in Item Catalog\nAll standard items admins can add via \`/shop add\`. Items with effects work automatically with \`/use\`.`
+     )
+    )
+    .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
+  )
+  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+  .addTextDisplayComponents(new TextDisplayBuilder().setContent(toolsText))
+  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+  .addTextDisplayComponents(new TextDisplayBuilder().setContent(consumablesText))
+  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+  .addTextDisplayComponents(new TextDisplayBuilder().setContent(collectiblesText))
+  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+  .addTextDisplayComponents(new TextDisplayBuilder().setContent(grindDropsText))
+  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+  .addTextDisplayComponents(
+   new TextDisplayBuilder().setContent(
+    `-# Admins: use \`/shop add [name] [cost]\` to list any item above · Players trade on \`/market\``
+   )
+  );
+
+ return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
  }
 
  if (!member.permissions.has(PermissionFlagsBits.Administrator)) {

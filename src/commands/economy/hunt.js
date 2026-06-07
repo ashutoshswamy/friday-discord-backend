@@ -8,11 +8,15 @@ const db = require('../../utils/db');
 const cooldowns = new Map();
 
 const LOOT_CHANCES = [
- { name: "Rabbit", chance: 0.35, msg: " You tracked a swift **Rabbit** and took a clean shot!" },
- { name: "Duck", chance: 0.70, msg: " You aimed at the skies and brought down a wild mallard **Duck**!" },
- { name: "Deer", chance: 0.88, msg: " You patiently waited in a tree stand and successfully harvested a large **Deer**!" },
- { name: "Wild Boar", chance: 0.97, msg: " You cornered a defensive **Wild Boar** and securely captured it!" },
- { name: "Grizzly Bear",chance: 1.00, msg: " **HOLY SHIT!**You successfully hunted a massive **Grizzly Bear**!" }
+ { name: "Rabbit",       chance: 0.28, msg: " You tracked a swift **Rabbit** and took a clean shot!" },
+ { name: "Eagle Feather",chance: 0.42, msg: " A golden eagle soared overhead — you plucked a prized **Eagle Feather** from the ground!" },
+ { name: "Duck",         chance: 0.60, msg: " You aimed at the skies and brought down a wild mallard **Duck**!" },
+ { name: "Deer",         chance: 0.75, msg: " You patiently waited in a tree stand and successfully harvested a large **Deer**!" },
+ { name: "Deer Antler",  chance: 0.84, msg: " You found a massive shed **Deer Antler** half-buried in the undergrowth!" },
+ { name: "Wild Boar",    chance: 0.92, msg: " You cornered a defensive **Wild Boar** and securely captured it!" },
+ { name: "Wolf Pelt",    chance: 0.97, msg: " A lone wolf crossed your path — you claimed its prized **Wolf Pelt**!" },
+ { name: "Grizzly Bear", chance: 0.993, msg: " **HOLY SHIT!** You successfully hunted a massive **Grizzly Bear**!" },
+ { name: "Dragon Scale", chance: 1.00, msg: " **LEGENDARY!** A mythical beast appeared from the shadows — you snatched a glowing **Dragon Scale**!" }
 ];
 
 module.exports = {

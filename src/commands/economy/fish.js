@@ -8,13 +8,18 @@ const db = require('../../utils/db');
 const cooldowns = new Map();
 
 const FISH_CHANCES = [
- { name: "Junk Seaweed", chance: 0.05, msg: " You reeled in... some slimy **Junk Seaweed**. Yuck." },
- { name: "Old Boot", chance: 0.08, msg: " You fought a heavy pull, only to land a waterlogged **Old Boot**." },
- { name: "Common Bass", chance: 0.43, msg: " Nice catch! You reeled in a standard **Common Bass**." },
- { name: "Salmon", chance: 0.73, msg: " Beautiful! You caught a healthy pink **Salmon**!" },
- { name: "Goldfish", chance: 0.90, msg: " Rare catch! You hooked a shining **Goldfish**!" },
- { name: "Tropical Coral Fish", chance: 0.98, msg: " Spectacular! You netted a vibrant, highly exotic **Tropical Coral Fish**!" },
- { name: "Mythical Whale", chance: 1.00, msg: " **UNBELIEVABLE!**You hooked and reeled in a leviathan **Mythical Whale**!" }
+ { name: "Junk Seaweed",      chance: 0.04, msg: " You reeled in... some slimy **Junk Seaweed**. Yuck." },
+ { name: "Old Boot",          chance: 0.07, msg: " You fought a heavy pull, only to land a waterlogged **Old Boot**." },
+ { name: "Clam",              chance: 0.20, msg: " You scooped a bumpy **Clam** from the lake bed!" },
+ { name: "Common Bass",       chance: 0.42, msg: " Nice catch! You reeled in a standard **Common Bass**." },
+ { name: "Salmon",            chance: 0.62, msg: " Beautiful! You caught a healthy pink **Salmon**!" },
+ { name: "Pufferfish",        chance: 0.73, msg: " Careful! You netted a spiky **Pufferfish** — it inflated immediately!" },
+ { name: "Goldfish",          chance: 0.83, msg: " Rare catch! You hooked a shining **Goldfish**!" },
+ { name: "Lobster",           chance: 0.91, msg: " Excellent haul! A snapping **Lobster** was caught in your net!" },
+ { name: "Tropical Coral Fish",chance: 0.95, msg: " Spectacular! You netted a vibrant, highly exotic **Tropical Coral Fish**!" },
+ { name: "Shark Tooth",       chance: 0.98, msg: " No shark, but you found a massive razor-sharp **Shark Tooth** snagged in your line!" },
+ { name: "Ancient Pearl",     chance: 0.997, msg: " **INCREDIBLE!** Your hook snagged an oyster holding a glowing **Ancient Pearl**!" },
+ { name: "Mythical Whale",    chance: 1.00, msg: " **UNBELIEVABLE!** You hooked and reeled in a leviathan **Mythical Whale**!" }
 ];
 
 module.exports = {
