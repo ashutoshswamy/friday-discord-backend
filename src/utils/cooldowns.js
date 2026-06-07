@@ -34,4 +34,12 @@ function checkCooldown(commandName, userId, seconds) {
     return { onCooldown: false };
 }
 
-module.exports = { checkCooldown };
+function getCooldownRemaining(commandName, userId) {
+    if (!cooldowns.has(commandName)) return 0;
+    const expiry = cooldowns.get(commandName).get(userId);
+    if (!expiry) return 0;
+    const remaining = expiry - Date.now();
+    return remaining > 0 ? remaining : 0;
+}
+
+module.exports = { checkCooldown, getCooldownRemaining, cooldowns };

@@ -1954,6 +1954,263 @@ module.exports = {
         return !error;
     },
 
+    async releasePet(guildId, userId) {
+        if (!supabase) return true;
+        const { error } = await supabase
+            .from('user_pets')
+            .delete()
+            .eq('guild_id', guildId)
+            .eq('user_id', userId);
+        return !error;
+    },
+
+    // ==========================================
+    // Social — Bio, Rep, Marriage
+    // ==========================================
+
+    async getUserSocial(guildId, userId) {
+        if (!supabase) return { bio: null, repCount: 0, lastRepGivenAt: 0, partnerId: null, marriedAt: null };
+        const { data, error } = await supabase
+            .from('user_social')
+            .select('*')
+            .eq('guild_id', guildId)
+            .eq('user_id', userId)
+            .maybeSingle();
+        if (error || !data) return { bio: null, repCount: 0, lastRepGivenAt: 0, partnerId: null, marriedAt: null };
+        return {
+            bio: data.bio || null,
+            repCount: Number(data.rep_count || 0),
+            lastRepGivenAt: Number(data.last_rep_given_at || 0),
+            partnerId: data.partner_id || null,
+            marriedAt: data.married_at || null
+        };
+    },
+
+    async setBio(guildId, userId, bio) {
+        if (!supabase) return true;
+        const { error } = await supabase.from('user_social')
+            .upsert({ guild_id: guildId, user_id: userId, bio }, { onConflict: 'guild_id,user_id' });
+        return !error;
+    },
+
+    async giveRep(guildId, giverId, receiverId) {
+        if (!supabase) return { success: true, newRepCount: 1 };
+        const now = Date.now();
+        const cooldownMs = 24 * 60 * 60 * 1000;
+
+        const giver = await this.getUserSocial(guildId, giverId);
+        if (giver.lastRepGivenAt && (now - giver.lastRepGivenAt < cooldownMs)) {
+            return { success: false, cooldownLeft: cooldownMs - (now - giver.lastRepGivenAt) };
+        }
+
+        await supabase.from('user_social').upsert(
+            { guild_id: guildId, user_id: giverId, last_rep_given_at: now },
+            { onConflict: 'guild_id,user_id' }
+        );
+
+        const receiver = await this.getUserSocial(guildId, receiverId);
+        const newRepCount = receiver.repCount + 1;
+        await supabase.from('user_social').upsert(
+            { guild_id: guildId, user_id: receiverId, rep_count: newRepCount },
+            { onConflict: 'guild_id,user_id' }
+        );
+
+        return { success: true, newRepCount };
+    },
+
+    async getMarriage(guildId, userId) {
+        if (!supabase) return null;
+        const social = await this.getUserSocial(guildId, userId);
+        if (!social.partnerId) return null;
+        return { partnerId: social.partnerId, marriedAt: social.marriedAt };
+    },
+
+    async setMarriage(guildId, userId1, userId2) {
+        if (!supabase) return true;
+        const now = new Date().toISOString();
+        await supabase.from('user_social').upsert(
+            { guild_id: guildId, user_id: userId1, partner_id: userId2, married_at: now },
+            { onConflict: 'guild_id,user_id' }
+        );
+        await supabase.from('user_social').upsert(
+            { guild_id: guildId, user_id: userId2, partner_id: userId1, married_at: now },
+            { onConflict: 'guild_id,user_id' }
+        );
+        return true;
+    },
+
+    async dissolveMarriage(guildId, userId) {
+        if (!supabase) return true;
+        const social = await this.getUserSocial(guildId, userId);
+        if (!social.partnerId) return false;
+
+        await supabase.from('user_social')
+            .update({ partner_id: null, married_at: null })
+            .eq('guild_id', guildId).eq('user_id', userId);
+
+        await supabase.from('user_social')
+            .update({ partner_id: null, married_at: null })
+            .eq('guild_id', guildId).eq('user_id', social.partnerId);
+
+        return true;
+    },
+
+    // ==========================================
+    // Clans
+    // ==========================================
+
+    async createClan(guildId, ownerId, name) {
+        if (!supabase) return { success: true, clan: { id: 'mock', name } };
+
+        const { data: existing } = await supabase.from('clans').select('id')
+            .eq('guild_id', guildId).ilike('name', name).maybeSingle();
+        if (existing) return { success: false, reason: 'A clan with that name already exists.' };
+
+        const inClan = await this.getClanByMember(guildId, ownerId);
+        if (inClan) return { success: false, reason: 'You are already a member of a clan.' };
+
+        const profile = await this.getProfile(guildId, ownerId);
+        if (profile.coins < 5000) return { success: false, reason: 'Creating a clan costs 5,000 coins.' };
+
+        await this.updateCoins(guildId, ownerId, -5000);
+
+        const { data, error } = await supabase.from('clans')
+            .insert([{ guild_id: guildId, name, owner_id: ownerId, treasury: 0, xp_total: 0, level: 1 }])
+            .select().single();
+
+        if (error) { await this.updateCoins(guildId, ownerId, 5000); return { success: false, reason: 'Database error.' }; }
+
+        await supabase.from('clan_members').insert([{ clan_id: data.id, guild_id: guildId, user_id: ownerId }]);
+        return { success: true, clan: { id: data.id, name: data.name } };
+    },
+
+    async getClan(guildId, clanName) {
+        if (!supabase) return null;
+        const { data, error } = await supabase.from('clans').select('*')
+            .eq('guild_id', guildId).ilike('name', clanName).maybeSingle();
+        if (error || !data) return null;
+
+        const { data: members } = await supabase.from('clan_members')
+            .select('user_id, joined_at').eq('clan_id', data.id).eq('guild_id', guildId);
+
+        return {
+            id: data.id, name: data.name, ownerId: data.owner_id,
+            treasury: Number(data.treasury), xpTotal: Number(data.xp_total),
+            level: data.level, createdAt: data.created_at,
+            members: (members || []).map(m => ({ userId: m.user_id, joinedAt: m.joined_at }))
+        };
+    },
+
+    async getClanByMember(guildId, userId) {
+        if (!supabase) return null;
+        const { data: membership } = await supabase.from('clan_members').select('clan_id')
+            .eq('guild_id', guildId).eq('user_id', userId).maybeSingle();
+        if (!membership) return null;
+
+        const { data } = await supabase.from('clans').select('*').eq('id', membership.clan_id).maybeSingle();
+        if (!data) return null;
+
+        const { data: members } = await supabase.from('clan_members')
+            .select('user_id, joined_at').eq('clan_id', data.id);
+
+        return {
+            id: data.id, name: data.name, ownerId: data.owner_id,
+            treasury: Number(data.treasury), xpTotal: Number(data.xp_total),
+            level: data.level, createdAt: data.created_at,
+            members: (members || []).map(m => ({ userId: m.user_id, joinedAt: m.joined_at }))
+        };
+    },
+
+    async joinClan(guildId, userId, clanId) {
+        if (!supabase) return { success: true };
+        const { error } = await supabase.from('clan_members')
+            .insert([{ clan_id: clanId, guild_id: guildId, user_id: userId }]);
+        if (error) return { success: false, reason: 'Database error.' };
+        return { success: true };
+    },
+
+    async leaveClan(guildId, userId) {
+        if (!supabase) return true;
+        const { error } = await supabase.from('clan_members')
+            .delete().eq('guild_id', guildId).eq('user_id', userId);
+        return !error;
+    },
+
+    async kickFromClan(guildId, clanId, userId) {
+        if (!supabase) return true;
+        const { error } = await supabase.from('clan_members')
+            .delete().eq('clan_id', clanId).eq('guild_id', guildId).eq('user_id', userId);
+        return !error;
+    },
+
+    async depositToClan(guildId, clanId, userId, amount) {
+        if (!supabase) return { success: true, newTreasury: amount };
+        const profile = await this.getProfile(guildId, userId);
+        if (profile.coins < amount) return { success: false, reason: 'Insufficient wallet balance.' };
+
+        const { data: clan, error: fetchError } = await supabase.from('clans')
+            .select('treasury').eq('id', clanId).single();
+        if (fetchError || !clan) return { success: false, reason: 'Clan not found.' };
+
+        await this.updateCoins(guildId, userId, -amount);
+        const newTreasury = Number(clan.treasury) + amount;
+        const { error } = await supabase.from('clans').update({ treasury: newTreasury }).eq('id', clanId);
+        if (error) { await this.updateCoins(guildId, userId, amount); return { success: false, reason: 'Database error.' }; }
+        return { success: true, newTreasury };
+    },
+
+    async getClanLeaderboard(guildId) {
+        if (!supabase) return [];
+        const { data, error } = await supabase.from('clans').select('name, owner_id, treasury, level, xp_total')
+            .eq('guild_id', guildId).order('treasury', { ascending: false }).limit(10);
+        if (error) return [];
+        return data.map((c, i) => ({
+            rank: i + 1, name: c.name, ownerId: c.owner_id,
+            treasury: Number(c.treasury), level: c.level, xpTotal: Number(c.xp_total)
+        }));
+    },
+
+    // ==========================================
+    // Analytics
+    // ==========================================
+
+    async getServerAnalytics(guildId) {
+        if (!supabase) return null;
+        const [profilesRes, topRichRes] = await Promise.all([
+            supabase.from('user_profiles').select('coins, bank, xp, level').eq('guild_id', guildId),
+            supabase.from('user_profiles').select('user_id, coins, bank').eq('guild_id', guildId)
+                .order('coins', { ascending: false }).limit(5)
+        ]);
+        const profiles = profilesRes.data || [];
+        const totalMembers = profiles.length;
+        const totalCoins = profiles.reduce((s, p) => s + Number(p.coins) + Number(p.bank || 0), 0);
+        const totalXp = profiles.reduce((s, p) => s + Number(p.xp), 0);
+        const avgLevel = totalMembers > 0
+            ? (profiles.reduce((s, p) => s + Number(p.level), 0) / totalMembers).toFixed(1) : 0;
+        return {
+            totalMembers, totalCoins, totalXp, avgLevel,
+            topRich: (topRichRes.data || []).map(p => ({
+                userId: p.user_id, wealth: Number(p.coins) + Number(p.bank || 0)
+            }))
+        };
+    },
+
+    async getTopWealthUsers(guildId) {
+        if (!supabase) return [];
+        const { data, error } = await supabase.from('user_profiles')
+            .select('user_id, coins, bank, xp, level')
+            .eq('guild_id', guildId)
+            .order('coins', { ascending: false })
+            .limit(10);
+        if (error) return [];
+        return data.map((p, i) => ({
+            rank: i + 1, userId: p.user_id,
+            wallet: Number(p.coins), bank: Number(p.bank || 0),
+            wealth: Number(p.coins) + Number(p.bank || 0),
+            level: p.level, xp: Number(p.xp)
+        }));
+    },
+
     xpNeededForNextLevel,
 
     // ==========================================

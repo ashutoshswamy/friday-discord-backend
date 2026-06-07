@@ -9,17 +9,21 @@ const pages = {
  title: ' Friday Protocol Core — System Manual',
  accentColor: 0x8B5CF6,
  description: `Welcome to the official manual for **Friday**, your premium cyberpunk administrative assistant.\n\nFriday is powered by a high-performance Express core, a hosted real-time Supabase cluster, and advanced Google Gemini AI model engines.`,
- bodyText: `**System Specifications:**\n• Loaded Protocols: \`79 slash commands\`\n• Dynamic Systems: \`Leveling, Economy, Jobs, Pets, Player Bazaar, AutoMod, Onboarding\`\n• UI Control Panel: [Web Dashboard](https://fridaybot.ashutoshswamy.in)`,
+ bodyText: `**System Specifications:**\n• Loaded Protocols: \`100+ slash commands\`\n• Dynamic Systems: \`Leveling, Economy, Jobs, Pets, Clans, Social, AutoMod, Onboarding\`\n• UI Control Panel: [Web Dashboard](https://fridaybot.ashutoshswamy.in)`,
  fields: [
  { name: ' Core & AI Systems', value: 'Google Gemini AI generation, conversational ask, text rewriting, quotes, dashboard telemetry.' },
- { name: 'Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily/weekly/monthly coin cycles, job careers, hourly shift wages, scavenging, word scramble.' },
- { name: ' Casino & Gambling', value: 'Interactive Blackjack table, slots spinner, roulette payouts, arena cockfights, heists.' },
- { name: ' Scavenging & Shop', value: 'Hunting wild game, fishing lakes, shovel excavations, 30+ sellable loot drops, consumable items, player market bazaar.' },
+ { name: 'Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily/weekly/monthly coin cycles, job careers, hourly shift wages, scavenging, word scramble, crime, cooldowns.' },
+ { name: ' Casino & Gambling', value: 'Interactive Blackjack table, slots spinner, roulette payouts, highlow chains, dice, horse racing, cockfights, heists.' },
+ { name: ' Scavenging & Shop', value: 'Hunting wild game, fishing lakes, shovel excavations, mine shaft, 30+ sellable loot drops, consumable items, player market bazaar, interactive trade.' },
  { name: ' Stocks & Trading', value: 'Real-time global stock quotes (NASDAQ/NSE/CRYPTO), long-term share investments, 5× leveraged intraday long/short positions.' },
- { name: ' Pets & Leveling', value: 'Companion adoption, training, real-time hunger/energy decay, visual rank cards, voice XP trackers.' },
+ { name: ' Pets & Leveling', value: 'Companion adoption, training, rename, release, pet battles, real-time hunger/energy decay, visual rank cards, voice XP trackers.' },
+ { name: ' Social & Trivia', value: 'Profile cards, bio/tagline, reputation, marriage proposals, trivia questions for coins & XP.' },
+ { name: '🏰 Clans', value: 'Create clans, invite members, treasury deposits, clan leaderboards.' },
+ { name: ' Fun & Text', value: 'SpongeBob mock, text reverse, large ASCII art block letters.' },
  { name: ' Moderation & AutoMod', value: 'Warning log indexes, time-out silences, kick/ban actions, automated chat content spam blockers.' },
  { name: ' Onboarding & Utility', value: 'Onboarding cards, components reaction role boards, support portal helpdesks, weather alerts.' },
- { name: ' Giveaways & Events', value: 'Draw raffles, scheduler RSVP coordinates, voice room lockdown overrides, streaming alerts.' }
+ { name: ' Giveaways & Events', value: 'Draw raffles, scheduler RSVP coordinates, voice room lockdown overrides, streaming alerts.' },
+ { name: '📊 Analytics', value: 'Server economy overview, top spenders leaderboard, per-member activity reports (Admin).' }
  ]
  },
  help_core: {
@@ -57,7 +61,9 @@ const pages = {
  { name: '`/job list`', value: 'Browses all 12 available careers across 4 tiers with pay ranges and XP bonuses.' },
  { name: '`/beg`', value: 'Beg strangers for spare change. Grants coins (20 to 120) or rare scavenged junk items.' },
  { name: '`/search`', value: 'Selects active buttons to scavenge random locations. (Includes catch/bite penalties).' },
- { name: '`/scramble`', value: 'Starts a channel word scramble — first to unscramble wins coins + XP. Reward scales by word length (base: length × 35 coins). Speed bonuses: answer in ≤15s for +75%, ≤30s for +40%, ≤45s for +15%.' }
+ { name: '`/scramble`', value: 'Starts a channel word scramble — first to unscramble wins coins + XP. Reward scales by word length (base: length × 35 coins). Speed bonuses: answer in ≤15s for +75%, ≤30s for +40%, ≤45s for +15%.' },
+ { name: '`/crime [type]`', value: 'Attempt pickpocket (62%), carjack (42%), or fraud (28%). Success earns coins; failure deducts a fine. Separate cooldowns per crime type.' },
+ { name: '`/cooldowns`', value: 'Shows a full dashboard of all your active command cooldowns — DB-based (daily/work) and in-memory (slots/dice/trivia etc.).' }
  ]
  },
  help_jobs: {
@@ -119,6 +125,9 @@ const pages = {
  { name: '`/pet view`', value: 'Renders pet statistics card: Level/XP, Hunger decay, Energy pools, and Attack/Defense ratings.' },
  { name: '`/pet feed [coins/worm]`', value: 'Feeds companion to fill Hunger stats and stave off starvation levels.' },
  { name: '`/pet train [attribute]`', value: 'Improves Attack or Defense stats (Costs 25 Energy; trains pet to bite thieves trying to rob you).' },
+ { name: '`/pet rename [name]`', value: 'Gives your pet a new name (max 15 characters).' },
+ { name: '`/pet release`', value: 'Permanently releases your pet with a confirmation prompt.' },
+ { name: '`/pet battle [@user]`', value: 'Challenges another member\'s pet to a combat simulation. Winner earns bonus Pet XP.' },
  { name: '`/rank [user]`', value: 'Renders custom visual cyber neon canvas Rank Card showing Level, server-wide Rank, and XP progress.' },
  { name: '`/leaderboard xp/economy`', value: 'Renders top XP leveling tables or coin wealth leaderboards.' },
  { name: '`/vclevel`', value: 'Displays active voice chat minute leaderboards.' },
@@ -180,6 +189,54 @@ const pages = {
  { name: '`/portfolio view [user?]`', value: 'Shows all active long-term holdings and open intraday positions with live PnL calculations.' },
  { name: '`/portfolio open [type] [symbol] [margin]`', value: 'Opens a 5× leveraged intraday LONG (bullish) or SHORT (bearish) position using margin coins as collateral.' },
  { name: '`/portfolio close [symbol]`', value: 'Closes an active leveraged intraday position and settles profit or loss to your wallet.' }
+ ]
+ },
+ help_social: {
+ title: '👤 Social, Profiles & Trivia',
+ accentColor: 0xFF69B4,
+ description: 'Profile cards, personal bios, reputation, marriage, and trivia quiz rewards.',
+ fields: [
+ { name: '`/profile [user]`', value: 'Displays a full profile card: bio, level, net worth, job, pet, clan, marriage status, and rep count.' },
+ { name: '`/bio [text]`', value: 'Set your personal tagline/bio (max 150 chars). Use `/bio` alone to view your current bio.' },
+ { name: '`/rep [@user]`', value: 'Give a reputation point to another member. Once per 24 hours.' },
+ { name: '`/marry propose [@user]`', value: 'Send a marriage proposal with Accept/Decline buttons. Target has 60 seconds to respond.' },
+ { name: '`/marry divorce`', value: 'Dissolve your current marriage.' },
+ { name: '`/trivia [category]`', value: 'Answer a timed multiple-choice trivia question for coins + XP. Categories: General, Science, History, Gaming, Movies.' }
+ ]
+ },
+ help_clan: {
+ title: '🏰 Clans',
+ accentColor: 0x8B5CF6,
+ description: 'Create and manage a server clan, build your treasury, and climb the leaderboard.',
+ fields: [
+ { name: '`/clan create [name]`', value: 'Found a new clan for 5,000 coins. Name must be 2–20 characters.' },
+ { name: '`/clan invite [@user]`', value: 'Invite a member to your clan (owner only). Invite expires in 2 minutes.' },
+ { name: '`/clan join [name]`', value: 'Accept a pending invite and join a clan.' },
+ { name: '`/clan leave`', value: 'Leave your current clan (owners cannot leave).' },
+ { name: '`/clan kick [@user]`', value: 'Remove a member from your clan (owner only).' },
+ { name: '`/clan info [name?]`', value: 'View clan stats, treasury, level, and roster. Leave name blank to view your own clan.' },
+ { name: '`/clan deposit [amount]`', value: 'Contribute coins from your wallet to the clan treasury.' },
+ { name: '`/clan leaderboard`', value: 'View the top 10 clans ranked by treasury wealth on this server.' }
+ ]
+ },
+ help_fun: {
+ title: '🎭 Fun & Text Commands',
+ accentColor: 0xF97316,
+ description: 'Text transformation tools for laughs and creativity.',
+ fields: [
+ { name: '`/mock [text]`', value: 'Converts text to SpongeBob alternating-case mocking format (max 500 chars).' },
+ { name: '`/reverse [text]`', value: 'Reverses the input text character by character (max 500 chars).' },
+ { name: '`/ascii [text]`', value: 'Renders text as giant 5-line tall block art letters in a code block (max 10 chars, A–Z, 0–9).' }
+ ]
+ },
+ help_analytics: {
+ title: '📊 Server Analytics (Admin)',
+ accentColor: 0x06B6D4,
+ description: 'Economy telemetry and member activity inspection tools. Admin only.',
+ fields: [
+ { name: '`/analytics overview`', value: 'Shows total members with profiles, coins in circulation, total XP distributed, average level, and top 5 wealthiest.' },
+ { name: '`/analytics topspenders`', value: 'Top 10 members ranked by combined wallet + bank balance with per-player breakdown.' },
+ { name: '`/analytics activity [@user]`', value: 'Inspect a specific member\'s economy summary: coins, XP, level, job, pet, clan, rep, and cooldown status.' }
  ]
  },
  help_giveaways: {
@@ -245,10 +302,14 @@ function buildMenu(disabled = false) {
  new StringSelectMenuOptionBuilder().setLabel('Casino & Heists').setDescription('/blackjack, slots, roulette, cockfights, heists.').setValue('help_casino'),
  new StringSelectMenuOptionBuilder().setLabel('Scavenging & Shop').setDescription('/hunt, fish, dig, sell 30+ items, consumables, market bazaar.').setValue('help_grinding'),
  new StringSelectMenuOptionBuilder().setLabel('Stocks & Trading').setDescription('/stock list, quote, buy, sell, portfolio open/close/view.').setValue('help_stocks'),
- new StringSelectMenuOptionBuilder().setLabel('Pets & Leveling').setDescription('/pet adopt, feed, train, visual ranks, leaderboards.').setValue('help_pets_leveling'),
+ new StringSelectMenuOptionBuilder().setLabel('Pets & Leveling').setDescription('/pet adopt, feed, train, rename, release, battle, ranks.').setValue('help_pets_leveling'),
+ new StringSelectMenuOptionBuilder().setLabel('Social & Trivia').setDescription('/profile, bio, rep, marry, trivia quiz rewards.').setValue('help_social'),
+ new StringSelectMenuOptionBuilder().setLabel('Clans').setDescription('/clan create, invite, join, leave, deposit, leaderboard.').setValue('help_clan'),
+ new StringSelectMenuOptionBuilder().setLabel('Fun & Text').setDescription('/mock, reverse, ascii block art.').setValue('help_fun'),
  new StringSelectMenuOptionBuilder().setLabel('Moderation & AutoMod').setDescription('/automod, warns, slowmodes, purges, locks, kicks, bans.').setValue('help_moderation'),
  new StringSelectMenuOptionBuilder().setLabel('Onboarding & Utility').setDescription('Welcome visual cards, auto-roles, tickets portal, widgets.').setValue('help_utility'),
- new StringSelectMenuOptionBuilder().setLabel('Giveaways & Event Logs').setDescription('/giveaway, events, voice locks, audit logs list, streamers alerts.').setValue('help_giveaways')
+ new StringSelectMenuOptionBuilder().setLabel('Giveaways & Event Logs').setDescription('/giveaway, events, voice locks, audit logs list, streamers alerts.').setValue('help_giveaways'),
+ new StringSelectMenuOptionBuilder().setLabel('Analytics (Admin)').setDescription('/analytics overview, topspenders, activity — admin only.').setValue('help_analytics')
  );
 
  return new ActionRowBuilder().addComponents(menu);

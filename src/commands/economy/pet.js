@@ -1,7 +1,9 @@
 const {
  SlashCommandBuilder,
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
- SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+ SeparatorBuilder, SeparatorSpacingSize,
+ ActionRowBuilder, ButtonBuilder, ButtonStyle,
+ ComponentType, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
 const { EMOJIS } = require('../../utils/emojis');
@@ -51,7 +53,20 @@ module.exports = {
  { name: ' Attack (For training bite power)', value: 'attack' },
  { name: ' Defense (Increases guard/bite chance when others rob you)', value: 'defense' }
  )
- .setRequired(true))),
+ .setRequired(true)))
+ .addSubcommand(sub =>
+ sub.setName('rename')
+ .setDescription('Give your pet a new name.')
+ .addStringOption(opt =>
+ opt.setName('name').setDescription('New pet name (max 15 chars)').setRequired(true)))
+ .addSubcommand(sub =>
+ sub.setName('release')
+ .setDescription('Release your pet back into the wild (permanent).'))
+ .addSubcommand(sub =>
+ sub.setName('battle')
+ .setDescription('Challenge another member\'s pet to a battle!')
+ .addUserOption(opt =>
+ opt.setName('user').setDescription('The member to battle').setRequired(true))),
 
  async execute(interaction) {
  const { guild, user } = interaction;
@@ -289,6 +304,116 @@ module.exports = {
  .addTextDisplayComponents(new TextDisplayBuilder().setContent(detailText));
 
  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+ }
+
+ if (subcommand === 'rename') {
+ const newName = interaction.options.getString('name').trim();
+ if (newName.length > 15) {
+ return interaction.editReply({ content: 'Pet names are limited to 15 characters!', ephemeral: true });
+ }
+
+ const oldName = pet.name;
+ await db.updatePetStats(guild.id, user.id, { name: newName });
+
+ return interaction.editReply({
+  flags: MessageFlags.IsComponentsV2,
+  components: [new ContainerBuilder()
+   .setAccentColor(0x00E5FF)
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `## Pet Renamed!\n**${oldName}** is now known as **${newName}**.`
+   ))]
+ });
+ }
+
+ if (subcommand === 'release') {
+ const confirmContainer = new ContainerBuilder()
+  .setAccentColor(0xFF4444)
+  .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+   `## ⚠️ Release ${pet.name}?\nThis is **permanent** — you will lose your pet and their progress.\n\nAre you sure?`
+  ))
+  .addActionRowComponents(
+   new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('release_confirm').setLabel('Release').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('release_cancel').setLabel('Cancel').setStyle(ButtonStyle.Secondary)
+   )
+  );
+
+ const sent = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [confirmContainer], fetchReply: true });
+ const collector = sent.createMessageComponentCollector({ componentType: ComponentType.Button, filter: i => i.user.id === user.id, time: 30000, max: 1 });
+
+ collector.on('collect', async (i) => {
+  if (i.customId === 'release_confirm') {
+   await db.releasePet(guild.id, user.id);
+   await i.update({ flags: MessageFlags.IsComponentsV2, components: [new ContainerBuilder()
+    .setAccentColor(0x6B7280)
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+     `## Pet Released\n**${pet.name}** has been released into the wild.`
+    ))] });
+  } else {
+   await i.update({ flags: MessageFlags.IsComponentsV2, components: [new ContainerBuilder()
+    .setAccentColor(0x00FF66)
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Cancelled\n**${pet.name}** stays with you.`))] });
+  }
+ });
+
+ collector.on('end', async (collected, reason) => {
+  if (reason === 'time' && collected.size === 0) {
+   await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [new ContainerBuilder()
+    .setAccentColor(0x6B7280)
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Timed Out\nRelease cancelled.`))] }).catch(() => {});
+  }
+ });
+
+ return;
+ }
+
+ if (subcommand === 'battle') {
+ const opponent = interaction.options.getUser('user');
+ if (opponent.id === user.id) return interaction.editReply({ content: 'You cannot battle your own pet!', ephemeral: true });
+ if (opponent.bot) return interaction.editReply({ content: 'Bots do not have pets!', ephemeral: true });
+
+ const opponentPet = await db.getPet(guild.id, opponent.id);
+ if (!opponentPet) return interaction.editReply({ content: `<@${opponent.id}> does not have a pet!`, ephemeral: true });
+
+ const myPower = pet.attack * 2 + pet.defense + pet.level * 3 + Math.floor(Math.random() * 20);
+ const theirPower = opponentPet.attack * 2 + opponentPet.defense + opponentPet.level * 3 + Math.floor(Math.random() * 20);
+
+ const myWon = myPower > theirPower;
+ const tied = myPower === theirPower;
+
+ let resultText, xpReward;
+ if (tied) {
+  resultText = `## Pet Battle — Draw!\n**${pet.name}** vs **${opponentPet.name}** ended in a draw!`;
+  xpReward = 15;
+ } else if (myWon) {
+  resultText = `## Pet Battle — Victory!\n**${pet.name}** defeated **${opponentPet.name}**!`;
+  xpReward = 40;
+ } else {
+  resultText = `## Pet Battle — Defeat!\n**${pet.name}** lost to **${opponentPet.name}**!`;
+  xpReward = 10;
+ }
+
+ const newPetXp = pet.xp + xpReward;
+ const xpNeededForLevel = pet.level * 200;
+ const statsUpdate = { xp: newPetXp % xpNeededForLevel };
+ if (newPetXp >= xpNeededForLevel) statsUpdate.level = pet.level + 1;
+ await db.updatePetStats(guild.id, user.id, statsUpdate);
+
+ return interaction.editReply({
+  flags: MessageFlags.IsComponentsV2,
+  components: [new ContainerBuilder()
+   .setAccentColor(myWon ? 0x00FF66 : tied ? 0xFFD700 : 0xFF4444)
+   .addSectionComponents(
+    new SectionBuilder()
+     .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+      `${resultText}\n\n` +
+      `**${pet.name}** Power: \`${myPower}\`\n` +
+      `**${opponentPet.name}** Power: \`${theirPower}\`\n\n` +
+      `+${xpReward} Pet XP earned!`
+     ))
+     .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+   )]
+ });
  }
 
  } catch (err) {
