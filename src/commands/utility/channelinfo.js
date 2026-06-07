@@ -1,18 +1,18 @@
-const { SlashCommandBuilder, EmbedBuilder, ChannelType } = require('discord.js');
+const {
+    SlashCommandBuilder, ChannelType,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder,
+    ThumbnailBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('channelinfo')
         .setDescription('Displays detailed information and metadata about a server channel.')
-        .addChannelOption(opt => 
+        .addChannelOption(opt =>
             opt.setName('channel')
                 .setDescription('The channel you want to inspect')
                 .setRequired(true)),
 
-    /**
-     * Executes the channelinfo command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, options } = interaction;
         if (!guild) return;
@@ -21,8 +21,7 @@ module.exports = {
 
         try {
             const createdUnix = Math.floor(channel.createdTimestamp / 1000);
-            
-            // Map channel type to readable name
+
             let readableType = 'Unknown Channel';
             if (channel.type === ChannelType.GuildText) readableType = '📝 Text Channel';
             if (channel.type === ChannelType.GuildVoice) readableType = '🎙️ Voice Channel';
@@ -30,39 +29,47 @@ module.exports = {
             if (channel.type === ChannelType.GuildAnnouncement) readableType = '📢 Announcement Channel';
             if (channel.type === ChannelType.GuildStageVoice) readableType = '🎭 Stage Channel';
 
-            const embed = new EmbedBuilder()
-                .setTitle(`📺 Channel Profile: ${channel.name}`)
-                .setColor('#8b5cf6')
-                .setTimestamp()
-                .addFields(
-                    { name: 'Channel Name', value: `${channel}`, inline: true },
-                    { name: 'Channel ID', value: `\`${channel.id}\``, inline: true },
-                    { name: 'Channel Type', value: `${readableType}`, inline: true },
-                    { name: 'Category Parent', value: channel.parent ? `📁 ${channel.parent.name}` : '`None`', inline: true },
-                    { name: 'NSFW Restriction', value: channel.nsfw ? '🔞 Yes (Restricted)' : '✅ No (Safe)', inline: true },
-                    { name: 'Created At', value: `<t:${createdUnix}:F> (<t:${createdUnix}:R>)`, inline: false }
-                );
+            let details = `**Channel:** ${channel}\n` +
+                `**ID:** \`${channel.id}\`\n` +
+                `**Type:** ${readableType}\n` +
+                `**Category:** ${channel.parent ? `📁 ${channel.parent.name}` : '`None`'}\n` +
+                `**NSFW:** ${channel.nsfw ? '🔞 Yes (Restricted)' : '✅ No (Safe)'}\n` +
+                `**Created:** <t:${createdUnix}:F> (<t:${createdUnix}:R>)`;
 
             if (channel.type === ChannelType.GuildText && channel.topic) {
-                embed.addFields({ name: 'Channel Topic', value: `*"${channel.topic}"*`, inline: false });
+                details += `\n**Topic:** *"${channel.topic}"*`;
             }
 
             if (channel.type === ChannelType.GuildVoice) {
-                embed.addFields(
-                    { name: 'User Bitrate', value: `🔊 ${channel.bitrate / 1000}kbps`, inline: true },
-                    { name: 'User Limit Capacity', value: channel.userLimit > 0 ? `👥 ${channel.userLimit.toLocaleString()} members max` : '👥 Unlimited', inline: true }
-                );
+                details += `\n**Bitrate:** 🔊 ${channel.bitrate / 1000}kbps\n` +
+                    `**User Limit:** ${channel.userLimit > 0 ? `👥 ${channel.userLimit.toLocaleString()} max` : '👥 Unlimited'}`;
             }
 
-            await interaction.editReply({ embeds: [embed] });
+            const container = new ContainerBuilder()
+                .setAccentColor(0x8b5cf6)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`## 📺 Channel Profile: ${channel.name}`)
+                        )
+                        .setThumbnailAccessory(
+                            new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) ?? 'https://cdn.discordapp.com/embed/avatars/0.png')
+                        )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(details)
+                );
+
+            await interaction.editReply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [container]
+            });
         } catch (err) {
             console.error('[CHANNELINFO ERROR]', err);
-            const _errMsg = { content: '❌ Failed to fetch channel information.', ephemeral: true };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(_errMsg).catch(() => null);
-            } else {
-                await interaction.editReply(_errMsg).catch(() => null);
-            }
+            const errMsg = { content: '❌ Failed to fetch channel information.', ephemeral: true };
+            if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => null);
+            else await interaction.editReply(errMsg).catch(() => null);
         }
     }
 };

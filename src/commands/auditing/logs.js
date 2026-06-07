@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -14,10 +17,6 @@ module.exports = {
                 .setDescription('View recent voice channel connection activity.')
                 .addUserOption(opt => opt.setName('user').setDescription('Filter voice logs for a specific member').setRequired(false))),
 
-    /**
-     * Executes the logs command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, options, client } = interaction;
         if (!guild) return;
@@ -28,22 +27,14 @@ module.exports = {
         try {
             if (subcommand === 'message') {
                 const logs = client.messageAuditLog || [];
-                // Filter by guild and user if specified
                 let filtered = logs.filter(l => l.guildId === guild.id);
-                if (targetUser) {
-                    filtered = filtered.filter(l => l.userId === targetUser.id);
-                }
+                if (targetUser) filtered = filtered.filter(l => l.userId === targetUser.id);
 
                 if (filtered.length === 0) {
                     return interaction.editReply({ content: '📜 No recent chat message edits or deletions logged.' });
                 }
 
-                const embed = new EmbedBuilder()
-                    .setTitle(`📝 Chat Activity Logs: ${guild.name}`)
-                    .setColor('#FF9900')
-                    .setTimestamp();
-
-                const logsText = filtered.slice(0, 15).map((l, index) => {
+                const logsText = filtered.slice(0, 15).map(l => {
                     const time = `<t:${Math.floor(l.timestamp / 1000)}:T>`;
                     if (l.type === 'DELETE') {
                         return `${time} 🗑️ **[DELETE]** <@${l.userId}> in **#${l.channelName}**:\n> *${l.content.substring(0, 100)}*`;
@@ -52,34 +43,46 @@ module.exports = {
                     }
                 }).join('\n\n');
 
-                embed.setDescription(logsText);
-                await interaction.editReply({ embeds: [embed] });
-            } 
-            
-            else if (subcommand === 'voice') {
+                const header = targetUser ? `## 📝 Chat Activity Logs — ${targetUser.username}` : `## 📝 Chat Activity Logs — ${guild.name}`;
+
+                const container = new ContainerBuilder()
+                    .setAccentColor(0xFF9900)
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent(logsText))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`-# Showing up to 15 most recent events`)
+                    );
+
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+            }
+
+            if (subcommand === 'voice') {
                 const logs = client.voiceAuditLog || [];
-                // Filter by guild and user if specified
                 let filtered = logs.filter(l => l.guildId === guild.id);
-                if (targetUser) {
-                    filtered = filtered.filter(l => l.userId === targetUser.id);
-                }
+                if (targetUser) filtered = filtered.filter(l => l.userId === targetUser.id);
 
                 if (filtered.length === 0) {
                     return interaction.editReply({ content: '📜 No recent voice activity logged.' });
                 }
-
-                const embed = new EmbedBuilder()
-                    .setTitle(`🎙️ Voice Connection Logs: ${guild.name}`)
-                    .setColor('#00CCFF')
-                    .setTimestamp();
 
                 const logsText = filtered.slice(0, 15).map(l => {
                     const time = `<t:${Math.floor(l.timestamp / 1000)}:T>`;
                     return `${time} 👤 <@${l.userId}>: ${l.details}`;
                 }).join('\n');
 
-                embed.setDescription(logsText);
-                await interaction.editReply({ embeds: [embed] });
+                const header = targetUser ? `## 🎙️ Voice Connection Logs — ${targetUser.username}` : `## 🎙️ Voice Connection Logs — ${guild.name}`;
+
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00CCFF)
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent(logsText))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`-# Showing up to 15 most recent voice events`)
+                    );
+
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
         } catch (err) {
             console.error('[LOGS COMMAND ERROR]', err);

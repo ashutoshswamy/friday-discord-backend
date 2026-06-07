@@ -1,28 +1,48 @@
-const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, StringSelectMenuBuilder, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 const BUILT_IN_CONSUMABLES = new Set(['pizza', 'energy drink', 'gamer energy drink', 'lootbox', 'prize box']);
 
 async function processItem(guild, user, matchedItem, shopItems) {
-    const embed = new EmbedBuilder().setTimestamp();
     const normalizedName = matchedItem.toLowerCase();
 
     if (normalizedName === 'pizza') {
         await db.addXp(guild.id, user.id, 150);
-        embed.setTitle('🍕 Delicious Pizza!')
-            .setColor('#00FFCC')
-            .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-            .setDescription('You ate the **Pizza**! It was absolutely delicious!\nYou gained **🏆 150 XP** instantly towards your rank.');
-        return { embed };
+        return {
+            container: new ContainerBuilder()
+                .setAccentColor(0x00FFCC)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 🍕 Delicious Pizza!\nYou ate the **Pizza**! It was absolutely delicious!\nYou gained **🏆 150 XP** instantly towards your rank.`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                )
+        };
     }
 
     if (normalizedName === 'energy drink' || normalizedName === 'gamer energy drink') {
         await db.updateCoins(guild.id, user.id, 300);
-        embed.setTitle('⚡ Energy Boost!')
-            .setColor('#00FFCC')
-            .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-            .setDescription(`You gulped down the **${matchedItem}** and felt a surge of productivity!\nYou earned **🪙 300 coins** directly in your wallet.`);
-        return { embed };
+        return {
+            container: new ContainerBuilder()
+                .setAccentColor(0x00FFCC)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## ⚡ Energy Boost!\nYou gulped down the **${matchedItem}** and felt a surge of productivity!\nYou earned **<:coin:1512926963239489606> 300 coins** directly in your wallet.`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                )
+        };
     }
 
     if (normalizedName === 'lootbox' || normalizedName === 'prize box') {
@@ -32,7 +52,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
         if (roll < 0.10) {
             await db.updateCoins(guild.id, user.id, 2500);
             prizeTitle = '💎 JACKPOT WINNER!';
-            prizeDesc = `🎉 You hit the **SUPER JACKPOT**!\nYou won a massive **🪙 2,500 coins** directly in your wallet!`;
+            prizeDesc = `🎉 You hit the **SUPER JACKPOT**!\nYou won a massive **<:coin:1512926963239489606> 2,500 coins** directly in your wallet!`;
         } else if (roll < 0.30) {
             await db.addItemToInventory(guild.id, user.id, 'Silver Ring');
             prizeTitle = '💍 Rare Item!';
@@ -45,18 +65,23 @@ async function processItem(guild, user, matchedItem, shopItems) {
         } else {
             const coinGain = Math.floor(Math.random() * 401) + 200;
             await db.updateCoins(guild.id, user.id, coinGain);
-            prizeTitle = '🪙 Coin Cache!';
-            prizeDesc = `The chest opened to reveal spare coins!\nYou pocketed **🪙 ${coinGain.toLocaleString()} coins** in your wallet.`;
+            prizeTitle = '<:coin:1512926963239489606> Coin Cache!';
+            prizeDesc = `The chest opened to reveal spare coins!\nYou pocketed **<:coin:1512926963239489606> ${coinGain.toLocaleString()} coins** in your wallet.`;
         }
 
-        embed.setTitle(`🎁 Lootbox: ${prizeTitle}`)
-            .setColor('#FF00AA')
-            .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-            .setDescription(prizeDesc);
-        return { embed };
+        return {
+            container: new ContainerBuilder()
+                .setAccentColor(0xFF00AA)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`## 🎁 Lootbox: ${prizeTitle}\n${prizeDesc}`)
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                )
+        };
     }
 
-    // Custom consumables
     const customConsumable = shopItems.find(i => i.name.toLowerCase() === normalizedName);
     if (customConsumable?.actionType) {
         const actionType = customConsumable.actionType.toUpperCase();
@@ -64,18 +89,34 @@ async function processItem(guild, user, matchedItem, shopItems) {
 
         if (actionType === 'XP') {
             await db.addXp(guild.id, user.id, actionValue);
-            embed.setTitle(`✨ Used ${customConsumable.name}!`)
-                .setColor('#00FFCC')
-                .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`You consumed **${customConsumable.name}**!\nYou gained **🏆 ${actionValue.toLocaleString()} XP** towards your rank.`);
-            return { embed };
+            return {
+                container: new ContainerBuilder()
+                    .setAccentColor(0x00FFCC)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## ✨ Used ${customConsumable.name}!\nYou consumed **${customConsumable.name}**!\nYou gained **🏆 ${actionValue.toLocaleString()} XP** towards your rank.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                    )
+            };
         } else if (actionType === 'COINS') {
             await db.updateCoins(guild.id, user.id, actionValue);
-            embed.setTitle(`🪙 Used ${customConsumable.name}!`)
-                .setColor('#FFD700')
-                .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`You consumed **${customConsumable.name}**!\nYou received **🪙 ${actionValue.toLocaleString()} coins** in your wallet.`);
-            return { embed };
+            return {
+                container: new ContainerBuilder()
+                    .setAccentColor(0xFFD700)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## <:coin:1512926963239489606> Used ${customConsumable.name}!\nYou consumed **${customConsumable.name}**!\nYou received **<:coin:1512926963239489606> ${actionValue.toLocaleString()} coins** in your wallet.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                    )
+            };
         } else {
             return { error: `❌ **${matchedItem}** has an unrecognized effect type and cannot be used.`, refund: true };
         }
@@ -103,7 +144,6 @@ module.exports = {
             const inventory = await db.getInventory(guild.id, user.id);
             const shopItems = await db.getShopItems(guild.id);
 
-            // Determine all usable items in inventory
             const customConsumableNames = shopItems
                 .filter(i => i.actionType)
                 .map(i => i.name.toLowerCase());
@@ -112,7 +152,6 @@ module.exports = {
                 BUILT_IN_CONSUMABLES.has(name.toLowerCase()) || customConsumableNames.includes(name.toLowerCase())
             ))];
 
-            // Direct use if item name provided
             if (itemNameInput) {
                 const matchedItem = inventory.find(i => i.toLowerCase() === itemNameInput.toLowerCase());
                 if (!matchedItem) {
@@ -133,10 +172,9 @@ module.exports = {
                     return interaction.editReply({ content: result.error, ephemeral: true });
                 }
 
-                return interaction.editReply({ embeds: [result.embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [result.container] });
             }
 
-            // Interactive picker — show consumable select menu
             if (usableItems.length === 0) {
                 return interaction.editReply({
                     content: '❌ You have no consumable items in your inventory. Visit `/shop view` to buy consumables like Pizza, Energy Drink, or Lootboxes.',
@@ -160,16 +198,21 @@ module.exports = {
                 .setPlaceholder('⚡ Choose a consumable to use...')
                 .addOptions(selectOptions);
 
-            const row = new ActionRowBuilder().addComponents(select);
+            const promptContainer = new ContainerBuilder()
+                .setAccentColor(0x00FFCC)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## ⚡ Use a Consumable Item\nYou have **${usableItems.length}** consumable item(s) available.\nSelect one from the menu below to activate it.`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addActionRowComponents(new ActionRowBuilder().addComponents(select));
 
-            const promptEmbed = new EmbedBuilder()
-                .setTitle('⚡ Use a Consumable Item')
-                .setColor('#00FFCC')
-                .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`You have **${usableItems.length}** consumable item(s) available.\nSelect one from the menu below to activate it.`)
-                .setFooter({ text: 'Select within 30 seconds' });
-
-            const response = await interaction.editReply({ embeds: [promptEmbed], components: [row] });
+            const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [promptContainer] });
 
             const collector = response.createMessageComponentCollector({
                 filter: i => i.user.id === user.id,
@@ -197,7 +240,7 @@ module.exports = {
                     return i.followUp({ content: result.error, ephemeral: true });
                 }
 
-                await i.editReply({ embeds: [result.embed], components: [] });
+                await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [result.container] });
             });
 
             collector.on('end', async (collected, reason) => {
@@ -207,7 +250,22 @@ module.exports = {
                         .setPlaceholder('⚡ Session expired')
                         .setDisabled(true)
                         .addOptions({ label: 'Expired', value: 'expired' });
-                    await interaction.editReply({ components: [new ActionRowBuilder().addComponents(disabledSelect)] }).catch(() => null);
+
+                    const expiredContainer = new ContainerBuilder()
+                        .setAccentColor(0x00FFCC)
+                        .addSectionComponents(
+                            new SectionBuilder()
+                                .addTextDisplayComponents(
+                                    new TextDisplayBuilder().setContent(
+                                        `## ⚡ Use a Consumable Item\nSession expired. Run the command again to use an item.`
+                                    )
+                                )
+                                .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                        .addActionRowComponents(new ActionRowBuilder().addComponents(disabledSelect));
+
+                    await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => null);
                 }
             });
 

@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 const SELLABLE_ITEMS = {
@@ -8,6 +13,36 @@ const SELLABLE_ITEMS = {
     'dirt fossil': 200, 'ancient vase': 600, 'buried gold chest': 1500,
     'silver ring': 250, 'lootbox': 300
 };
+
+function buildInventoryContainer(targetUser, itemCounts, items, extraText, sellBtn, useBtn, sellableOwned) {
+    const listText = Object.keys(itemCounts).length > 0
+        ? Object.entries(itemCounts).map(([name, count]) => `• **${name}**${count > 1 ? ` ×${count}` : ''}`).join('\n')
+        : '*Inventory is now empty*';
+
+    const container = new ContainerBuilder()
+        .setAccentColor(0xFF8C00)
+        .addSectionComponents(
+            new SectionBuilder()
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(`## 🎒 Inventory: ${targetUser.username}\n${items.length} item(s) total`)
+                )
+                .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
+        )
+        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(listText));
+
+    if (extraText) {
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(extraText));
+    }
+
+    if (sellBtn && useBtn) {
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+        container.addActionRowComponents(new ActionRowBuilder().addComponents(sellBtn, useBtn));
+    }
+
+    return container;
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -39,28 +74,14 @@ module.exports = {
             }
 
             const itemCounts = {};
-            items.forEach(name => {
-                itemCounts[name] = (itemCounts[name] || 0) + 1;
-            });
-
-            const listText = Object.entries(itemCounts).map(([name, count]) =>
-                `• **${name}**${count > 1 ? ` ×${count}` : ''}`
-            ).join('\n');
-
-            const embed = new EmbedBuilder()
-                .setTitle(`🎒 Inventory: ${targetUser.username}`)
-                .setColor('#FF8C00')
-                .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                .setDescription(listText)
-                .setFooter({ text: `${items.length} item(s) total` })
-                .setTimestamp();
+            items.forEach(name => { itemCounts[name] = (itemCounts[name] || 0) + 1; });
 
             const isSelf = targetUser.id === user.id;
             if (!isSelf) {
-                return interaction.editReply({ embeds: [embed] });
+                const container = buildInventoryContainer(targetUser, itemCounts, items, null, null, null, []);
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
-            // Build unique sellable item list for the select menu
             const uniqueItems = Object.keys(itemCounts);
             const sellableOwned = uniqueItems.filter(n => SELLABLE_ITEMS[n.toLowerCase()] !== undefined);
 
@@ -74,15 +95,12 @@ module.exports = {
                 .setLabel('⚡ Use an Item')
                 .setStyle(ButtonStyle.Primary);
 
-            const row = new ActionRowBuilder().addComponents(sellBtn, useBtn);
+            const container = buildInventoryContainer(user, itemCounts, items, null, sellBtn, useBtn, sellableOwned);
 
-            const components = [row];
-
-            // Add sell select menu if there are sellable items
             if (sellableOwned.length > 0) {
                 const sellOptions = sellableOwned.slice(0, 25).map(name => ({
                     label: `${name} (×${itemCounts[name]})`,
-                    description: `Sells for 🪙 ${SELLABLE_ITEMS[name.toLowerCase()]} each`,
+                    description: `Sells for <:coin:1512926963239489606> ${SELLABLE_ITEMS[name.toLowerCase()]} each`,
                     value: `sell_${name}`
                 }));
 
@@ -91,10 +109,10 @@ module.exports = {
                     .setPlaceholder('🗑️ Sell a specific item...')
                     .addOptions(sellOptions);
 
-                components.push(new ActionRowBuilder().addComponents(sellSelect));
+                container.addActionRowComponents(new ActionRowBuilder().addComponents(sellSelect));
             }
 
-            const response = await interaction.editReply({ embeds: [embed], components });
+            const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
             const collector = response.createMessageComponentCollector({
                 filter: i => i.user.id === user.id,
@@ -132,20 +150,34 @@ module.exports = {
                     const refreshedCounts = {};
                     refreshedItems.forEach(name => { refreshedCounts[name] = (refreshedCounts[name] || 0) + 1; });
 
-                    const refreshedText = Object.keys(refreshedCounts).length > 0
-                        ? Object.entries(refreshedCounts).map(([name, count]) => `• **${name}**${count > 1 ? ` ×${count}` : ''}`).join('\n')
-                        : '*Inventory is now empty*';
+                    const extraText = `💰 **Junk Sold:** ${soldCount} item(s) for <:coin:1512926963239489606> **+${totalEarned.toLocaleString()}** coins!`;
+                    const refreshedSellable = Object.keys(refreshedCounts).filter(n => SELLABLE_ITEMS[n.toLowerCase()] !== undefined);
 
-                    const refreshedEmbed = new EmbedBuilder()
-                        .setTitle(`🎒 Inventory: ${user.username}`)
-                        .setColor('#FF8C00')
-                        .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                        .setDescription(refreshedText)
-                        .addFields({ name: '💰 Junk Sold', value: `Sold **${soldCount}** junk item(s) for 🪙 **+${totalEarned.toLocaleString()}** coins!` })
-                        .setFooter({ text: `${refreshedItems.length} item(s) remaining` })
-                        .setTimestamp();
+                    const newSellBtn = new ButtonBuilder()
+                        .setCustomId('inv_sell_all_junk')
+                        .setLabel('💰 Sell All Junk')
+                        .setStyle(ButtonStyle.Success);
+                    const newUseBtn = new ButtonBuilder()
+                        .setCustomId('inv_use_item')
+                        .setLabel('⚡ Use an Item')
+                        .setStyle(ButtonStyle.Primary);
 
-                    await i.editReply({ embeds: [refreshedEmbed] });
+                    const refreshedContainer = buildInventoryContainer(user, refreshedCounts, refreshedItems, extraText, newSellBtn, newUseBtn, refreshedSellable);
+
+                    if (refreshedSellable.length > 0) {
+                        const newSellOptions = refreshedSellable.slice(0, 25).map(name => ({
+                            label: `${name} (×${refreshedCounts[name]})`,
+                            description: `Sells for <:coin:1512926963239489606> ${SELLABLE_ITEMS[name.toLowerCase()]} each`,
+                            value: `sell_${name}`
+                        }));
+                        const newSellSelect = new StringSelectMenuBuilder()
+                            .setCustomId('inv_sell_select')
+                            .setPlaceholder('🗑️ Sell a specific item...')
+                            .addOptions(newSellOptions);
+                        refreshedContainer.addActionRowComponents(new ActionRowBuilder().addComponents(newSellSelect));
+                    }
+
+                    await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [refreshedContainer] });
 
                 } else if (i.customId === 'inv_use_item') {
                     await i.reply({ content: '⚡ Use `/use [item]` to consume items from your inventory!', ephemeral: true });
@@ -174,39 +206,65 @@ module.exports = {
                     const refreshedCounts = {};
                     refreshedItems.forEach(name => { refreshedCounts[name] = (refreshedCounts[name] || 0) + 1; });
 
-                    const refreshedText = Object.keys(refreshedCounts).length > 0
-                        ? Object.entries(refreshedCounts).map(([name, count]) => `• **${name}**${count > 1 ? ` ×${count}` : ''}`).join('\n')
-                        : '*Inventory is now empty*';
+                    const extraText = `💰 **Item Sold:** 1× **${itemName}** for <:coin:1512926963239489606> **+${price.toLocaleString()}** coins!`;
+                    const refreshedSellable = Object.keys(refreshedCounts).filter(n => SELLABLE_ITEMS[n.toLowerCase()] !== undefined);
 
-                    const refreshedEmbed = new EmbedBuilder()
-                        .setTitle(`🎒 Inventory: ${user.username}`)
-                        .setColor('#FF8C00')
-                        .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                        .setDescription(refreshedText)
-                        .addFields({ name: '💰 Item Sold', value: `Sold **1× ${itemName}** for 🪙 **+${price.toLocaleString()}** coins!` })
-                        .setFooter({ text: `${refreshedItems.length} item(s) remaining` })
-                        .setTimestamp();
+                    const newSellBtn = new ButtonBuilder()
+                        .setCustomId('inv_sell_all_junk')
+                        .setLabel('💰 Sell All Junk')
+                        .setStyle(ButtonStyle.Success);
+                    const newUseBtn = new ButtonBuilder()
+                        .setCustomId('inv_use_item')
+                        .setLabel('⚡ Use an Item')
+                        .setStyle(ButtonStyle.Primary);
 
-                    await i.editReply({ embeds: [refreshedEmbed] });
+                    const refreshedContainer = buildInventoryContainer(user, refreshedCounts, refreshedItems, extraText, newSellBtn, newUseBtn, refreshedSellable);
+
+                    if (refreshedSellable.length > 0) {
+                        const newSellOptions = refreshedSellable.slice(0, 25).map(name => ({
+                            label: `${name} (×${refreshedCounts[name]})`,
+                            description: `Sells for <:coin:1512926963239489606> ${SELLABLE_ITEMS[name.toLowerCase()]} each`,
+                            value: `sell_${name}`
+                        }));
+                        const newSellSelect = new StringSelectMenuBuilder()
+                            .setCustomId('inv_sell_select')
+                            .setPlaceholder('🗑️ Sell a specific item...')
+                            .addOptions(newSellOptions);
+                        refreshedContainer.addActionRowComponents(new ActionRowBuilder().addComponents(newSellSelect));
+                    }
+
+                    await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [refreshedContainer] });
                 }
             });
 
             collector.on('end', async () => {
-                const disabledComponents = [
-                    new ActionRowBuilder().addComponents(
-                        ButtonBuilder.from(sellBtn).setDisabled(true),
-                        ButtonBuilder.from(useBtn).setDisabled(true)
-                    )
-                ];
+                const disabledSellBtn = new ButtonBuilder()
+                    .setCustomId('inv_sell_all_junk')
+                    .setLabel('💰 Sell All Junk')
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(true);
+                const disabledUseBtn = new ButtonBuilder()
+                    .setCustomId('inv_use_item')
+                    .setLabel('⚡ Use an Item')
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(true);
+
+                const currentItems = await db.getInventory(guild.id, user.id).catch(() => items);
+                const currentCounts = {};
+                currentItems.forEach(name => { currentCounts[name] = (currentCounts[name] || 0) + 1; });
+
+                const expiredContainer = buildInventoryContainer(user, currentCounts, currentItems, null, disabledSellBtn, disabledUseBtn, []);
+
                 if (sellableOwned.length > 0) {
                     const disabledSelect = new StringSelectMenuBuilder()
                         .setCustomId('inv_sell_select')
                         .setPlaceholder('🗑️ Session expired')
                         .setDisabled(true)
                         .addOptions({ label: 'Expired', value: 'expired' });
-                    disabledComponents.push(new ActionRowBuilder().addComponents(disabledSelect));
+                    expiredContainer.addActionRowComponents(new ActionRowBuilder().addComponents(disabledSelect));
                 }
-                await interaction.editReply({ components: disabledComponents }).catch(() => null);
+
+                await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => null);
             });
 
         } catch (err) {

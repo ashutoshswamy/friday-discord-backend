@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits, ChannelType,
+    ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -6,8 +9,6 @@ module.exports = {
         .setName('alerts')
         .setDescription('Configure social media stream and upload notifications.')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-        
-        // Subcommand: youtube
         .addSubcommand(sub =>
             sub.setName('youtube')
                 .setDescription('Configure YouTube video upload notification alerts.')
@@ -21,16 +22,10 @@ module.exports = {
                             { name: 'List Active Subscriptions', value: 'list' }
                         ))
                 .addStringOption(opt =>
-                    opt.setName('url')
-                        .setDescription('The YouTube channel URL link')
-                        .setRequired(false))
+                    opt.setName('url').setDescription('The YouTube channel URL link').setRequired(false))
                 .addChannelOption(opt =>
-                    opt.setName('channel')
-                        .setDescription('Discord channel to send notifications inside')
-                        .addChannelTypes(ChannelType.GuildText)
-                        .setRequired(false)))
-        
-        // Subcommand: twitch
+                    opt.setName('channel').setDescription('Discord channel to send notifications inside')
+                        .addChannelTypes(ChannelType.GuildText).setRequired(false)))
         .addSubcommand(sub =>
             sub.setName('twitch')
                 .setDescription('Configure Twitch stream live notification alerts.')
@@ -44,19 +39,11 @@ module.exports = {
                             { name: 'List Active Subscriptions', value: 'list' }
                         ))
                 .addStringOption(opt =>
-                    opt.setName('username')
-                        .setDescription('The Twitch username channel')
-                        .setRequired(false))
+                    opt.setName('username').setDescription('The Twitch username channel').setRequired(false))
                 .addChannelOption(opt =>
-                    opt.setName('channel')
-                        .setDescription('Discord channel to send notifications inside')
-                        .addChannelTypes(ChannelType.GuildText)
-                        .setRequired(false))),
+                    opt.setName('channel').setDescription('Discord channel to send notifications inside')
+                        .addChannelTypes(ChannelType.GuildText).setRequired(false))),
 
-    /**
-     * Executes the alerts command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, options } = interaction;
         if (!guild) return;
@@ -64,19 +51,15 @@ module.exports = {
         const subcommand = options.getSubcommand();
 
         try {
-            // ------------------------------------------
-            // A. Subcommand: youtube
-            // ------------------------------------------
             if (subcommand === 'youtube') {
                 const action = options.getString('action');
                 const url = options.getString('url');
                 const channel = options.getChannel('channel');
 
-                // Validation: Alterations require target URLs and Discord pings channel
                 if (action !== 'list' && (!url || !channel)) {
-                    return interaction.editReply({ 
-                        content: '❌ You must specify both a YouTube channel `url` and a target text `channel`!', 
-                        ephemeral: true 
+                    return interaction.editReply({
+                        content: '❌ You must specify both a YouTube channel `url` and a target text `channel`!',
+                        ephemeral: true
                     });
                 }
 
@@ -88,7 +71,9 @@ module.exports = {
                 if (action === 'remove') {
                     const success = await db.removeYoutubeAlert(guild.id, url);
                     return interaction.editReply({
-                        content: success ? `✅ Successfully removed YouTube alerts subscription for ${url}.` : `❌ No active subscription was found for ${url}.`,
+                        content: success
+                            ? `✅ Successfully removed YouTube alerts subscription for ${url}.`
+                            : `❌ No active subscription was found for ${url}.`,
                         ephemeral: !success
                     });
                 }
@@ -99,31 +84,34 @@ module.exports = {
                         return interaction.editReply({ content: '📜 There are currently no YouTube alert subscriptions configured.' });
                     }
 
-                    const listText = alertsList.map((item, idx) => `${idx + 1}. **Channel**: <#${item.channelId}> • **URL**: ${item.youtubeUrl}`).join('\n');
+                    const listText = alertsList.map((item, idx) =>
+                        `${idx + 1}. **Channel:** <#${item.channelId}>\n   **URL:** ${item.youtubeUrl}`
+                    ).join('\n\n');
 
-                    const embed = new EmbedBuilder()
-                        .setTitle('📹 YouTube Alert Subscriptions')
-                        .setColor('#FF0000')
-                        .setDescription(listText)
-                        .setTimestamp();
+                    const container = new ContainerBuilder()
+                        .setAccentColor(0xFF0000)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`## 📹 YouTube Alert Subscriptions`)
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                        .addTextDisplayComponents(new TextDisplayBuilder().setContent(listText))
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`-# ${alertsList.length} active YouTube subscription${alertsList.length !== 1 ? 's' : ''}`)
+                        );
 
-                    return interaction.editReply({ embeds: [embed] });
+                    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
                 }
             }
 
-            // ------------------------------------------
-            // B. Subcommand: twitch
-            // ------------------------------------------
             if (subcommand === 'twitch') {
                 const action = options.getString('action');
                 const username = options.getString('username');
                 const channel = options.getChannel('channel');
 
-                // Validation: Alterations require targeted username and Discord pings channel
                 if (action !== 'list' && (!username || !channel)) {
-                    return interaction.editReply({ 
-                        content: '❌ You must specify both a Twitch `username` and a target text `channel`!', 
-                        ephemeral: true 
+                    return interaction.editReply({
+                        content: '❌ You must specify both a Twitch `username` and a target text `channel`!',
+                        ephemeral: true
                     });
                 }
 
@@ -135,7 +123,9 @@ module.exports = {
                 if (action === 'remove') {
                     const success = await db.removeTwitchAlert(guild.id, username);
                     return interaction.editReply({
-                        content: success ? `✅ Successfully removed Twitch live alerts subscription for **${username}**.` : `❌ No active subscription was found for **${username}**.`,
+                        content: success
+                            ? `✅ Successfully removed Twitch live alerts subscription for **${username}**.`
+                            : `❌ No active subscription was found for **${username}**.`,
                         ephemeral: !success
                     });
                 }
@@ -146,15 +136,22 @@ module.exports = {
                         return interaction.editReply({ content: '📜 There are currently no Twitch live alert subscriptions configured.' });
                     }
 
-                    const listText = alertsList.map((item, idx) => `${idx + 1}. **Channel**: <#${item.channelId}> • **Twitch User**: \`${item.twitchUsername}\``).join('\n');
+                    const listText = alertsList.map((item, idx) =>
+                        `${idx + 1}. **Channel:** <#${item.channelId}>\n   **Twitch User:** \`${item.twitchUsername}\``
+                    ).join('\n\n');
 
-                    const embed = new EmbedBuilder()
-                        .setTitle('🎮 Twitch Live Alert Subscriptions')
-                        .setColor('#9146FF')
-                        .setDescription(listText)
-                        .setTimestamp();
+                    const container = new ContainerBuilder()
+                        .setAccentColor(0x9146FF)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`## 🎮 Twitch Live Alert Subscriptions`)
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                        .addTextDisplayComponents(new TextDisplayBuilder().setContent(listText))
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`-# ${alertsList.length} active Twitch subscription${alertsList.length !== 1 ? 's' : ''}`)
+                        );
 
-                    return interaction.editReply({ embeds: [embed] });
+                    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
                 }
             }
 

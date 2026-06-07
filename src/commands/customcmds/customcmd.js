@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder,
+    ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -7,47 +11,27 @@ module.exports = {
         .setName('customcmd')
         .setDescription('Create and manage custom chat trigger commands (e.g., !rules).')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-        
-        // Subcommand: add
         .addSubcommand(sub =>
             sub.setName('add')
                 .setDescription('Create a custom text trigger command.')
-                .addStringOption(opt => 
-                    opt.setName('name')
-                        .setDescription('The trigger keyword (e.g., rules)')
-                        .setRequired(true))
-                .addStringOption(opt => 
-                    opt.setName('text')
-                        .setDescription('The plain-text response when the command is triggered')
-                        .setRequired(true)))
-        
-        // Subcommand: embed
+                .addStringOption(opt =>
+                    opt.setName('name').setDescription('The trigger keyword (e.g., rules)').setRequired(true))
+                .addStringOption(opt =>
+                    opt.setName('text').setDescription('The plain-text response when the command is triggered').setRequired(true)))
         .addSubcommand(sub =>
             sub.setName('embed')
                 .setDescription('Opens a Modal form to build a rich embed custom trigger command.')
-                .addStringOption(opt => 
-                    opt.setName('name')
-                        .setDescription('The trigger keyword (e.g., socials)')
-                        .setRequired(true)))
-        
-        // Subcommand: remove
+                .addStringOption(opt =>
+                    opt.setName('name').setDescription('The trigger keyword (e.g., socials)').setRequired(true)))
         .addSubcommand(sub =>
             sub.setName('remove')
                 .setDescription('Delete an active custom command trigger.')
-                .addStringOption(opt => 
-                    opt.setName('name')
-                        .setDescription('The trigger keyword to delete')
-                        .setRequired(true)))
-        
-        // Subcommand: list
+                .addStringOption(opt =>
+                    opt.setName('name').setDescription('The trigger keyword to delete').setRequired(true)))
         .addSubcommand(sub =>
             sub.setName('list')
                 .setDescription('List all custom trigger commands configured in this server.')),
 
-    /**
-     * Executes the customcmd command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, options } = interaction;
         if (!guild) return;
@@ -55,14 +39,10 @@ module.exports = {
         const subcommand = options.getSubcommand();
 
         try {
-            // ------------------------------------------
-            // A. Subcommand: add
-            // ------------------------------------------
             if (subcommand === 'add') {
                 const name = options.getString('name').toLowerCase().trim();
                 const text = options.getString('text');
 
-                // Validation: Trigger names cannot contain spaces
                 if (name.includes(' ')) {
                     return interaction.reply({ content: '❌ Custom trigger keywords cannot contain spaces!', ephemeral: true });
                 }
@@ -71,9 +51,6 @@ module.exports = {
                 return interaction.reply({ content: `✅ Successfully created trigger command: \`!${name}\`!` });
             }
 
-            // ------------------------------------------
-            // B. Subcommand: embed
-            // ------------------------------------------
             if (subcommand === 'embed') {
                 const name = options.getString('name').toLowerCase().trim();
 
@@ -81,98 +58,80 @@ module.exports = {
                     return interaction.reply({ content: '❌ Custom trigger keywords cannot contain spaces!', ephemeral: true });
                 }
 
-                // Construct Modal builder prompt
                 const modal = new ModalBuilder()
                     .setCustomId(`customcmd_modal_${name}`)
                     .setTitle(`Configure Embed: !${name}`);
 
                 const titleInput = new TextInputBuilder()
-                    .setCustomId('title')
-                    .setLabel('Embed Title')
-                    .setStyle(TextInputStyle.Short)
-                    .setPlaceholder('Enter a bold header title (optional)...')
-                    .setRequired(false);
+                    .setCustomId('title').setLabel('Embed Title').setStyle(TextInputStyle.Short)
+                    .setPlaceholder('Enter a bold header title (optional)...').setRequired(false);
 
                 const descInput = new TextInputBuilder()
-                    .setCustomId('description')
-                    .setLabel('Embed Description')
-                    .setStyle(TextInputStyle.Paragraph)
-                    .setPlaceholder('Enter the main card body description text...')
-                    .setRequired(true);
+                    .setCustomId('description').setLabel('Embed Description').setStyle(TextInputStyle.Paragraph)
+                    .setPlaceholder('Enter the main card body description text...').setRequired(true);
 
                 const colorInput = new TextInputBuilder()
-                    .setCustomId('color')
-                    .setLabel('Embed Color (Hex Code)')
-                    .setStyle(TextInputStyle.Short)
-                    .setPlaceholder('e.g., #00FFCC (optional)...')
-                    .setRequired(false);
+                    .setCustomId('color').setLabel('Embed Color (Hex Code)').setStyle(TextInputStyle.Short)
+                    .setPlaceholder('e.g., #00FFCC (optional)...').setRequired(false);
 
                 const imageInput = new TextInputBuilder()
-                    .setCustomId('image')
-                    .setLabel('Embed Large Image URL')
-                    .setStyle(TextInputStyle.Short)
-                    .setPlaceholder('https://example.com/banner.png (optional)...')
-                    .setRequired(false);
+                    .setCustomId('image').setLabel('Embed Large Image URL').setStyle(TextInputStyle.Short)
+                    .setPlaceholder('https://example.com/banner.png (optional)...').setRequired(false);
 
                 const thumbInput = new TextInputBuilder()
-                    .setCustomId('thumbnail')
-                    .setLabel('Embed Small Thumbnail URL')
-                    .setStyle(TextInputStyle.Short)
-                    .setPlaceholder('https://example.com/logo.png (optional)...')
-                    .setRequired(false);
+                    .setCustomId('thumbnail').setLabel('Embed Small Thumbnail URL').setStyle(TextInputStyle.Short)
+                    .setPlaceholder('https://example.com/logo.png (optional)...').setRequired(false);
 
-                // Add text inputs into individual action rows
-                const row1 = new ActionRowBuilder().addComponents(titleInput);
-                const row2 = new ActionRowBuilder().addComponents(descInput);
-                const row3 = new ActionRowBuilder().addComponents(colorInput);
-                const row4 = new ActionRowBuilder().addComponents(imageInput);
-                const row5 = new ActionRowBuilder().addComponents(thumbInput);
+                modal.addComponents(
+                    new ActionRowBuilder().addComponents(titleInput),
+                    new ActionRowBuilder().addComponents(descInput),
+                    new ActionRowBuilder().addComponents(colorInput),
+                    new ActionRowBuilder().addComponents(imageInput),
+                    new ActionRowBuilder().addComponents(thumbInput)
+                );
 
-                modal.addComponents(row1, row2, row3, row4, row5);
-
-                // Launch modal form popup
                 return interaction.showModal(modal);
             }
 
-            // ------------------------------------------
-            // C. Subcommand: remove
-            // ------------------------------------------
             if (subcommand === 'remove') {
                 const name = options.getString('name').toLowerCase().trim();
-
                 const success = await db.removeCustomCommand(guild.id, name);
 
                 if (!success) {
-                    return interaction.reply({ 
-                        content: `❌ Could not find a custom command with trigger \`!${name}\` in this server.`, 
-                        ephemeral: true 
+                    return interaction.reply({
+                        content: `❌ Could not find a custom command with trigger \`!${name}\` in this server.`,
+                        ephemeral: true
                     });
                 }
 
                 return interaction.reply({ content: `✅ Successfully deleted custom trigger \`!${name}\`.` });
             }
 
-            // ------------------------------------------
-            // D. Subcommand: list
-            // ------------------------------------------
             if (subcommand === 'list') {
                 const commands = await db.getCustomCommands(guild.id);
 
                 if (commands.length === 0) {
-                    return interaction.reply({ 
-                        content: '📜 There are currently no custom triggers configured in this server. Use `/customcmd add` to get started!' 
+                    return interaction.reply({
+                        content: '📜 There are currently no custom triggers configured in this server. Use `/customcmd add` to get started!'
                     });
                 }
 
-                const listText = commands.map(c => `• \`!${c.name}\` [${c.isEmbed ? '🎨 Rich Embed' : '📝 Plain Text'}]`).join('\n');
+                await interaction.deferReply();
 
-                const embed = new EmbedBuilder()
-                    .setTitle('📜 Custom Triggers Catalog')
-                    .setColor('#00FFCC')
-                    .setDescription(listText)
-                    .setTimestamp();
+                const listText = commands.map(c => `• \`!${c.name}\` — ${c.isEmbed ? '🎨 Rich Embed' : '📝 Plain Text'}`).join('\n');
 
-                return interaction.reply({ embeds: [embed] });
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00FFCC)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`## 📜 Custom Triggers Catalog`)
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent(listText))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`-# ${commands.length} trigger${commands.length !== 1 ? 's' : ''} configured · Use /customcmd add to create more`)
+                    );
+
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
         } catch (err) {

@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 
 function parseTime(timeStr) {
     const regex = /^(\d+)([smhd])$/;
@@ -17,7 +21,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('remind')
         .setDescription('Schedules a deferred background timer notification.')
-        .addStringOption(opt => 
+        .addStringOption(opt =>
             opt.setName('time')
                 .setDescription('When to remind you (e.g. 10s, 5m, 2h, 1d)')
                 .setRequired(true))
@@ -26,10 +30,6 @@ module.exports = {
                 .setDescription('The reminder note to notify you with')
                 .setRequired(true)),
 
-    /**
-     * Executes the remind command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { user, options } = interaction;
         const timeInput = options.getString('time').trim().toLowerCase();
@@ -39,56 +39,69 @@ module.exports = {
             const durationMs = parseTime(timeInput);
             if (!durationMs || durationMs < 5000) {
                 return interaction.editReply({
-                    content: '❌ Invalid time formatting! Use structures like: `10s` (10 seconds), `5m` (5 minutes), `2h` (2 hours), or `1d` (1 day). Minimum reminder is 5s.',
+                    content: '❌ Invalid time formatting! Use structures like: `10s`, `5m`, `2h`, or `1d`. Minimum reminder is 5s.',
                     ephemeral: true
                 });
             }
 
-            // Cap reminder at 14 days
             if (durationMs > 14 * 24 * 60 * 60 * 1000) {
-                return interaction.editReply({
-                    content: '❌ Cooldown limit: Reminders cannot exceed 14 days!',
-                    ephemeral: true
-                });
+                return interaction.editReply({ content: '❌ Reminders cannot exceed 14 days!', ephemeral: true });
             }
 
             const alertTimeUnix = Math.floor((Date.now() + durationMs) / 1000);
 
-            const embed = new EmbedBuilder()
-                .setTitle('⏰ Reminder Scheduled')
-                .setColor('#8b5cf6')
-                .setDescription(`I will DM you a reminder **<t:${alertTimeUnix}:R>** (at <t:${alertTimeUnix}:F>).`)
-                .addFields({ name: 'Reminder Note', value: `*"${message}"*` })
-                .setTimestamp();
+            const container = new ContainerBuilder()
+                .setAccentColor(0x8b5cf6)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## ⏰ Reminder Scheduled\nI will DM you a reminder **<t:${alertTimeUnix}:R>** (at <t:${alertTimeUnix}:F>).`
+                            )
+                        )
+                        .setThumbnailAccessory(
+                            new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true }))
+                        )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(`**Reminder Note:** *"${message}"*`)
+                );
 
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
-            // Deferred task trigger
             setTimeout(async () => {
-                const dmEmbed = new EmbedBuilder()
-                    .setTitle('⏰ REMINDER NOTIFICATION!')
-                    .setColor('#8b5cf6')
-                    .setDescription(`You scheduled a reminder for now!`)
-                    .addFields(
-                        { name: 'Your Note', value: `*"${message}"*` },
-                        { name: 'Originally set at', value: `<t:${Math.floor((Date.now() - durationMs) / 1000)}:f>` }
+                const dmContainer = new ContainerBuilder()
+                    .setAccentColor(0x8b5cf6)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## ⏰ REMINDER NOTIFICATION!\nYou scheduled a reminder for now!`
+                                )
+                            )
+                            .setThumbnailAccessory(
+                                new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true }))
+                            )
                     )
-                    .setTimestamp();
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**Your Note:** *"${message}"*\n` +
+                            `**Originally set:** <t:${Math.floor((Date.now() - durationMs) / 1000)}:f>`
+                        )
+                    );
 
-                await user.send({ embeds: [dmEmbed] }).catch(() => {
-                    // Fallback to active system channel if DM closed
+                await user.send({ flags: MessageFlags.IsComponentsV2, components: [dmContainer] }).catch(() => {
                     console.log(`[REMINDER WARNING] Could not DM user ${user.id} (DMs closed).`);
                 });
             }, durationMs);
 
         } catch (err) {
             console.error('[REMINDER ERROR]', err);
-            const _errMsg = { content: '❌ Failed to register reminder task.', ephemeral: true };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(_errMsg).catch(() => null);
-            } else {
-                await interaction.editReply(_errMsg).catch(() => null);
-            }
+            const errMsg = { content: '❌ Failed to register reminder task.', ephemeral: true };
+            if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => null);
+            else await interaction.editReply(errMsg).catch(() => null);
         }
     }
 };

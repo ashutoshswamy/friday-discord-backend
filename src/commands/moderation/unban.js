@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -6,13 +10,9 @@ module.exports = {
         .setName('unban')
         .setDescription('Unbans a user from the server by their user ID.')
         .addStringOption(option =>
-            option.setName('user_id')
-                .setDescription('The Discord ID of the user to unban')
-                .setRequired(true))
+            option.setName('user_id').setDescription('The Discord ID of the user to unban').setRequired(true))
         .addStringOption(option =>
-            option.setName('reason')
-                .setDescription('The reason for unbanning this user')
-                .setRequired(false))
+            option.setName('reason').setDescription('The reason for unbanning this user').setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
     async execute(interaction) {
@@ -35,19 +35,27 @@ module.exports = {
             await guild.members.unban(targetId, `${reason} | Unbanned by ${user.tag}`);
             await db.logInfraction(guild.id, targetId, user.id, 'UNBAN', reason);
 
-            const embed = new EmbedBuilder()
-                .setTitle('✅ User Unbanned')
-                .setColor('#00FF66')
-                .setThumbnail(ban.user.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`**${ban.user.tag}** (\`${targetId}\`) has been unbanned from **${guild.name}**.`)
-                .addFields(
-                    { name: 'User ID', value: `\`${targetId}\``, inline: true },
-                    { name: 'Moderator', value: `<@${user.id}>`, inline: true },
-                    { name: 'Reason', value: reason }
+            const container = new ContainerBuilder()
+                .setAccentColor(0x00FF66)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## ✅ User Unbanned\n**${ban.user.tag}** (\`${targetId}\`) has been unbanned from **${guild.name}**.`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(ban.user.displayAvatarURL({ forceStatic: true })))
                 )
-                .setTimestamp();
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `**User ID:** \`${targetId}\`\n` +
+                        `**Moderator:** <@${user.id}>\n` +
+                        `**Reason:** ${reason}`
+                    )
+                );
 
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
         } catch (err) {
             console.error('[ERROR] Unban failed:', err);
             const errMsg = { content: '❌ Failed to unban this user. Ensure the user ID is correct and my role has the Ban Members permission.', ephemeral: true };

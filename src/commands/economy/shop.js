@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -34,7 +39,7 @@ module.exports = {
                         .setRequired(false)
                         .addChoices(
                             { name: '🏆 Grant XP Boost', value: 'XP' },
-                            { name: '🪙 Grant Wallet Coins Cache', value: 'COINS' }
+                            { name: '<:coin:1512926963239489606> Grant Wallet Coins Cache', value: 'COINS' }
                         ))
                 .addIntegerOption(opt =>
                     opt.setName('action_value')
@@ -56,39 +61,32 @@ module.exports = {
         const subcommand = options.getSubcommand();
 
         try {
-            // ── view ──────────────────────────────────────────────────────
             if (subcommand === 'view') {
                 const items = await db.getShopItems(guild.id);
 
                 if (items.length === 0) {
-                    const emptyEmbed = new EmbedBuilder()
-                        .setTitle(`🛍️ Server Shop — ${guild.name}`)
-                        .setColor('#FF8C00')
-                        .setDescription('📭 The server shop is currently empty.\nAdministrators can add listings using `/shop add`.')
-                        .setTimestamp();
-                    return interaction.editReply({ embeds: [emptyEmbed] });
+                    const emptyContainer = new ContainerBuilder()
+                        .setAccentColor(0xFF8C00)
+                        .addSectionComponents(
+                            new SectionBuilder()
+                                .addTextDisplayComponents(
+                                    new TextDisplayBuilder().setContent(
+                                        `## 🛍️ Server Shop — ${guild.name}\n📭 The server shop is currently empty.\nAdministrators can add listings using \`/shop add\`.`
+                                    )
+                                )
+                                .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
+                        );
+                    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [emptyContainer] });
                 }
 
-                const embed = new EmbedBuilder()
-                    .setTitle(`🛍️ Server Shop — ${guild.name}`)
-                    .setColor('#FF8C00')
-                    .setDescription('Exchange server coins for exclusive items and role rewards!')
-                    .setThumbnail(guild.iconURL({ forceStatic: true }))
-                    .setFooter({ text: 'Select an item below to purchase it instantly' })
-                    .setTimestamp();
+                const itemsText = items.map(item => {
+                    const roleText = item.roleRewardId ? `\n  🎭 Grants: <@&${item.roleRewardId}>` : '';
+                    return `**🛒 ${item.name}** — <:coin:1512926963239489606> **${item.cost.toLocaleString()}** coins\n  *${item.description}*${roleText}`;
+                }).join('\n\n');
 
-                items.forEach(item => {
-                    const roleText = item.roleRewardId ? `\n🎭 Grants: <@&${item.roleRewardId}>` : '';
-                    embed.addFields({
-                        name: `🛒 ${item.name} — 🪙 ${item.cost.toLocaleString()} coins`,
-                        value: `*${item.description}*${roleText}`
-                    });
-                });
-
-                // Quick Buy select menu
                 const buyOptions = items.slice(0, 25).map(item => ({
                     label: item.name,
-                    description: `🪙 ${item.cost.toLocaleString()} coins${item.roleRewardId ? ' · Grants a role' : ''}`,
+                    description: `<:coin:1512926963239489606> ${item.cost.toLocaleString()} coins${item.roleRewardId ? ' · Grants a role' : ''}`,
                     value: `buy_${item.name}`
                 }));
 
@@ -97,9 +95,23 @@ module.exports = {
                     .setPlaceholder('🛒 Select an item to purchase...')
                     .addOptions(buyOptions);
 
-                const row = new ActionRowBuilder().addComponents(buySelect);
+                const container = new ContainerBuilder()
+                    .setAccentColor(0xFF8C00)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## 🛍️ Server Shop — ${guild.name}\nExchange server coins for exclusive items and role rewards!`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent(itemsText))
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addActionRowComponents(new ActionRowBuilder().addComponents(buySelect));
 
-                const response = await interaction.editReply({ embeds: [embed], components: [row] });
+                const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
                 const collector = response.createMessageComponentCollector({
                     filter: i => i.user.id === user.id,
@@ -129,23 +141,27 @@ module.exports = {
                         }
                     }
 
-                    const confirmEmbed = new EmbedBuilder()
-                        .setTitle('✅ Purchase Confirmed')
-                        .setColor('#00FF66')
-                        .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                        .setDescription(`**${itemName}** has been added to your inventory!`)
-                        .addFields({ name: 'Cost Paid', value: `🪙 **${result.cost.toLocaleString()}** coins`, inline: true });
+                    let detailText = `**Item Purchased:** 📦 **${itemName}** → your inventory\n**Cost Paid:** <:coin:1512926963239489606> **${result.cost.toLocaleString()}** coins`;
 
                     if (result.roleRewardId) {
-                        confirmEmbed.addFields({
-                            name: 'Role Reward',
-                            value: roleGranted ? `✅ **${roleText}** granted!` : `❌ Could not grant **${roleText}** (check bot role position).`,
-                            inline: true
-                        });
+                        detailText += `\n**Role Reward:** ${roleGranted ? `✅ **${roleText}** granted!` : `❌ Could not grant **${roleText}** (check bot role position).`}`;
                     }
 
-                    confirmEmbed.setTimestamp();
-                    await i.followUp({ embeds: [confirmEmbed], ephemeral: true });
+                    const confirmContainer = new ContainerBuilder()
+                        .setAccentColor(0x00FF66)
+                        .addSectionComponents(
+                            new SectionBuilder()
+                                .addTextDisplayComponents(
+                                    new TextDisplayBuilder().setContent(
+                                        `## ✅ Purchase Confirmed\n**${itemName}** has been added to your inventory!`
+                                    )
+                                )
+                                .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                        .addTextDisplayComponents(new TextDisplayBuilder().setContent(detailText));
+
+                    await i.followUp({ flags: MessageFlags.IsComponentsV2, components: [confirmContainer], ephemeral: true });
                 });
 
                 collector.on('end', async () => {
@@ -154,13 +170,29 @@ module.exports = {
                         .setPlaceholder('🛒 Shop session expired')
                         .setDisabled(true)
                         .addOptions({ label: 'Expired', value: 'expired' });
-                    await interaction.editReply({ components: [new ActionRowBuilder().addComponents(disabledSelect)] }).catch(() => null);
+
+                    const expiredContainer = new ContainerBuilder()
+                        .setAccentColor(0xFF8C00)
+                        .addSectionComponents(
+                            new SectionBuilder()
+                                .addTextDisplayComponents(
+                                    new TextDisplayBuilder().setContent(
+                                        `## 🛍️ Server Shop — ${guild.name}\nExchange server coins for exclusive items and role rewards!`
+                                    )
+                                )
+                                .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                        .addTextDisplayComponents(new TextDisplayBuilder().setContent(itemsText))
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                        .addActionRowComponents(new ActionRowBuilder().addComponents(disabledSelect));
+
+                    await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => null);
                 });
 
                 return;
             }
 
-            // ── admin gate ────────────────────────────────────────────────
             if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
                 return interaction.editReply({
                     content: '❌ Administrator permission required to modify the shop catalog.',
@@ -168,7 +200,6 @@ module.exports = {
                 });
             }
 
-            // ── add ───────────────────────────────────────────────────────
             if (subcommand === 'add') {
                 const name = options.getString('name');
                 const cost = options.getInteger('cost');
@@ -188,16 +219,14 @@ module.exports = {
 
                 if (!result.success) {
                     if (result.reason === 'migration_needed') {
-                        const embed = new EmbedBuilder()
-                            .setTitle('⚠️ Database Migration Required')
-                            .setColor('#FFCC00')
-                            .setDescription(
-                                `Consumable effects require the latest schema.\n\n` +
-                                `**Run in Supabase SQL Editor:**\n` +
-                                `\`\`\`sql\nALTER TABLE shop_items ADD COLUMN IF NOT EXISTS action_type TEXT;\nALTER TABLE shop_items ADD COLUMN IF NOT EXISTS action_value INT;\n\`\`\``
-                            )
-                            .setTimestamp();
-                        return interaction.editReply({ embeds: [embed] });
+                        const migrationContainer = new ContainerBuilder()
+                            .setAccentColor(0xFFCC00)
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## ⚠️ Database Migration Required\nConsumable effects require the latest schema.\n\n**Run in Supabase SQL Editor:**\n\`\`\`sql\nALTER TABLE shop_items ADD COLUMN IF NOT EXISTS action_type TEXT;\nALTER TABLE shop_items ADD COLUMN IF NOT EXISTS action_value INT;\n\`\`\``
+                                )
+                            );
+                        return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [migrationContainer] });
                     }
                     return interaction.editReply({
                         content: `❌ Failed to add item. A listing named \`${name}\` may already exist.`,
@@ -205,25 +234,25 @@ module.exports = {
                     });
                 }
 
-                const actionText = actionType ? ` — Consumable: **${actionType}** grants **${actionValue.toLocaleString()}** on use` : '';
+                let detailText =
+                    `**Name:** 🛒 **${name}**\n` +
+                    `**Price:** <:coin:1512926963239489606> **${cost.toLocaleString()}** coins\n` +
+                    `**Description:** ${description}`;
 
-                const embed = new EmbedBuilder()
-                    .setTitle('✅ Shop Item Added')
-                    .setColor('#00FF66')
-                    .setDescription(`**${name}** is now listed in the shop.`)
-                    .addFields(
-                        { name: 'Price', value: `🪙 **${cost.toLocaleString()}** coins`, inline: true },
-                        { name: 'Description', value: description, inline: false }
+                if (actionType) detailText += `\n**Effect:** Consumable — **${actionType}** grants **${actionValue.toLocaleString()}** on use`;
+                if (role) detailText += `\n**Role Reward:** <@&${role.id}>`;
+
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00FF66)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`## ✅ Shop Item Added\n**${name}** is now listed in the shop.`)
                     )
-                    .setTimestamp();
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent(detailText));
 
-                if (actionType) embed.addFields({ name: 'Effect', value: actionText.replace(' — ', ''), inline: false });
-                if (role) embed.addFields({ name: 'Role Reward', value: `<@&${role.id}>`, inline: true });
-
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
-            // ── remove ────────────────────────────────────────────────────
             if (subcommand === 'remove') {
                 const name = options.getString('name');
 
@@ -239,12 +268,17 @@ module.exports = {
 
                 const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
-                const confirmEmbed = new EmbedBuilder()
-                    .setTitle('⚠️ Confirm Shop Item Removal')
-                    .setColor('#FF4500')
-                    .setDescription(`Remove **${name}** from the shop? This cannot be undone.`);
+                const confirmContainer = new ContainerBuilder()
+                    .setAccentColor(0xFF4500)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## ⚠️ Confirm Shop Item Removal\nRemove **${name}** from the shop? This cannot be undone.`
+                        )
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addActionRowComponents(row);
 
-                const response = await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
+                const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [confirmContainer] });
 
                 const collector = response.createMessageComponentCollector({
                     filter: i => i.user.id === user.id,
@@ -254,30 +288,32 @@ module.exports = {
 
                 collector.on('collect', async i => {
                     if (i.customId === 'shop_remove_cancel') {
-                        return i.update({ content: '✅ Removal cancelled.', embeds: [], components: [] });
+                        return i.update({ content: '✅ Removal cancelled.', flags: MessageFlags.IsComponentsV2, components: [] });
                     }
 
                     const result = await db.removeShopItem(guild.id, name);
                     if (!result.success) {
                         return i.update({
                             content: `❌ ${result.reason || `Could not find \`${name}\` in the shop.`}`,
-                            embeds: [],
+                            flags: MessageFlags.IsComponentsV2,
                             components: []
                         });
                     }
 
-                    const embed = new EmbedBuilder()
-                        .setTitle('🗑️ Item Removed')
-                        .setColor('#FF4500')
-                        .setDescription(`**${name}** has been removed from the server shop.`)
-                        .setTimestamp();
+                    const removedContainer = new ContainerBuilder()
+                        .setAccentColor(0xFF4500)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 🗑️ Item Removed\n**${name}** has been removed from the server shop.`
+                            )
+                        );
 
-                    await i.update({ embeds: [embed], components: [] });
+                    await i.update({ flags: MessageFlags.IsComponentsV2, components: [removedContainer] });
                 });
 
                 collector.on('end', async (collected, reason) => {
                     if (reason === 'time' && collected.size === 0) {
-                        await interaction.editReply({ content: '⏰ Confirmation timed out.', embeds: [], components: [] }).catch(() => null);
+                        await interaction.editReply({ content: '⏰ Confirmation timed out.', flags: MessageFlags.IsComponentsV2, components: [] }).catch(() => null);
                     }
                 });
             }

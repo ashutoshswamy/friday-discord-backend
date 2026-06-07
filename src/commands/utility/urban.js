@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
+} = require('discord.js');
 const axios = require('axios');
 
 module.exports = {
@@ -12,10 +17,6 @@ module.exports = {
                 .setDescription('The word or phrase to lookup')
                 .setRequired(true)),
 
-    /**
-     * Executes the urban command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction
-     */
     async execute(interaction) {
         const { options } = interaction;
         const term = options.getString('term').trim();
@@ -37,33 +38,52 @@ module.exports = {
                 return interaction.editReply({ content: `❌ No definitions found for term: \`${term}\`.` });
             }
 
-            // Grab top definition
             const topDef = list[0];
-            
-            // Clean square brackets [] commonly used in Urban Dictionary markdown links
             const cleanText = (text) => text.replace(/\[|\]/g, '');
 
-            const definition = topDef.definition.length > 1024 
-                ? `${topDef.definition.substring(0, 1021)}...` 
+            const definition = topDef.definition.length > 1000
+                ? `${topDef.definition.substring(0, 997)}...`
                 : topDef.definition;
 
-            const example = topDef.example 
-                ? (topDef.example.length > 1024 ? `${topDef.example.substring(0, 1021)}...` : topDef.example)
+            const example = topDef.example
+                ? (topDef.example.length > 500 ? `${topDef.example.substring(0, 497)}...` : topDef.example)
                 : 'No example provided.';
 
-            const embed = new EmbedBuilder()
-                .setTitle(`📚 Urban Dictionary: ${topDef.word}`)
-                .setURL(topDef.permalink)
-                .setColor('#1D2439') // Sleek dark slate
-                .setDescription(`*Definition by **${topDef.author}***`)
-                .addFields(
-                    { name: 'Definition', value: cleanText(definition), inline: false },
-                    { name: 'Example Case', value: `*${cleanText(example)}*`, inline: false },
-                    { name: 'Feedback Ratio', value: `👍 **${topDef.thumbs_up}**  /  👎 **${topDef.thumbs_down}**`, inline: true }
-                )
-                .setTimestamp();
+            const linkBtn = new ButtonBuilder()
+                .setLabel('🔗 Full Entry')
+                .setStyle(ButtonStyle.Link)
+                .setURL(topDef.permalink);
 
-            await interaction.editReply({ embeds: [embed] });
+            const container = new ContainerBuilder()
+                .setAccentColor(0x1D2439)
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `## 📚 Urban Dictionary: ${topDef.word}\n*Definition by **${topDef.author}***`
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `**Definition:**\n${cleanText(definition)}`
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `**Example:**\n*${cleanText(example)}*`
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `**Feedback:** 👍 **${topDef.thumbs_up}**  ·  👎 **${topDef.thumbs_down}**`
+                    )
+                )
+                .addActionRowComponents(
+                    new ActionRowBuilder().addComponents(linkBtn)
+                );
+
+            await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
         } catch (err) {
             console.error('[URBAN ERROR]', err);

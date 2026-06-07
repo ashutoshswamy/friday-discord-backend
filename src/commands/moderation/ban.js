@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -6,19 +11,11 @@ module.exports = {
         .setName('ban')
         .setDescription('Bans a user from the server and deletes their recent message history.')
         .addUserOption(option =>
-            option.setName('user')
-                .setDescription('The user to ban')
-                .setRequired(true))
+            option.setName('user').setDescription('The user to ban').setRequired(true))
         .addStringOption(option =>
-            option.setName('reason')
-                .setDescription('The reason for banning this user')
-                .setRequired(false))
+            option.setName('reason').setDescription('The reason for banning this user').setRequired(false))
         .addIntegerOption(option =>
-            option.setName('days')
-                .setDescription('Number of days of message history to delete (0-7 days)')
-                .setMinValue(0)
-                .setMaxValue(7)
-                .setRequired(false))
+            option.setName('days').setDescription('Number of days of message history to delete (0-7 days)').setMinValue(0).setMaxValue(7).setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
     async execute(interaction) {
@@ -37,45 +34,41 @@ module.exports = {
 
         if (targetMember) {
             if (!targetMember.bannable) {
-                return interaction.editReply({
-                    content: '❌ I cannot ban this user — they may outrank me or I lack permission.',
-                    ephemeral: true
-                });
+                return interaction.editReply({ content: '❌ I cannot ban this user — they may outrank me or I lack permission.', ephemeral: true });
             }
-
             if (targetMember.roles.highest.position >= interaction.member.roles.highest.position && guild.ownerId !== user.id) {
-                return interaction.editReply({
-                    content: '❌ You cannot ban this user — they have an equal or higher role.',
-                    ephemeral: true
-                });
+                return interaction.editReply({ content: '❌ You cannot ban this user — they have an equal or higher role.', ephemeral: true });
             }
         }
 
-        const confirmBtn = new ButtonBuilder()
-            .setCustomId('ban_confirm')
-            .setLabel('🔨 Confirm Ban')
-            .setStyle(ButtonStyle.Danger);
-
-        const cancelBtn = new ButtonBuilder()
-            .setCustomId('ban_cancel')
-            .setLabel('✕ Cancel')
-            .setStyle(ButtonStyle.Secondary);
-
+        const confirmBtn = new ButtonBuilder().setCustomId('ban_confirm').setLabel('🔨 Confirm Ban').setStyle(ButtonStyle.Danger);
+        const cancelBtn = new ButtonBuilder().setCustomId('ban_cancel').setLabel('✕ Cancel').setStyle(ButtonStyle.Secondary);
         const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
-        const confirmEmbed = new EmbedBuilder()
-            .setTitle('⚠️ Confirm Ban')
-            .setColor('#FF0000')
-            .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-            .setDescription(`You are about to **permanently ban** <@${targetUser.id}> from **${guild.name}**.`)
-            .addFields(
-                { name: 'User', value: `${targetUser.tag} (\`${targetUser.id}\`)`, inline: true },
-                { name: 'Delete Messages', value: `${days} day(s)`, inline: true },
-                { name: 'Reason', value: reason }
+        const confirmContainer = new ContainerBuilder()
+            .setAccentColor(0xFF0000)
+            .addSectionComponents(
+                new SectionBuilder()
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## ⚠️ Confirm Ban\nYou are about to **permanently ban** <@${targetUser.id}> from **${guild.name}**.`
+                        )
+                    )
+                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
             )
-            .setFooter({ text: 'This action cannot be easily undone. Confirm within 30 seconds.' });
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(
+                    `**User:** ${targetUser.tag} (\`${targetUser.id}\`)\n` +
+                    `**Delete Messages:** ${days} day(s)\n` +
+                    `**Reason:** ${reason}`
+                )
+            )
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# This action cannot be easily undone. Confirm within 30 seconds.`))
+            .addActionRowComponents(row);
 
-        const response = await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
+        const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [confirmContainer] });
 
         const collector = response.createMessageComponentCollector({
             filter: i => i.user.id === user.id,
@@ -85,53 +78,45 @@ module.exports = {
 
         collector.on('collect', async i => {
             if (i.customId === 'ban_cancel') {
-                return i.update({
-                    content: '✅ Ban cancelled.',
-                    embeds: [],
-                    components: []
-                });
+                return i.update({ content: '✅ Ban cancelled.', flags: MessageFlags.IsComponentsV2, components: [] });
             }
 
             try {
                 const deleteMessageSeconds = days * 24 * 60 * 60;
-                await guild.members.ban(targetUser.id, {
-                    deleteMessageSeconds,
-                    reason: `${reason} | Banned by ${user.tag}`
-                });
-
+                await guild.members.ban(targetUser.id, { deleteMessageSeconds, reason: `${reason} | Banned by ${user.tag}` });
                 await db.logInfraction(guild.id, targetUser.id, user.id, 'BAN', reason);
 
-                const embed = new EmbedBuilder()
-                    .setTitle('🔨 User Banned')
-                    .setColor('#FF0000')
-                    .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                    .setDescription(`**${targetUser.tag}** has been permanently banned from **${guild.name}**.`)
-                    .addFields(
-                        { name: 'User ID', value: `\`${targetUser.id}\``, inline: true },
-                        { name: 'Moderator', value: `<@${user.id}>`, inline: true },
-                        { name: 'Deleted Messages', value: `${days} day(s)`, inline: true },
-                        { name: 'Reason', value: reason }
+                const bannedContainer = new ContainerBuilder()
+                    .setAccentColor(0xFF0000)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## 🔨 User Banned\n**${targetUser.tag}** has been permanently banned from **${guild.name}**.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
                     )
-                    .setTimestamp();
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**User ID:** \`${targetUser.id}\`\n` +
+                            `**Moderator:** <@${user.id}>\n` +
+                            `**Deleted Messages:** ${days} day(s)\n` +
+                            `**Reason:** ${reason}`
+                        )
+                    );
 
-                await i.update({ embeds: [embed], components: [] });
+                await i.update({ flags: MessageFlags.IsComponentsV2, components: [bannedContainer] });
             } catch (err) {
                 console.error('[ERROR] Ban failed:', err);
-                await i.update({
-                    content: '❌ Failed to ban this user. Verify my role has the Ban Members permission.',
-                    embeds: [],
-                    components: []
-                });
+                await i.update({ content: '❌ Failed to ban this user. Verify my role has the Ban Members permission.', flags: MessageFlags.IsComponentsV2, components: [] });
             }
         });
 
         collector.on('end', async (collected, reason) => {
             if (reason === 'time' && collected.size === 0) {
-                await interaction.editReply({
-                    content: '⏰ Confirmation timed out. Ban cancelled.',
-                    embeds: [],
-                    components: []
-                }).catch(() => null);
+                await interaction.editReply({ content: '⏰ Confirmation timed out. Ban cancelled.', flags: MessageFlags.IsComponentsV2, components: [] }).catch(() => null);
             }
         });
     }

@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 
 const WORDS = [
     'javascript', 'discord', 'server', 'giveaway', 'python', 'keyboard',
@@ -22,7 +26,6 @@ function scrambleWord(word) {
     return scrambled === word ? scrambleWord(word) : scrambled;
 }
 
-// Active games: channelId -> { answer, scrambled, timeoutId }
 const activeGames = new Map();
 
 module.exports = {
@@ -38,7 +41,6 @@ module.exports = {
         const { channel, user, options } = interaction;
         const guess = options.getString('answer')?.toLowerCase().trim();
 
-        // ── Answer attempt
         if (guess) {
             const game = activeGames.get(channel.id);
             if (!game) {
@@ -48,19 +50,20 @@ module.exports = {
                 clearTimeout(game.timeoutId);
                 activeGames.delete(channel.id);
 
-                const embed = new EmbedBuilder()
-                    .setTitle('✅ Correct!')
-                    .setColor('#4ade80')
-                    .setDescription(`🏆 **${user.tag}** got it!\nThe word was **${game.answer}**`)
-                    .setTimestamp();
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x4ade80)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## ✅ Correct!\n🏆 **${user.tag}** got it!\nThe word was **${game.answer}**`
+                        )
+                    );
 
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             } else {
                 return interaction.editReply({ content: `❌ **${guess}** is wrong. Keep trying!`, ephemeral: true });
             }
         }
 
-        // ── Start new game
         if (activeGames.has(channel.id)) {
             const game = activeGames.get(channel.id);
             return interaction.editReply({ content: `⚠️ A game is already running! Unscramble: \`${game.scrambled}\``, ephemeral: true });
@@ -72,27 +75,36 @@ module.exports = {
 
         const timeoutId = setTimeout(async () => {
             activeGames.delete(channel.id);
-            const embed = new EmbedBuilder()
-                .setTitle('⏰ Time\'s Up!')
-                .setColor('#f87171')
-                .setDescription(`Nobody got it. The word was **${word}**`)
-                .setTimestamp();
-            await channel.send({ embeds: [embed] }).catch(() => null);
+            const container = new ContainerBuilder()
+                .setAccentColor(0xf87171)
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `## ⏰ Time's Up!\nNobody got it. The word was **${word}**`
+                    )
+                );
+            await channel.send({ flags: MessageFlags.IsComponentsV2, components: [container] }).catch(() => null);
         }, timeLimit * 1000);
 
         activeGames.set(channel.id, { answer: word, scrambled, timeoutId });
 
-        const embed = new EmbedBuilder()
-            .setTitle('🔤 Word Scramble!')
-            .setColor('#8b5cf6')
-            .setDescription(
-                `Unscramble this word:\n\n## \`${scrambled}\`\n\n` +
-                `Use \`/scramble answer:<your guess>\` to answer.\n` +
-                `⏰ You have **${timeLimit} seconds**!`
+        const container = new ContainerBuilder()
+            .setAccentColor(0x8b5cf6)
+            .addSectionComponents(
+                new SectionBuilder()
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## 🔤 Word Scramble!\nUnscramble this word:\n\n# \`${scrambled}\`\n\n` +
+                            `Use \`/scramble answer:<your guess>\` to answer.\n` +
+                            `⏰ You have **${timeLimit} seconds**!`
+                        )
+                    )
+                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
             )
-            .setFooter({ text: `Started by ${user.tag}` })
-            .setTimestamp();
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(`-# Started by ${user.tag}`)
+            );
 
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
     }
 };

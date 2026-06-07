@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -7,9 +12,7 @@ module.exports = {
         .setName('warn')
         .setDescription('Issues a formal warning to a user.')
         .addUserOption(option =>
-            option.setName('user')
-                .setDescription('The user to warn')
-                .setRequired(true))
+            option.setName('user').setDescription('The user to warn').setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
@@ -33,10 +36,7 @@ module.exports = {
         const targetMember = await guild.members.fetch(targetUser.id).catch(() => null);
         if (targetMember && guild.ownerId !== user.id) {
             if (targetMember.roles.highest.position >= interaction.member.roles.highest.position) {
-                return interaction.reply({
-                    content: '❌ You cannot warn this user — they have an equal or higher role.',
-                    ephemeral: true
-                });
+                return interaction.reply({ content: '❌ You cannot warn this user — they have an equal or higher role.', ephemeral: true });
             }
         }
 
@@ -81,24 +81,31 @@ module.exports = {
                 `**Reason:** ${reason}`
             ).then(() => true).catch(() => false);
 
-            const embed = new EmbedBuilder()
-                .setTitle('⚠️ Warning Issued')
-                .setColor('#FF8C00')
-                .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`**${targetUser.tag}** has received Warning #${warnCount}.`)
-                .addFields(
-                    { name: 'User', value: `<@${targetUser.id}> (\`${targetUser.id}\`)`, inline: true },
-                    { name: 'Moderator', value: `<@${user.id}>`, inline: true },
-                    { name: 'Warning ID', value: `\`${warning.id}\``, inline: true },
-                    { name: 'DM Sent', value: dmsSent ? '✅ Yes' : '❌ No (DMs closed)', inline: true },
-                    { name: 'Total Warnings', value: `⚠️ **${warnCount}** warning(s)`, inline: true },
-                    { name: 'Reason', value: reason }
+            const container = new ContainerBuilder()
+                .setAccentColor(0xFF8C00)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## ⚠️ Warning Issued\n**${targetUser.tag}** has received Warning #${warnCount}.`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
                 )
-                .setTimestamp();
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `**User:** <@${targetUser.id}> (\`${targetUser.id}\`)\n` +
+                        `**Moderator:** <@${user.id}>\n` +
+                        `**Warning ID:** \`${warning.id}\`\n` +
+                        `**DM Sent:** ${dmsSent ? '✅ Yes' : '❌ No (DMs closed)'}\n` +
+                        `**Total Warnings:** ⚠️ **${warnCount}** warning(s)\n` +
+                        `**Reason:** ${reason}`
+                    )
+                );
 
-            await submitted.editReply({ embeds: [embed] });
+            await submitted.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
-            // Escalation check
             const rules = await db.getPunishmentRules(guild.id);
             const matchingRule = rules.find(r => warnCount === r.warnThreshold);
             if (matchingRule) {

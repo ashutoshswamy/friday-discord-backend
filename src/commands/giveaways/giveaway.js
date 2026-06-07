@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ButtonBuilder, ActionRowBuilder, ButtonStyle,
+    ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 function parseDuration(timeStr) {
@@ -13,36 +17,64 @@ function parseDuration(timeStr) {
     return null;
 }
 
+function buildGiveawayContainer(prize, winnersCount, endUnix, entrantCount = 0, active = true) {
+    const container = new ContainerBuilder()
+        .setAccentColor(0xFF0099)
+        .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+                `## 🎉 GIVEAWAY${active ? '' : ' ENDED'} 🎉\n` +
+                `**Prize:** 🎁 **${prize}**\n` +
+                `**Winners:** 👥 ${winnersCount}\n` +
+                (active
+                    ? `**Ends:** <t:${endUnix}:R> (at <t:${endUnix}:f>)\n\n-# Click the button below to enter the draw!`
+                    : `**Total Entries:** ${entrantCount}`)
+            )
+        );
+
+    if (active) {
+        container.addActionRowComponents(
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('giveaway_join_PLACEHOLDER')
+                    .setLabel('🎉 Enter Draw')
+                    .setStyle(ButtonStyle.Primary)
+            )
+        );
+    } else {
+        container.addActionRowComponents(
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('giveaway_ended_placeholder')
+                    .setLabel('🔒 Closed')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(true)
+            )
+        );
+    }
+
+    return container;
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('giveaway')
         .setDescription('Create and manage server giveaways.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-        
-        // Subcommand: start
         .addSubcommand(sub =>
             sub.setName('start')
                 .setDescription('Launch a new interactive giveaway with button entries.')
                 .addStringOption(opt => opt.setName('duration').setDescription('Giveaway duration (e.g. 30s, 5m, 2h)').setRequired(true))
                 .addIntegerOption(opt => opt.setName('winners').setDescription('Number of winners to draw').setRequired(true).setMinValue(1))
                 .addStringOption(opt => opt.setName('prize').setDescription('The prize item being offered').setRequired(true)))
-        
-        // Subcommand: end
         .addSubcommand(sub =>
             sub.setName('end')
                 .setDescription('Immediately close a running giveaway and draw winners.')
                 .addStringOption(opt => opt.setName('id').setDescription('The Message ID of the active giveaway').setRequired(true)))
-        
-        // Subcommand: reroll
         .addSubcommand(sub =>
             sub.setName('reroll')
                 .setDescription('Select new winners from the participants of an ended giveaway.')
                 .addStringOption(opt => opt.setName('id').setDescription('The Message ID of the ended giveaway').setRequired(true))),
 
-    /**
-     * Executes the giveaway command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, channel, options, client } = interaction;
         if (!guild || !channel) return;
@@ -53,9 +85,6 @@ module.exports = {
         client.giveaways = client.giveaways || new Map();
 
         try {
-            // ------------------------------------------
-            // A. Subcommand: start
-            // ------------------------------------------
             if (subcommand === 'start') {
                 const durationInput = options.getString('duration').trim().toLowerCase();
                 const winnersCount = options.getInteger('winners');
@@ -71,38 +100,30 @@ module.exports = {
 
                 const endUnix = Math.floor((Date.now() + durationMs) / 1000);
 
-                const embed = new EmbedBuilder()
-                    .setTitle('🎉 GIVEAWAY LAUNCHED! 🎉')
-                    .setDescription(
-                        `**Prize:** 🎁 **${prize}**\n` +
-                        `**Winners Count:** 👥 ${winnersCount}\n` +
-                        `**Time Remaining:** Ends **<t:${endUnix}:R>** (at <t:${endUnix}:f>)\n\n` +
-                        `Click the button below to join the draw!`
-                    )
-                    .setColor('#FF0099')
-                    .setFooter({ text: 'Giveaway Entry System' })
-                    .setTimestamp();
-
-                const joinBtn = new ButtonBuilder()
-                    .setCustomId(`giveaway_join_TEMP_ID`) // Will replace with message ID
-                    .setLabel('🎉 Enter Draw')
-                    .setStyle(ButtonStyle.Primary);
-
-                const row = new ActionRowBuilder().addComponents(joinBtn);
+                const container = buildGiveawayContainer(prize, winnersCount, endUnix, 0, true);
 
                 await interaction.editReply({ content: '✅ Starting giveaway...', ephemeral: true });
 
-                const msg = await channel.send({ embeds: [embed], components: [row] });
-                
-                // Replace joinBtn ID with the real message ID for persistence
-                const realJoinBtn = new ButtonBuilder()
-                    .setCustomId(`giveaway_join_${msg.id}`)
-                    .setLabel('🎉 Enter Draw')
-                    .setStyle(ButtonStyle.Primary);
-                const realRow = new ActionRowBuilder().addComponents(realJoinBtn);
-                await msg.edit({ components: [realRow] });
+                const msg = await channel.send({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
-                // Register giveaway in client memory
+                const realContainer = new ContainerBuilder()
+                    .setAccentColor(0xFF0099)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## 🎉 GIVEAWAY 🎉\n**Prize:** 🎁 **${prize}**\n**Winners:** 👥 ${winnersCount}\n**Ends:** <t:${endUnix}:R> (at <t:${endUnix}:f>)\n\n-# Click the button below to enter the draw!`
+                        )
+                    )
+                    .addActionRowComponents(
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`giveaway_join_${msg.id}`)
+                                .setLabel('🎉 Enter Draw')
+                                .setStyle(ButtonStyle.Primary)
+                        )
+                    );
+
+                await msg.edit({ flags: MessageFlags.IsComponentsV2, components: [realContainer] });
+
                 client.giveaways.set(msg.id, {
                     messageId: msg.id,
                     channelId: channel.id,
@@ -115,13 +136,9 @@ module.exports = {
                 });
 
                 await db.saveGiveaway(guild.id, channel.id, msg.id, prize, winnersCount);
-
                 return;
             }
 
-            // ------------------------------------------
-            // B. Subcommand: end
-            // ------------------------------------------
             if (subcommand === 'end') {
                 if (!client.giveaways.has(id)) {
                     return interaction.editReply({ content: '❌ Could not find an active giveaway matching that message ID!', ephemeral: true });
@@ -132,9 +149,6 @@ module.exports = {
                 return;
             }
 
-            // ------------------------------------------
-            // C. Subcommand: reroll
-            // ------------------------------------------
             if (subcommand === 'reroll') {
                 if (!client.giveaways.has(id)) {
                     return interaction.editReply({ content: '❌ No recorded participants found for that giveaway ID in memory!', ephemeral: true });
@@ -147,33 +161,30 @@ module.exports = {
                     return interaction.editReply({ content: '❌ No one entered the giveaway, so it cannot be re-rolled!', ephemeral: true });
                 }
 
-                // Choose new winners
                 const shuffled = entrantsArray.sort(() => 0.5 - Math.random());
                 const winners = shuffled.slice(0, giveaway.winnersCount);
-
                 const winnerPings = winners.map(w => `<@${w}>`).join(', ');
 
-                const embed = new EmbedBuilder()
-                    .setTitle('🎉 GIVEAWAY RE-ROLLED! 🎉')
-                    .setColor('#FF0099')
-                    .setDescription(
-                        `**Prize:** 🎁 **${giveaway.prize}**\n` +
-                        `**New Winners Draw:** ${winnerPings}!\n\n` +
-                        `Congratulations on your victory!`
-                    )
-                    .setTimestamp();
+                const rerollContainer = new ContainerBuilder()
+                    .setAccentColor(0xFF0099)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## 🎉 GIVEAWAY RE-ROLLED! 🎉\n**Prize:** 🎁 **${giveaway.prize}**\n**New Winners:** ${winnerPings}!\n\nCongratulations on your victory!`
+                        )
+                    );
 
-                await channel.send({ content: `🎉 Congratulations ${winnerPings}! You won the re-roll for **${giveaway.prize}**!`, embeds: [embed] });
+                await channel.send({
+                    content: `🎉 Congratulations ${winnerPings}! You won the re-roll for **${giveaway.prize}**!`,
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [rerollContainer]
+                });
                 return interaction.editReply({ content: '✅ Giveaway successfully re-rolled!', ephemeral: true });
             }
 
-            // ------------------------------------------
-            // Helper Function: End Giveaway
-            // ------------------------------------------
             async function endGiveaway(messageId) {
                 if (!client.giveaways.has(messageId)) return;
                 const giveaway = client.giveaways.get(messageId);
-                
+
                 if (!giveaway.active) return;
                 giveaway.active = false;
                 clearTimeout(giveaway.timer);
@@ -185,62 +196,64 @@ module.exports = {
                 if (!message) return;
 
                 const entrantsArray = Array.from(giveaway.entrants);
-
-                // Disable button
-                const disabledBtn = new ButtonBuilder()
-                    .setCustomId(`giveaway_ended_${messageId}`)
-                    .setLabel('🔒 Closed')
-                    .setStyle(ButtonStyle.Secondary)
-                    .setDisabled(true);
-                const disabledRow = new ActionRowBuilder().addComponents(disabledBtn);
+                const disabledRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`giveaway_ended_${messageId}`)
+                        .setLabel('🔒 Closed')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(true)
+                );
 
                 if (entrantsArray.length === 0) {
-                    const embed = new EmbedBuilder()
-                        .setTitle('🎉 GIVEAWAY ENDED 🎉')
-                        .setColor('#71717a')
-                        .setDescription(
-                            `**Prize:** 🎁 **${giveaway.prize}**\n\n` +
-                            `❌ **Draw Cancelled:** No valid entrants participated in the draw.`
+                    const endedContainer = new ContainerBuilder()
+                        .setAccentColor(0x71717A)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 🎉 GIVEAWAY ENDED 🎉\n**Prize:** 🎁 **${giveaway.prize}**\n\n❌ **Draw Cancelled:** No valid entrants participated in the draw.`
+                            )
                         )
-                        .setTimestamp();
+                        .addActionRowComponents(disabledRow);
 
-                    await message.edit({ embeds: [embed], components: [disabledRow] });
+                    await message.edit({ flags: MessageFlags.IsComponentsV2, components: [endedContainer] });
                     await db.endGiveaway(messageId, [], 0);
                     return;
                 }
 
-                // Choose winners
                 const shuffled = entrantsArray.sort(() => 0.5 - Math.random());
                 const winners = shuffled.slice(0, giveaway.winnersCount);
-
                 const winnerPings = winners.map(w => `<@${w}>`).join(', ');
 
-                const embed = new EmbedBuilder()
-                    .setTitle('🎉 GIVEAWAY RESULTS 🎉')
-                    .setColor('#FF0099')
-                    .setDescription(
-                        `**Prize Won:** 🎁 **${giveaway.prize}**\n` +
-                        `**Winners Drawn:** ${winnerPings}!\n\n` +
-                        `Thank you everyone for participating!`
+                const resultsContainer = new ContainerBuilder()
+                    .setAccentColor(0xFF0099)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## 🎉 GIVEAWAY RESULTS 🎉\n**Prize Won:** 🎁 **${giveaway.prize}**\n**Winners:** ${winnerPings}!\n\nThank you everyone for participating!`
+                        )
                     )
-                    .setTimestamp();
+                    .addActionRowComponents(disabledRow);
 
-                const winnerEmbed = new EmbedBuilder()
-                    .setTitle('🏆 Congratulations!')
-                    .setColor('#FFD700')
-                    .setDescription(`${winnerPings} won the **${giveaway.prize}** giveaway!`)
-                    .addFields(
-                        { name: '🎁 Prize', value: giveaway.prize, inline: true },
-                        { name: '👥 Total Entries', value: `${entrantsArray.length}`, inline: true },
-                        { name: '🏅 Winners', value: winnerPings, inline: false }
+                const winnerContainer = new ContainerBuilder()
+                    .setAccentColor(0xFFD700)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## 🏆 Congratulations!\n${winnerPings} won the **${giveaway.prize}** giveaway!`
+                        )
                     )
-                    .setFooter({ text: `Giveaway ID: ${messageId}` })
-                    .setTimestamp();
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `🎁 **Prize:** ${giveaway.prize}\n👥 **Total Entries:** ${entrantsArray.length}\n🏅 **Winners:** ${winnerPings}`
+                        )
+                    )
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`-# Giveaway ID: ${messageId}`)
+                    );
 
-                await message.edit({ embeds: [embed], components: [disabledRow] });
+                await message.edit({ flags: MessageFlags.IsComponentsV2, components: [resultsContainer] });
                 await targetChannel.send({
                     content: `🎉 Congratulations ${winnerPings}! You won **${giveaway.prize}**!`,
-                    embeds: [winnerEmbed],
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [winnerContainer],
                     reply: { messageReference: messageId }
                 });
                 await db.endGiveaway(messageId, winners, entrantsArray.length);

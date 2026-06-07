@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ButtonBuilder, ActionRowBuilder, ButtonStyle,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -6,8 +11,6 @@ module.exports = {
         .setName('event')
         .setDescription('Manage server events and scheduled activities.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-        
-        // Subcommand: create
         .addSubcommand(sub =>
             sub.setName('create')
                 .setDescription('Deploy a guild event RSVP card.')
@@ -16,16 +19,11 @@ module.exports = {
                 .addStringOption(opt => opt.setName('date').setDescription('Time and date (e.g. Tomorrow at 8 PM)').setRequired(true))
                 .addStringOption(opt => opt.setName('location').setDescription('Voice channel or physical location').setRequired(true))),
 
-    /**
-     * Executes the event command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, channel, options, client } = interaction;
         if (!guild || !channel) return;
 
         const subcommand = options.getSubcommand();
-
         client.events = client.events || new Map();
 
         try {
@@ -37,37 +35,68 @@ module.exports = {
 
                 await interaction.editReply({ content: '✅ Deploying event card...', ephemeral: true });
 
-                const embed = new EmbedBuilder()
-                    .setTitle(`📅 Guild Event: ${title}`)
-                    .setColor('#FFCC00')
-                    .setThumbnail(guild.iconURL({ forceStatic: true }))
-                    .setDescription(desc)
-                    .addFields(
-                        { name: '⏰ Date / Time', value: `\`${date}\``, inline: true },
-                        { name: '📍 Location', value: `\`${location}\``, inline: true },
-                        { name: '👥 RSVPs (0)', value: '*No one yet*', inline: false }
+                const iconUrl = guild.iconURL({ forceStatic: true });
+
+                const container = new ContainerBuilder()
+                    .setAccentColor(0xFFCC00)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(`## 📅 Guild Event: ${title}\n${desc}`)
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'))
                     )
-                    .setFooter({ text: 'Click button below to RSVP!' })
-                    .setTimestamp();
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `⏰ **Date / Time:** \`${date}\`\n📍 **Location:** \`${location}\`\n👥 **RSVPs:** *No one yet*`
+                        )
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addActionRowComponents(
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setCustomId('event_rsvp_TEMP')
+                                .setLabel('⏰ RSVP / Attend')
+                                .setStyle(ButtonStyle.Success)
+                        )
+                    )
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`-# Click the button above to RSVP for this event`)
+                    );
 
-                const rsvpBtn = new ButtonBuilder()
-                    .setCustomId(`event_rsvp_TEMP`)
-                    .setLabel('⏰ RSVP / Attend')
-                    .setStyle(ButtonStyle.Success);
+                const msg = await channel.send({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
-                const row = new ActionRowBuilder().addComponents(rsvpBtn);
+                const realContainer = new ContainerBuilder()
+                    .setAccentColor(0xFFCC00)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(`## 📅 Guild Event: ${title}\n${desc}`)
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'))
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `⏰ **Date / Time:** \`${date}\`\n📍 **Location:** \`${location}\`\n👥 **RSVPs:** *No one yet*`
+                        )
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addActionRowComponents(
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`event_rsvp_${msg.id}`)
+                                .setLabel('⏰ RSVP / Attend')
+                                .setStyle(ButtonStyle.Success)
+                        )
+                    )
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`-# Click the button above to RSVP for this event`)
+                    );
 
-                const msg = await channel.send({ embeds: [embed], components: [row] });
+                await msg.edit({ flags: MessageFlags.IsComponentsV2, components: [realContainer] });
 
-                // Update custom ID with real message ID
-                const realBtn = new ButtonBuilder()
-                    .setCustomId(`event_rsvp_${msg.id}`)
-                    .setLabel('⏰ RSVP / Attend')
-                    .setStyle(ButtonStyle.Success);
-                const realRow = new ActionRowBuilder().addComponents(realBtn);
-                await msg.edit({ components: [realRow] });
-
-                // Register event in client memory
                 client.events.set(msg.id, {
                     messageId: msg.id,
                     guildId: guild.id,

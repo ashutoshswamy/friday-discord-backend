@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, TextDisplayBuilder, MessageFlags
+} = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -14,15 +17,10 @@ module.exports = {
             sub.setName('claim')
                 .setDescription('Claim ownership and manager overrides of your active voice channel.')),
 
-    /**
-     * Executes the vc command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, member } = interaction;
         if (!guild || !member) return;
 
-        // Check if member is in a voice channel
         const voiceChannel = member.voice.channel;
         if (!voiceChannel) {
             return interaction.editReply({
@@ -31,62 +29,52 @@ module.exports = {
             });
         }
 
-        const subcommand = options = interaction.options.getSubcommand();
+        const subcommand = interaction.options.getSubcommand();
 
         try {
-            // ------------------------------------------
-            // A. Subcommand: lock
-            // ------------------------------------------
             if (subcommand === 'lock') {
-                // Deny @everyone Connect permission
-                await voiceChannel.permissionOverwrites.edit(guild.roles.everyone.id, {
-                    Connect: false
-                });
+                await voiceChannel.permissionOverwrites.edit(guild.roles.everyone.id, { Connect: false });
 
-                const embed = new EmbedBuilder()
-                    .setTitle('🔒 Voice Channel Locked')
-                    .setColor('#FF3333')
-                    .setDescription(`The voice channel **${voiceChannel.name}** has been locked. Only whitelisted users can connect now.`)
-                    .setTimestamp();
+                const container = new ContainerBuilder()
+                    .setAccentColor(0xFF3333)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## 🔒 Voice Channel Locked\nThe voice channel **${voiceChannel.name}** has been locked. Only whitelisted users can connect now.`
+                        )
+                    );
 
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
-            // ------------------------------------------
-            // B. Subcommand: unlock
-            // ------------------------------------------
             if (subcommand === 'unlock') {
-                // Reset @everyone Connect permission
-                await voiceChannel.permissionOverwrites.edit(guild.roles.everyone.id, {
-                    Connect: null
-                });
+                await voiceChannel.permissionOverwrites.edit(guild.roles.everyone.id, { Connect: null });
 
-                const embed = new EmbedBuilder()
-                    .setTitle('🔓 Voice Channel Unlocked')
-                    .setColor('#00FF66')
-                    .setDescription(`The voice channel **${voiceChannel.name}** has been unlocked. Anyone can connect now.`)
-                    .setTimestamp();
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00FF66)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## 🔓 Voice Channel Unlocked\nThe voice channel **${voiceChannel.name}** has been unlocked. Anyone can connect now.`
+                        )
+                    );
 
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
-            // ------------------------------------------
-            // C. Subcommand: claim
-            // ------------------------------------------
             if (subcommand === 'claim') {
-                // Grant executing user Manage Channel override
                 await voiceChannel.permissionOverwrites.edit(member.id, {
                     ManageChannels: true,
                     MoveMembers: true
                 });
 
-                const embed = new EmbedBuilder()
-                    .setTitle('👑 Voice Channel Claimed')
-                    .setColor('#FFD700')
-                    .setDescription(`You have successfully claimed channel management rights over **${voiceChannel.name}**! You can now move members and configure settings.`)
-                    .setTimestamp();
+                const container = new ContainerBuilder()
+                    .setAccentColor(0xFFD700)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## 👑 Voice Channel Claimed\nYou have successfully claimed channel management rights over **${voiceChannel.name}**! You can now move members and configure settings.`
+                        )
+                    );
 
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
         } catch (err) {

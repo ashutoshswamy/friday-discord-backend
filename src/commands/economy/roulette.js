@@ -1,4 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle,
+    StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
+    MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 
@@ -48,31 +55,55 @@ module.exports = {
             return interaction.editReply({ content: `⏳ Roulette is on cooldown. Try again in **${cd.remaining}s**.`, ephemeral: true });
         }
 
+        const buildResultContainer = (rolled, betLabel, winnings, isWin, finalCoins) => {
+            const colorSquare = rolled.color === 'red' ? '🔴' : rolled.color === 'black' ? '⚫' : '🟢';
+            return new ContainerBuilder()
+                .setAccentColor(isWin ? 0x00FF66 : 0xFF3333)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 🎡 Roulette Result\n` +
+                                `The ball lands on ${colorSquare} **${rolled.num} (${rolled.color.toUpperCase()})**\n\n` +
+                                (isWin ? `🎉 **Win!** Your bet on **${betLabel}** paid out!` : `❌ **Loss.** Your bet on **${betLabel}** missed.`)
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `**Bet Space:** \`${betLabel}\`\n` +
+                        `**Bet Amount:** <:coin:1512926963239489606> **${bet.toLocaleString()}**\n` +
+                        `**Payout:** ${isWin ? `<:coin:1512926963239489606> **+${winnings.toLocaleString()}**` : '<:coin:1512926963239489606> **0**'}\n` +
+                        `**Wallet:** <:coin:1512926963239489606> **${finalCoins.toLocaleString()}**`
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent('-# 🔴 Red (2×) | ⚫ Black (2×) | 🟢 Green (35×) | Number (35×)')
+                );
+        };
+
         try {
             const profile = await db.getProfile(guild.id, user.id);
             if (profile.coins < bet) {
                 return interaction.editReply({
-                    content: `❌ Insufficient coins. Your wallet has 🪙 **${profile.coins.toLocaleString()}** coins.`,
+                    content: `❌ Insufficient coins. Your wallet has <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins.`,
                     ephemeral: true
                 });
             }
 
-            // If space arg provided, resolve immediately
             if (spaceArg) {
                 let betType, betTarget;
                 if (['red', 'black', 'green'].includes(spaceArg)) {
-                    betType = 'COLOR';
-                    betTarget = spaceArg;
+                    betType = 'COLOR'; betTarget = spaceArg;
                 } else {
                     const n = parseInt(spaceArg);
                     if (isNaN(n) || n < 0 || n > 36) {
-                        return interaction.editReply({
-                            content: '❌ Invalid bet space. Use `red`, `black`, `green`, or a number `0–36`.',
-                            ephemeral: true
-                        });
+                        return interaction.editReply({ content: '❌ Invalid bet space. Use `red`, `black`, `green`, or a number `0–36`.', ephemeral: true });
                     }
-                    betType = 'NUMBER';
-                    betTarget = n;
+                    betType = 'NUMBER'; betTarget = n;
                 }
 
                 await db.updateCoins(guild.id, user.id, -bet);
@@ -81,43 +112,15 @@ module.exports = {
                 if (winnings > 0) await db.updateCoins(guild.id, user.id, winnings);
 
                 const finalBalance = await db.getProfile(guild.id, user.id);
-                const colorSquare = rolled.color === 'red' ? '🔴' : rolled.color === 'black' ? '⚫' : '🟢';
-                const isWin = winnings > 0;
-
-                const embed = new EmbedBuilder()
-                    .setTitle('🎡 Roulette')
-                    .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                    .setColor(isWin ? '#00FF66' : '#FF3333')
-                    .setDescription(
-                        `The ball lands on ${colorSquare} **${rolled.num} (${rolled.color.toUpperCase()})**\n\n` +
-                        (isWin ? `🎉 **Win!** Your bet on \`${spaceArg.toUpperCase()}\` paid out!` : `❌ **Loss.** Your bet on \`${spaceArg.toUpperCase()}\` missed.`)
-                    )
-                    .addFields(
-                        { name: 'Bet', value: `🪙 **${bet.toLocaleString()}**`, inline: true },
-                        { name: 'Payout', value: isWin ? `🪙 **+${winnings.toLocaleString()}**` : '🪙 **0**', inline: true },
-                        { name: 'Wallet', value: `🪙 **${finalBalance.coins.toLocaleString()}**`, inline: true }
-                    )
-                    .setFooter({ text: '🔴 Red (2×) | ⚫ Black (2×) | 🟢 Green (35×) | Number (35×)' })
-                    .setTimestamp();
-
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [buildResultContainer(rolled, spaceArg.toUpperCase(), winnings, winnings > 0, finalBalance.coins)]
+                });
             }
 
-            // Interactive mode — show color buttons + number select
-            const redBtn = new ButtonBuilder()
-                .setCustomId('rl_red')
-                .setLabel('🔴 Red (2×)')
-                .setStyle(ButtonStyle.Danger);
-
-            const blackBtn = new ButtonBuilder()
-                .setCustomId('rl_black')
-                .setLabel('⚫ Black (2×)')
-                .setStyle(ButtonStyle.Secondary);
-
-            const greenBtn = new ButtonBuilder()
-                .setCustomId('rl_green')
-                .setLabel('🟢 Green (35×)')
-                .setStyle(ButtonStyle.Success);
+            const redBtn = new ButtonBuilder().setCustomId('rl_red').setLabel('🔴 Red (2×)').setStyle(ButtonStyle.Danger);
+            const blackBtn = new ButtonBuilder().setCustomId('rl_black').setLabel('⚫ Black (2×)').setStyle(ButtonStyle.Secondary);
+            const greenBtn = new ButtonBuilder().setCustomId('rl_green').setLabel('🟢 Green (35×)').setStyle(ButtonStyle.Success);
 
             const numberOptions = Array.from({ length: 37 }, (_, n) => ({
                 label: `${n === 0 ? '🟢' : RED_NUMBERS.includes(n) ? '🔴' : '⚫'} Number ${n}`,
@@ -127,32 +130,40 @@ module.exports = {
 
             const numberSelect = new StringSelectMenuBuilder()
                 .setCustomId('rl_number')
-                .setPlaceholder('🎲 Or pick a specific number (0–36)...')
-                .addOptions(numberOptions.slice(0, 25));
+                .setPlaceholder('🎲 Or pick a specific number (0–24)...')
+                .addOptions(numberOptions.slice(0, 25).map(o =>
+                    new StringSelectMenuOptionBuilder().setLabel(o.label).setValue(o.value).setDescription(o.description)
+                ));
 
             const numberSelect2 = new StringSelectMenuBuilder()
                 .setCustomId('rl_number2')
                 .setPlaceholder('🎲 Numbers 25–36...')
-                .addOptions(numberOptions.slice(25));
+                .addOptions(numberOptions.slice(25).map(o =>
+                    new StringSelectMenuOptionBuilder().setLabel(o.label).setValue(o.value).setDescription(o.description)
+                ));
 
-            const row1 = new ActionRowBuilder().addComponents(redBtn, blackBtn, greenBtn);
-            const row2 = new ActionRowBuilder().addComponents(numberSelect);
-            const row3 = new ActionRowBuilder().addComponents(numberSelect2);
-
-            const promptEmbed = new EmbedBuilder()
-                .setTitle('🎡 Roulette Table')
-                .setColor('#8b5cf6')
-                .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                .setDescription(
-                    `**Bet:** 🪙 **${bet.toLocaleString()}** coins\n\n` +
-                    `Choose a color or pick a specific number to place your bet.\n` +
-                    `🔴 Red / ⚫ Black pays **2×** · 🟢 Green / Numbers pay **35×**`
+            const promptContainer = new ContainerBuilder()
+                .setAccentColor(0x8b5cf6)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 🎡 Roulette Table\n**Bet:** <:coin:1512926963239489606> **${bet.toLocaleString()}** coins\n\n` +
+                                `Choose a color or pick a specific number to place your bet.\n` +
+                                `🔴 Red / ⚫ Black pays **2×** · 🟢 Green / Numbers pay **35×**`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
                 )
-                .setFooter({ text: 'You have 30 seconds to place your bet' });
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# You have 30 seconds to place your bet'))
+                .addActionRowComponents(new ActionRowBuilder().addComponents(redBtn, blackBtn, greenBtn))
+                .addActionRowComponents(new ActionRowBuilder().addComponents(numberSelect))
+                .addActionRowComponents(new ActionRowBuilder().addComponents(numberSelect2));
 
             const response = await interaction.editReply({
-                embeds: [promptEmbed],
-                components: [row1, row2, row3]
+                flags: MessageFlags.IsComponentsV2,
+                components: [promptContainer]
             });
 
             const collector = response.createMessageComponentCollector({
@@ -182,34 +193,17 @@ module.exports = {
                 if (winnings > 0) await db.updateCoins(guild.id, user.id, winnings);
 
                 const finalBalance = await db.getProfile(guild.id, user.id);
-                const colorSquare = rolled.color === 'red' ? '🔴' : rolled.color === 'black' ? '⚫' : '🟢';
-                const isWin = winnings > 0;
-
-                const resultEmbed = new EmbedBuilder()
-                    .setTitle('🎡 Roulette Result')
-                    .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                    .setColor(isWin ? '#00FF66' : '#FF3333')
-                    .setDescription(
-                        `The ball lands on ${colorSquare} **${rolled.num} (${rolled.color.toUpperCase()})**\n\n` +
-                        (isWin ? `🎉 **Win!** Your bet on **${betLabel}** paid out!` : `❌ **Loss.** Your bet on **${betLabel}** missed.`)
-                    )
-                    .addFields(
-                        { name: 'Bet Space', value: `\`${betLabel}\``, inline: true },
-                        { name: 'Bet Amount', value: `🪙 **${bet.toLocaleString()}**`, inline: true },
-                        { name: 'Payout', value: isWin ? `🪙 **+${winnings.toLocaleString()}**` : '🪙 **0**', inline: true },
-                        { name: 'Wallet', value: `🪙 **${finalBalance.coins.toLocaleString()}**`, inline: true }
-                    )
-                    .setFooter({ text: '🔴 Red (2×) | ⚫ Black (2×) | 🟢 Green (35×) | Number (35×)' })
-                    .setTimestamp();
-
-                await i.editReply({ embeds: [resultEmbed], components: [] });
+                await i.editReply({
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [buildResultContainer(rolled, betLabel, winnings, winnings > 0, finalBalance.coins)]
+                });
             });
 
             collector.on('end', async (collected, reason) => {
                 if (reason === 'time' && collected.size === 0) {
                     await interaction.editReply({
                         content: '⏰ No bet placed. The table has cleared.',
-                        embeds: [],
+                        flags: MessageFlags.IsComponentsV2,
                         components: []
                     }).catch(() => null);
                 }
@@ -218,11 +212,8 @@ module.exports = {
         } catch (err) {
             console.error('[ROULETTE ERROR]', err);
             const errMsg = { content: '❌ Failed to process Roulette game.', ephemeral: true };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(errMsg).catch(() => null);
-            } else {
-                await interaction.editReply(errMsg).catch(() => null);
-            }
+            if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => null);
+            else await interaction.editReply(errMsg).catch(() => null);
         }
     }
 };

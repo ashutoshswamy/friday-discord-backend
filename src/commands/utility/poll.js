@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -30,10 +33,10 @@ module.exports = {
 
         // ── Create
         if (sub === 'create') {
-            const question      = options.getString('question');
-            const rawOptions    = options.getString('options');
-            const duration      = options.getInteger('duration') ?? 24;
-            const multiselect   = options.getBoolean('multiselect') ?? false;
+            const question    = options.getString('question');
+            const rawOptions  = options.getString('options');
+            const duration    = options.getInteger('duration') ?? 24;
+            const multiselect = options.getBoolean('multiselect') ?? false;
 
             const optionsList = rawOptions.split(',').map(o => o.trim()).filter(o => o);
 
@@ -52,7 +55,6 @@ module.exports = {
                     }
                 });
 
-                // Save poll with empty emojis — native polls handle display
                 await db.savePoll(guild.id, channel.id, msg.id, question, optionsList, []);
                 await interaction.editReply({ content: `📊 Poll posted! (runs for **${duration}h**)`, ephemeral: true });
             } catch (err) {
@@ -90,19 +92,16 @@ module.exports = {
                 if (!msg)
                     return interaction.editReply({ content: '❌ Could not find the poll message. It may have been deleted.', ephemeral: true });
 
-                // End the native Discord poll via MessageManager
                 const endedMsg = await pollChannel.messages.endPoll(messageId).catch(async (err) => {
                     console.error('[POLL CLOSE ERROR] endPoll failed:', err);
                     return null;
                 });
 
-                // Re-fetch to get finalized vote counts from Discord's API
                 const freshMsg = endedMsg
                     ? await pollChannel.messages.fetch(messageId).catch(() => endedMsg)
                     : null;
 
                 let results = null;
-                let embed;
 
                 if (freshMsg?.poll) {
                     const answers    = [...(freshMsg.poll.answers).values()];
@@ -121,21 +120,29 @@ module.exports = {
                         return `**${r.text}**${r.winner ? ' 🏆' : ''}\n\`${bar}\` ${r.pct}% (${r.count.toLocaleString()} vote${r.count !== 1 ? 's' : ''})`;
                     }).join('\n\n');
 
-                    embed = new EmbedBuilder()
-                        .setTitle(`📊 Poll Closed — ${poll.question}`)
-                        .setColor('#71717a')
-                        .setDescription(resultsText || '*No votes recorded.*')
-                        .setFooter({ text: `Closed by ${user.tag} · ${totalVotes.toLocaleString()} total vote${totalVotes !== 1 ? 's' : ''}` })
-                        .setTimestamp();
+                    await db.closePoll(messageId, results);
+
+                    const container = new ContainerBuilder()
+                        .setAccentColor(0x71717a)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`## 📊 Poll Closed\n**${poll.question}**`)
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(resultsText || '*No votes recorded.*')
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `-# Closed by ${user.tag} · ${totalVotes.toLocaleString()} total vote${totalVotes !== 1 ? 's' : ''}`
+                            )
+                        );
+
+                    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
                 }
 
                 await db.closePoll(messageId, results);
-
-                if (embed) {
-                    await interaction.editReply({ embeds: [embed] });
-                } else {
-                    await interaction.editReply({ content: `🔒 Poll closed! Results visible in <#${poll.channelId}>.` });
-                }
+                await interaction.editReply({ content: `🔒 Poll closed! Results visible in <#${poll.channelId}>.` });
             } catch (err) {
                 console.error('[POLL CLOSE ERROR]', err);
                 const e = { content: '❌ Failed to close poll.', ephemeral: true };

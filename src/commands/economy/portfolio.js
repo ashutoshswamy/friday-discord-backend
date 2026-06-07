@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -40,10 +44,6 @@ module.exports = {
                         .setDescription('The stock symbol of the position to close')
                         .setRequired(true))),
 
-    /**
-     * Executes the portfolio command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, user } = interaction;
         if (!guild) return;
@@ -60,13 +60,6 @@ module.exports = {
                 const stocksData = await db.getUserStocksTotalValue(guild.id, targetUser.id);
                 const intradayData = await db.getUserIntradayTotalValue(guild.id, targetUser.id);
 
-                const embed = new EmbedBuilder()
-                    .setTitle(`📈 Asset Portfolio: ${targetUser.username}`)
-                    .setColor('#00E5FF') // Brilliant neon cyan
-                    .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                    .setTimestamp();
-
-                // 1. Long-term Holdings
                 let stocksStr = '';
                 if (stocksData.holdings.length > 0) {
                     for (const h of stocksData.holdings) {
@@ -78,40 +71,57 @@ module.exports = {
                     stocksStr = '*No active long-term investments. Buy stocks using `/stock buy`.*\n\n';
                 }
 
-                // 2. Intraday Positions
                 let intradayStr = '';
                 if (intradayData.positions.length > 0) {
                     for (const p of intradayData.positions) {
                         const sign = p.pnl >= 0 ? '+' : '';
                         const pnlColor = p.pnl >= 0 ? '🟢 `+' : '🔴 `';
                         const typeEmoji = p.type === 'LONG' ? '🟢' : '🔴';
-                        intradayStr += `• **${p.symbol}** | ${typeEmoji} **${p.type}** (${p.leverage}x)\n  Margin: \`🪙 ${p.margin.toLocaleString()}\` | Entry: \`${p.currency}${p.entryPrice.toFixed(2)}\` | Cur: \`${p.currency}${p.currentPrice.toFixed(2)}\`\n  PnL: ${pnlColor}${p.pnl.toFixed(2)} (${sign}${p.pnlPercent.toFixed(2)}%)\` | Return: **🪙 ${p.currentValue.toFixed(2)}**\n\n`;
+                        intradayStr += `• **${p.symbol}** | ${typeEmoji} **${p.type}** (${p.leverage}x)\n  Margin: \`<:coin:1512926963239489606> ${p.margin.toLocaleString()}\` | Entry: \`${p.currency}${p.entryPrice.toFixed(2)}\` | Cur: \`${p.currency}${p.currentPrice.toFixed(2)}\`\n  PnL: ${pnlColor}${p.pnl.toFixed(2)} (${sign}${p.pnlPercent.toFixed(2)}%)\` | Return: **<:coin:1512926963239489606> ${p.currentValue.toFixed(2)}**\n\n`;
                     }
                 } else {
                     intradayStr = '*No active intraday positions. Open trades using `/portfolio open`.*\n\n';
                 }
 
-                embed.addFields(
-                    { name: '🏛️ Long-term Investments (LONG Only)', value: stocksStr, inline: false },
-                    { name: '⚡ Leveraged Intraday Trades (5x Max Leverage)', value: intradayStr, inline: false }
-                );
-
-                // Financial Overview
                 const totalCost = (stocksData.totalCost || 0) + (intradayData.totalMargin || 0);
                 const totalValue = (stocksData.totalValue || 0) + (intradayData.totalValue || 0);
                 const overallPnL = totalValue - totalCost;
                 const overallPnLPercent = totalCost > 0 ? (overallPnL / totalCost) * 100 : 0;
                 const pnlSign = overallPnL >= 0 ? '+' : '';
 
-                embed.addFields({
-                    name: '💼 Portfolio Balance Summary',
-                    value: `• Total Invested Assets: **🪙 ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** coins\n• Portfolio Current Value: **🪙 ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** coins\n• Cumulative Unrealized PnL: **${overallPnL >= 0 ? '🟢' : '🔴'} ${pnlSign}${overallPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pnlSign}${overallPnLPercent.toFixed(2)}%)**`,
-                    inline: false
-                });
+                const summaryText =
+                    `• Total Invested: **<:coin:1512926963239489606> ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** coins\n` +
+                    `• Current Value: **<:coin:1512926963239489606> ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** coins\n` +
+                    `• Unrealized PnL: **${overallPnL >= 0 ? '🟢' : '🔴'} ${pnlSign}${overallPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pnlSign}${overallPnLPercent.toFixed(2)}%)**`;
 
-                embed.setFooter({ text: 'Fictional simulation — prices do not reflect real markets. Not financial advice.' });
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00E5FF)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(`## 📈 Asset Portfolio\n${targetUser.username}'s investment holdings and active trades.`)
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`**🏛️ Long-term Investments**\n${stocksStr}`)
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`**⚡ Leveraged Intraday Trades (5x)**\n${intradayStr}`)
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`**💼 Portfolio Summary**\n${summaryText}`)
+                    )
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `-# Fictional simulation — prices do not reflect real markets. Not financial advice.`
+                        )
+                    );
 
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
             if (subcommand === 'open') {
@@ -125,22 +135,35 @@ module.exports = {
 
                 const result = await db.openIntradayPosition(guild.id, user.id, symbol, type, margin, 5);
 
-                const embed = new EmbedBuilder()
-                    .setTitle('⚡ Intraday Leveraged Position Opened!')
-                    .setColor('#00E5FF')
-                    .setDescription(`You successfully opened a **5x leveraged ${type}** position on **${result.symbol}** using your wallet balance.`)
-                    .addFields(
-                        { name: '🗂️ Symbol', value: `**${result.symbol}**`, inline: true },
-                        { name: '🧭 Order Type', value: result.type === 'LONG' ? '🟢 LONG' : '🔴 SHORT', inline: true },
-                        { name: '⚖️ Leverage', value: `**${result.leverage}x**`, inline: true },
-                        { name: '💵 Margin Collateral', value: `🪙 **${result.margin.toLocaleString()}** coins`, inline: true },
-                        { name: '🏷️ Entry Price', value: `${result.currency}${result.entryPrice.toLocaleString()}`, inline: true },
-                        { name: '📦 Leveraged Position Size', value: `\`${result.shares.toFixed(4)}\` shares`, inline: true }
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00E5FF)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## ⚡ Leveraged Position Opened!\nYou opened a **5x leveraged ${type}** on **${result.symbol}**.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
                     )
-                    .setFooter({ text: 'Warning: Leveraged trading amplifies both profits and losses. · Fictional simulation — not financial advice.' })
-                    .setTimestamp();
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**Symbol:** **${result.symbol}**\n` +
+                            `**Order Type:** ${result.type === 'LONG' ? '🟢 LONG' : '🔴 SHORT'}\n` +
+                            `**Leverage:** **${result.leverage}x**\n` +
+                            `**Margin Collateral:** <:coin:1512926963239489606> **${result.margin.toLocaleString()}** coins\n` +
+                            `**Entry Price:** ${result.currency}${result.entryPrice.toLocaleString()}\n` +
+                            `**Position Size:** \`${result.shares.toFixed(4)}\` shares`
+                        )
+                    )
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `-# ⚠️ Leveraged trading amplifies both profits and losses. Fictional simulation — not financial advice.`
+                        )
+                    );
 
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
             if (subcommand === 'close') {
@@ -153,25 +176,39 @@ module.exports = {
 
                 const pnlSign = result.pnl >= 0 ? '+' : '';
                 const pnlPercent = (result.pnl / result.margin) * 100;
+                const accentColor = result.pnl >= 0 ? 0x00FF66 : 0xFF3333;
 
-                const embed = new EmbedBuilder()
-                    .setTitle('Settled: Intraday Position Closed!')
-                    .setColor(result.pnl >= 0 ? '#00FF66' : '#FF3333')
-                    .setDescription(`Your leveraged position on **${result.symbol}** has been settled and closed.`)
-                    .addFields(
-                        { name: '🗂️ Symbol', value: `**${result.symbol}**`, inline: true },
-                        { name: '🧭 Order Type', value: result.type === 'LONG' ? '🟢 LONG' : '🔴 SHORT', inline: true },
-                        { name: '🏷️ Entry Price', value: `${result.currency}${result.entryPrice.toFixed(2)}`, inline: true },
-                        { name: '🏷️ Settlement Price', value: `${result.currency}${result.exitPrice.toFixed(2)}`, inline: true },
-                        { name: '💵 Initial Margin', value: `🪙 **${result.margin.toLocaleString()}** coins`, inline: true },
-                        { name: '📈 Realized PnL', value: `**${result.pnl >= 0 ? '🟢' : '🔴'} ${pnlSign}${result.pnl.toFixed(2)} (${pnlSign}${pnlPercent.toFixed(2)}%)**`, inline: true },
-                        { name: '👛 Settled Cash Returned', value: `🪙 **${result.totalReturn.toFixed(2)}** coins`, inline: true },
-                        { name: '👛 Wallet Balance', value: `🪙 **${result.newBalance.toLocaleString()}** coins`, inline: true }
+                const container = new ContainerBuilder()
+                    .setAccentColor(accentColor)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## ${result.pnl >= 0 ? '🟢' : '🔴'} Position Settled: ${result.symbol}\nYour leveraged position has been closed and PnL settled.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
                     )
-                    .setFooter({ text: 'Settlement proceeds are immediately updated in your active wallet. · Fictional simulation — not financial advice.' })
-                    .setTimestamp();
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**Symbol:** **${result.symbol}**\n` +
+                            `**Order Type:** ${result.type === 'LONG' ? '🟢 LONG' : '🔴 SHORT'}\n` +
+                            `**Entry Price:** ${result.currency}${result.entryPrice.toFixed(2)}\n` +
+                            `**Settlement Price:** ${result.currency}${result.exitPrice.toFixed(2)}\n` +
+                            `**Initial Margin:** <:coin:1512926963239489606> **${result.margin.toLocaleString()}** coins\n` +
+                            `**Realized PnL:** **${result.pnl >= 0 ? '🟢' : '🔴'} ${pnlSign}${result.pnl.toFixed(2)} (${pnlSign}${pnlPercent.toFixed(2)}%)**\n` +
+                            `**Cash Returned:** <:coin:1512926963239489606> **${result.totalReturn.toFixed(2)}** coins\n` +
+                            `**New Wallet:** <:coin:1512926963239489606> **${result.newBalance.toLocaleString()}** coins`
+                        )
+                    )
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `-# Settlement proceeds immediately updated in your wallet. · Fictional simulation — not financial advice.`
+                        )
+                    );
 
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
         } catch (err) {

@@ -1,30 +1,41 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 const PAGE_SIZE = 5;
 
-function buildWarningsEmbed(targetUser, warnings, page, totalPages) {
+function buildWarningsContainer(targetUser, warnings, page, totalPages) {
     const start = page * PAGE_SIZE;
     const slice = warnings.slice(start, start + PAGE_SIZE);
 
-    const embed = new EmbedBuilder()
-        .setTitle(`⚠️ Warning History: ${targetUser.tag}`)
-        .setColor('#FF4500')
-        .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-        .setDescription(`**${warnings.length}** warning(s) on record.`)
-        .setFooter({ text: `Page ${page + 1} of ${totalPages} · Use /clearwarn to manage records` })
-        .setTimestamp();
-
-    slice.forEach(warn => {
+    const warningsText = slice.map(warn => {
         const relativeTs = `<t:${Math.floor(warn.timestamp / 1000)}:R>`;
         const fullTs = `<t:${Math.floor(warn.timestamp / 1000)}:f>`;
-        embed.addFields({
-            name: `⚠️ Warning ID: \`${warn.id}\``,
-            value: `**Moderator:** <@${warn.moderatorId}>\n**Date:** ${fullTs} (${relativeTs})\n**Reason:** ${warn.reason}`
-        });
-    });
+        return `**⚠️ Warning ID: \`${warn.id}\`**\n**Moderator:** <@${warn.moderatorId}>\n**Date:** ${fullTs} (${relativeTs})\n**Reason:** ${warn.reason}`;
+    }).join('\n\n');
 
-    return embed;
+    const container = new ContainerBuilder()
+        .setAccentColor(0xFF4500)
+        .addSectionComponents(
+            new SectionBuilder()
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `## ⚠️ Warning History: ${targetUser.tag}\n**${warnings.length}** warning(s) on record.`
+                    )
+                )
+                .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
+        )
+        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(warningsText))
+        .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(`-# Page ${page + 1} of ${totalPages} · Use /clearwarn to manage records`)
+        );
+
+    return container;
 }
 
 module.exports = {
@@ -32,9 +43,7 @@ module.exports = {
         .setName('warnings')
         .setDescription("Displays a user's formal infraction and warning history.")
         .addUserOption(option =>
-            option.setName('user')
-                .setDescription('The user to view warnings for')
-                .setRequired(true))
+            option.setName('user').setDescription('The user to view warnings for').setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
@@ -47,38 +56,35 @@ module.exports = {
             const warnings = await db.getWarnings(guild.id, targetUser.id);
 
             if (warnings.length === 0) {
-                const cleanEmbed = new EmbedBuilder()
-                    .setTitle(`⚠️ Warning History: ${targetUser.tag}`)
-                    .setColor('#00FF66')
-                    .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                    .setDescription('✅ This user has a clean record — no warnings on file.')
-                    .setTimestamp();
-                return interaction.editReply({ embeds: [cleanEmbed] });
+                const cleanContainer = new ContainerBuilder()
+                    .setAccentColor(0x00FF66)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## ⚠️ Warning History: ${targetUser.tag}\n✅ This user has a clean record — no warnings on file.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
+                    );
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [cleanContainer] });
             }
 
             const sorted = warnings.slice().sort((a, b) => b.timestamp - a.timestamp);
             const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
             let page = 0;
 
-            const prevBtn = new ButtonBuilder()
-                .setCustomId('warns_prev')
-                .setLabel('◀ Previous')
-                .setStyle(ButtonStyle.Secondary)
-                .setDisabled(true);
+            const prevBtn = new ButtonBuilder().setCustomId('warns_prev').setLabel('◀ Previous').setStyle(ButtonStyle.Secondary).setDisabled(true);
+            const nextBtn = new ButtonBuilder().setCustomId('warns_next').setLabel('Next ▶').setStyle(ButtonStyle.Secondary).setDisabled(totalPages <= 1);
 
-            const nextBtn = new ButtonBuilder()
-                .setCustomId('warns_next')
-                .setLabel('Next ▶')
-                .setStyle(ButtonStyle.Secondary)
-                .setDisabled(totalPages <= 1);
+            const container = buildWarningsContainer(targetUser, sorted, page, totalPages);
 
-            const row = new ActionRowBuilder().addComponents(prevBtn, nextBtn);
-            const components = totalPages > 1 ? [row] : [];
+            if (totalPages > 1) {
+                container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+                container.addActionRowComponents(new ActionRowBuilder().addComponents(prevBtn, nextBtn));
+            }
 
-            const response = await interaction.editReply({
-                embeds: [buildWarningsEmbed(targetUser, sorted, page, totalPages)],
-                components
-            });
+            const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
             if (totalPages <= 1) return;
 
@@ -96,18 +102,22 @@ module.exports = {
                 const updatedPrev = new ButtonBuilder().setCustomId('warns_prev').setLabel('◀ Previous').setStyle(ButtonStyle.Secondary).setDisabled(page === 0);
                 const updatedNext = new ButtonBuilder().setCustomId('warns_next').setLabel('Next ▶').setStyle(ButtonStyle.Secondary).setDisabled(page >= totalPages - 1);
 
-                await i.editReply({
-                    embeds: [buildWarningsEmbed(targetUser, sorted, page, totalPages)],
-                    components: [new ActionRowBuilder().addComponents(updatedPrev, updatedNext)]
-                });
+                const updatedContainer = buildWarningsContainer(targetUser, sorted, page, totalPages);
+                updatedContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+                updatedContainer.addActionRowComponents(new ActionRowBuilder().addComponents(updatedPrev, updatedNext));
+
+                await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [updatedContainer] });
             });
 
             collector.on('end', async () => {
-                const disabledRow = new ActionRowBuilder().addComponents(
-                    ButtonBuilder.from(prevBtn).setDisabled(true),
-                    ButtonBuilder.from(nextBtn).setDisabled(true)
-                );
-                await interaction.editReply({ components: [disabledRow] }).catch(() => null);
+                const disabledPrev = new ButtonBuilder().setCustomId('warns_prev').setLabel('◀ Previous').setStyle(ButtonStyle.Secondary).setDisabled(true);
+                const disabledNext = new ButtonBuilder().setCustomId('warns_next').setLabel('Next ▶').setStyle(ButtonStyle.Secondary).setDisabled(true);
+
+                const expiredContainer = buildWarningsContainer(targetUser, sorted, page, totalPages);
+                expiredContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+                expiredContainer.addActionRowComponents(new ActionRowBuilder().addComponents(disabledPrev, disabledNext));
+
+                await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => null);
             });
 
         } catch (err) {

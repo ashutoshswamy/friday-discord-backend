@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -6,13 +11,9 @@ module.exports = {
         .setName('kick')
         .setDescription('Kicks a user from the server.')
         .addUserOption(option =>
-            option.setName('user')
-                .setDescription('The user to kick')
-                .setRequired(true))
+            option.setName('user').setDescription('The user to kick').setRequired(true))
         .addStringOption(option =>
-            option.setName('reason')
-                .setDescription('The reason for kicking this user')
-                .setRequired(false))
+            option.setName('reason').setDescription('The reason for kicking this user').setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
     async execute(interaction) {
@@ -33,43 +34,39 @@ module.exports = {
         }
 
         if (!targetMember.kickable) {
-            return interaction.editReply({
-                content: '❌ I cannot kick this user — they may outrank me or I lack permission.',
-                ephemeral: true
-            });
+            return interaction.editReply({ content: '❌ I cannot kick this user — they may outrank me or I lack permission.', ephemeral: true });
         }
 
         if (targetMember.roles.highest.position >= interaction.member.roles.highest.position && guild.ownerId !== user.id) {
-            return interaction.editReply({
-                content: '❌ You cannot kick this user — they have an equal or higher role.',
-                ephemeral: true
-            });
+            return interaction.editReply({ content: '❌ You cannot kick this user — they have an equal or higher role.', ephemeral: true });
         }
 
-        const confirmBtn = new ButtonBuilder()
-            .setCustomId('kick_confirm')
-            .setLabel('👢 Confirm Kick')
-            .setStyle(ButtonStyle.Danger);
-
-        const cancelBtn = new ButtonBuilder()
-            .setCustomId('kick_cancel')
-            .setLabel('✕ Cancel')
-            .setStyle(ButtonStyle.Secondary);
-
+        const confirmBtn = new ButtonBuilder().setCustomId('kick_confirm').setLabel('👢 Confirm Kick').setStyle(ButtonStyle.Danger);
+        const cancelBtn = new ButtonBuilder().setCustomId('kick_cancel').setLabel('✕ Cancel').setStyle(ButtonStyle.Secondary);
         const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
-        const confirmEmbed = new EmbedBuilder()
-            .setTitle('⚠️ Confirm Kick')
-            .setColor('#FFA500')
-            .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-            .setDescription(`You are about to **kick** <@${targetUser.id}> from **${guild.name}**.`)
-            .addFields(
-                { name: 'User', value: `${targetUser.tag} (\`${targetUser.id}\`)`, inline: true },
-                { name: 'Reason', value: reason }
+        const confirmContainer = new ContainerBuilder()
+            .setAccentColor(0xFFA500)
+            .addSectionComponents(
+                new SectionBuilder()
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## ⚠️ Confirm Kick\nYou are about to **kick** <@${targetUser.id}> from **${guild.name}**.`
+                        )
+                    )
+                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
             )
-            .setFooter({ text: 'They can rejoin with an invite. Confirm within 30 seconds.' });
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(
+                    `**User:** ${targetUser.tag} (\`${targetUser.id}\`)\n**Reason:** ${reason}`
+                )
+            )
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# They can rejoin with an invite. Confirm within 30 seconds.`))
+            .addActionRowComponents(row);
 
-        const response = await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
+        const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [confirmContainer] });
 
         const collector = response.createMessageComponentCollector({
             filter: i => i.user.id === user.id,
@@ -79,43 +76,43 @@ module.exports = {
 
         collector.on('collect', async i => {
             if (i.customId === 'kick_cancel') {
-                return i.update({ content: '✅ Kick cancelled.', embeds: [], components: [] });
+                return i.update({ content: '✅ Kick cancelled.', flags: MessageFlags.IsComponentsV2, components: [] });
             }
 
             try {
                 await targetMember.kick(`${reason} | Kicked by ${user.tag}`);
                 await db.logInfraction(guild.id, targetUser.id, user.id, 'KICK', reason);
 
-                const embed = new EmbedBuilder()
-                    .setTitle('👢 User Kicked')
-                    .setColor('#FFA500')
-                    .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                    .setDescription(`**${targetUser.tag}** has been kicked from **${guild.name}**.`)
-                    .addFields(
-                        { name: 'User ID', value: `\`${targetUser.id}\``, inline: true },
-                        { name: 'Moderator', value: `<@${user.id}>`, inline: true },
-                        { name: 'Reason', value: reason }
+                const kickedContainer = new ContainerBuilder()
+                    .setAccentColor(0xFFA500)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## 👢 User Kicked\n**${targetUser.tag}** has been kicked from **${guild.name}**.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
                     )
-                    .setTimestamp();
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**User ID:** \`${targetUser.id}\`\n` +
+                            `**Moderator:** <@${user.id}>\n` +
+                            `**Reason:** ${reason}`
+                        )
+                    );
 
-                await i.update({ embeds: [embed], components: [] });
+                await i.update({ flags: MessageFlags.IsComponentsV2, components: [kickedContainer] });
             } catch (err) {
                 console.error('[ERROR] Kick failed:', err);
-                await i.update({
-                    content: '❌ Failed to kick this user. Verify my role has the Kick Members permission.',
-                    embeds: [],
-                    components: []
-                });
+                await i.update({ content: '❌ Failed to kick this user. Verify my role has the Kick Members permission.', flags: MessageFlags.IsComponentsV2, components: [] });
             }
         });
 
         collector.on('end', async (collected, reason) => {
             if (reason === 'time' && collected.size === 0) {
-                await interaction.editReply({
-                    content: '⏰ Confirmation timed out. Kick cancelled.',
-                    embeds: [],
-                    components: []
-                }).catch(() => null);
+                await interaction.editReply({ content: '⏰ Confirmation timed out. Kick cancelled.', flags: MessageFlags.IsComponentsV2, components: [] }).catch(() => null);
             }
         });
     }

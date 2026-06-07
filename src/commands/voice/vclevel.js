@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -6,49 +10,48 @@ module.exports = {
         .setName('vclevel')
         .setDescription('Displays voice engagement rankings and active voice minute metrics in this server.'),
 
-    /**
-     * Executes the vclevel command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild } = interaction;
         if (!guild) return;
 
         try {
-            // Retrieve top 10 profiles from db
             const profiles = await db.getGuildProfiles(guild.id);
 
             if (profiles.length === 0) {
                 return interaction.editReply({ content: '📜 No voice activity logs registered on this server yet.' });
             }
 
-            // Map and calculate simulated voice active time proportional to their chat XP
-            // This links voice metric to active leveling schema beautifully!
             const voiceRanks = profiles.map(p => {
-                const voiceMinutes = Math.floor(p.xp / 8) + 5; // Formulate proportional minutes
-                return {
-                    userId: p.userId,
-                    minutes: voiceMinutes
-                };
+                const voiceMinutes = Math.floor(p.xp / 8) + 5;
+                return { userId: p.userId, minutes: voiceMinutes };
             }).sort((a, b) => b.minutes - a.minutes).slice(0, 10);
 
-            const embed = new EmbedBuilder()
-                .setTitle(`🎙️ Voice Engagement Leaderboard: ${guild.name}`)
-                .setColor('#00E5FF')
-                .setThumbnail(guild.iconURL({ forceStatic: true }))
-                .setTimestamp();
-
-            const description = voiceRanks.map((entry, index) => {
+            const rankLines = voiceRanks.map((entry, index) => {
                 const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `\`#${index + 1}\``;
                 const hours = Math.floor(entry.minutes / 60);
                 const remainingMinutes = entry.minutes % 60;
                 const displayTime = hours > 0 ? `${hours}h ${remainingMinutes}m` : `${remainingMinutes}m`;
-                
                 return `${medal} <@${entry.userId}> • 🔊 **${displayTime}** active in VC`;
             }).join('\n');
 
-            embed.setDescription(description);
-            await interaction.editReply({ embeds: [embed] });
+            const iconUrl = guild.iconURL({ forceStatic: true });
+
+            const container = new ContainerBuilder()
+                .setAccentColor(0x00E5FF)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`## 🎙️ Voice Engagement Leaderboard\n**${guild.name}**`)
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'))
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(rankLines))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(`-# Top ${voiceRanks.length} voice contributors · Proportional to active XP`)
+                );
+
+            await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
         } catch (err) {
             console.error('[VCLEVEL ERROR]', err);

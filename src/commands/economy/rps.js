@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 
@@ -32,7 +37,7 @@ module.exports = {
                 const profile = await db.getProfile(guild.id, user.id);
                 if (profile.coins < bet) {
                     return interaction.editReply({
-                        content: `❌ Not enough coins! Balance: 🪙 **${profile.coins.toLocaleString()}**`,
+                        content: `❌ Not enough coins! Balance: <:coin:1512926963239489606> **${profile.coins.toLocaleString()}**`,
                         ephemeral: true
                     });
                 }
@@ -40,32 +45,31 @@ module.exports = {
             }
         }
 
-        const rock = new ButtonBuilder()
-            .setCustomId('rps_rock')
-            .setLabel('🪨 Rock')
-            .setStyle(ButtonStyle.Secondary);
+        const rock = new ButtonBuilder().setCustomId('rps_rock').setLabel('🪨 Rock').setStyle(ButtonStyle.Secondary);
+        const paper = new ButtonBuilder().setCustomId('rps_paper').setLabel('📄 Paper').setStyle(ButtonStyle.Secondary);
+        const scissors = new ButtonBuilder().setCustomId('rps_scissors').setLabel('✂️ Scissors').setStyle(ButtonStyle.Secondary);
 
-        const paper = new ButtonBuilder()
-            .setCustomId('rps_paper')
-            .setLabel('📄 Paper')
-            .setStyle(ButtonStyle.Secondary);
+        const betLine = bet > 0 ? `\n<:coin:1512926963239489606> **${bet.toLocaleString()} coins** on the line!` : '';
 
-        const scissors = new ButtonBuilder()
-            .setCustomId('rps_scissors')
-            .setLabel('✂️ Scissors')
-            .setStyle(ButtonStyle.Secondary);
+        const promptContainer = new ContainerBuilder()
+            .setAccentColor(0x8b5cf6)
+            .addSectionComponents(
+                new SectionBuilder()
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## ✊ Rock · Paper · Scissors\n**${user.username}**, make your move!${betLine}`
+                        )
+                    )
+                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+            )
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# You have 30 seconds to choose'))
+            .addActionRowComponents(new ActionRowBuilder().addComponents(rock, paper, scissors));
 
-        const row = new ActionRowBuilder().addComponents(rock, paper, scissors);
-
-        const betLine = bet > 0 ? `\n🪙 **${bet.toLocaleString()} coins** on the line!` : '';
-        const prompt = new EmbedBuilder()
-            .setTitle('Rock · Paper · Scissors')
-            .setColor('#8b5cf6')
-            .setDescription(`**${user.username}**, make your move!${betLine}`)
-            .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-            .setFooter({ text: 'You have 30 seconds to choose' });
-
-        const response = await interaction.editReply({ embeds: [prompt], components: [row] });
+        const response = await interaction.editReply({
+            flags: MessageFlags.IsComponentsV2,
+            components: [promptContainer]
+        });
 
         const collector = response.createMessageComponentCollector({
             filter: i => i.user.id === user.id,
@@ -86,29 +90,29 @@ module.exports = {
 
             if (playerChoice === botChoice) {
                 resultText = "🤝 It's a **Tie**!";
-                color = '#94a3b8';
+                color = 0x94a3b8;
                 if (bet > 0 && guild) {
                     await db.updateCoins(guild.id, user.id, bet);
                     resultText += '\n↩️ Bet refunded.';
                 }
             } else if (playerData.beats === botChoice) {
                 resultText = '🏆 You **Win**!';
-                color = '#00FF66';
+                color = 0x00FF66;
                 if (bet > 0 && guild) {
                     coinDelta = bet * 2;
                     await db.updateCoins(guild.id, user.id, coinDelta);
-                    resultText += `\n🪙 **+${coinDelta.toLocaleString()} coins**`;
+                    resultText += `\n<:coin:1512926963239489606> **+${coinDelta.toLocaleString()} coins**`;
                 }
             } else {
                 resultText = '💀 You **Lose**!';
-                color = '#FF3333';
-                if (bet > 0) resultText += `\n🪙 **-${bet.toLocaleString()} coins**`;
+                color = 0xFF3333;
+                if (bet > 0) resultText += `\n<:coin:1512926963239489606> **-${bet.toLocaleString()} coins**`;
             }
 
             let balanceLine = '';
             if (bet > 0 && guild) {
                 const profile = await db.getProfile(guild.id, user.id);
-                balanceLine = `\n💰 Balance: 🪙 **${profile.coins.toLocaleString()}**`;
+                balanceLine = `\n💰 Balance: <:coin:1512926963239489606> **${profile.coins.toLocaleString()}**`;
             }
 
             const disabledRow = new ActionRowBuilder().addComponents(
@@ -117,40 +121,45 @@ module.exports = {
                 ButtonBuilder.from(scissors).setDisabled(true).setStyle(playerChoice === 'scissors' ? ButtonStyle.Primary : ButtonStyle.Secondary)
             );
 
-            const resultEmbed = new EmbedBuilder()
-                .setTitle('Rock · Paper · Scissors')
-                .setColor(color)
-                .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                .addFields(
-                    { name: 'Your Choice', value: `${playerData.emoji} **${playerData.label}**`, inline: true },
-                    { name: 'Friday\'s Choice', value: `${botData.emoji} **${botData.label}**`, inline: true },
-                    { name: 'Result', value: resultText + balanceLine, inline: false }
+            const resultContainer = new ContainerBuilder()
+                .setAccentColor(color)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## ✊ Rock · Paper · Scissors\n` +
+                                `**Your choice:** ${playerData.emoji} **${playerData.label}**\n` +
+                                `**Friday's choice:** ${botData.emoji} **${botData.label}**\n\n` +
+                                `${resultText}${balanceLine}`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
                 )
-                .setFooter({ text: `Challenged by ${user.tag}` })
-                .setTimestamp();
+                .addActionRowComponents(disabledRow);
 
-            await i.editReply({ embeds: [resultEmbed], components: [disabledRow] });
+            await i.editReply({ flags: MessageFlags.IsComponentsV2, components: [resultContainer] });
         });
 
         collector.on('end', async (collected, reason) => {
             if (reason === 'time' && collected.size === 0) {
-                if (bet > 0 && guild) {
-                    await db.updateCoins(guild.id, user.id, bet);
-                }
+                if (bet > 0 && guild) await db.updateCoins(guild.id, user.id, bet);
 
-                const timeoutEmbed = new EmbedBuilder()
-                    .setTitle('Rock · Paper · Scissors')
-                    .setColor('#6b7280')
-                    .setDescription('⏰ You took too long to make your move!' + (bet > 0 ? '\n↩️ Bet refunded.' : ''))
-                    .setTimestamp();
+                const timeoutContainer = new ContainerBuilder()
+                    .setAccentColor(0x6b7280)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            '⏰ You took too long to make your move!' + (bet > 0 ? '\n↩️ Bet refunded.' : '')
+                        )
+                    )
+                    .addActionRowComponents(
+                        new ActionRowBuilder().addComponents(
+                            ButtonBuilder.from(rock).setDisabled(true),
+                            ButtonBuilder.from(paper).setDisabled(true),
+                            ButtonBuilder.from(scissors).setDisabled(true)
+                        )
+                    );
 
-                const disabledRow = new ActionRowBuilder().addComponents(
-                    ButtonBuilder.from(rock).setDisabled(true),
-                    ButtonBuilder.from(paper).setDisabled(true),
-                    ButtonBuilder.from(scissors).setDisabled(true)
-                );
-
-                await interaction.editReply({ embeds: [timeoutEmbed], components: [disabledRow] }).catch(() => null);
+                await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [timeoutContainer] }).catch(() => null);
             }
         });
     }

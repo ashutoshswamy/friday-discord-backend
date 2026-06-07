@@ -1,8 +1,12 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 
-// Card helper representations
 const SUITS = ['♠️', '♥️', '♦️', '♣️'];
 const VALUES = [
     { name: '2', val: 2 }, { name: '3', val: 3 }, { name: '4', val: 4 },
@@ -21,10 +25,7 @@ function drawCard() {
 function calculateHand(hand) {
     let sum = hand.reduce((s, c) => s + c.val, 0);
     let aces = hand.filter(c => c.name === 'A').length;
-    while (sum > 21 && aces > 0) {
-        sum -= 10;
-        aces -= 1;
-    }
+    while (sum > 21 && aces > 0) { sum -= 10; aces -= 1; }
     return sum;
 }
 
@@ -32,16 +33,12 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('blackjack')
         .setDescription('Play a high-stakes blackjack card game against Friday (Dealer).')
-        .addIntegerOption(opt => 
+        .addIntegerOption(opt =>
             opt.setName('bet')
                 .setDescription('The amount of coins you want to bet')
                 .setRequired(true)
                 .setMinValue(1)),
 
-    /**
-     * Executes the blackjack command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, user, options } = interaction;
         if (!guild) return;
@@ -57,82 +54,69 @@ module.exports = {
             const profile = await db.getProfile(guild.id, user.id);
             if (profile.coins < bet) {
                 return interaction.editReply({
-                    content: `❌ You do not have enough coins! Your current balance is 🪙 **${profile.coins.toLocaleString()}** coins.`,
+                    content: `❌ You do not have enough coins! Your current balance is <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins.`,
                     ephemeral: true
                 });
             }
 
-            // Deduct bet from database
             await db.updateCoins(guild.id, user.id, -bet);
 
-            // Draw initial cards
             const playerHand = [drawCard(), drawCard()];
             const dealerHand = [drawCard(), drawCard()];
 
             let playerScore = calculateHand(playerHand);
             let dealerScore = calculateHand(dealerHand);
 
-            // Create buttons
-            const hitBtn = new ButtonBuilder()
-                .setCustomId('bj_hit')
-                .setLabel('🃏 Hit')
-                .setStyle(ButtonStyle.Primary);
+            const hitBtn = new ButtonBuilder().setCustomId('bj_hit').setLabel('🃏 Hit').setStyle(ButtonStyle.Primary);
+            const standBtn = new ButtonBuilder().setCustomId('bj_stand').setLabel('🛑 Stand').setStyle(ButtonStyle.Secondary);
 
-            const standBtn = new ButtonBuilder()
-                .setCustomId('bj_stand')
-                .setLabel('🛑 Stand')
-                .setStyle(ButtonStyle.Secondary);
-
-            const row = new ActionRowBuilder().addComponents(hitBtn, standBtn);
-
-            const getEmbed = (isFinal = false, status = '') => {
-                const embed = new EmbedBuilder()
-                    .setTitle('🃏 Blackjack Table')
-                    .setColor(isFinal ? (status.includes('Win') ? '#00FF66' : status.includes('Push') ? '#FFCC00' : '#FF3333') : '#8b5cf6')
-                    .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                    .addFields(
-                        { 
-                            name: `👤 Your Hand (${playerScore})`, 
-                            value: playerHand.map(c => `\`${c.display}\``).join('  '), 
-                            inline: true 
-                        },
-                        { 
-                            name: `🤖 Dealer's Hand (${isFinal ? dealerScore : '?'})`, 
-                            value: isFinal 
-                                ? dealerHand.map(c => `\`${c.display}\``).join('  ') 
-                                : `\`${dealerHand[0].display}\`  \`🎴\``, 
-                            inline: true 
-                        }
+            const buildContainer = (isFinal = false, status = '', color = 0x8b5cf6) =>
+                new ContainerBuilder()
+                    .setAccentColor(color)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## 🃏 Blackjack Table\n` +
+                                    (isFinal ? status : 'Choose to **Hit** for another card, or **Stand** to keep your score.')
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
                     )
-                    .setFooter({ text: `Current Bet: 🪙 ${bet.toLocaleString()} coins` });
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**👤 Your Hand (${playerScore}):** ${playerHand.map(c => `\`${c.display}\``).join('  ')}\n` +
+                            `**🤖 Dealer's Hand (${isFinal ? dealerScore : '?'}):** ${isFinal
+                                ? dealerHand.map(c => `\`${c.display}\``).join('  ')
+                                : `\`${dealerHand[0].display}\`  \`🎴\``
+                            }\n\n` +
+                            `-# Bet: <:coin:1512926963239489606> ${bet.toLocaleString()} coins`
+                        )
+                    );
 
-                if (isFinal) {
-                    embed.setDescription(`### ${status}`);
-                } else {
-                    embed.setDescription('Choose whether to **Hit** to draw another card, or **Stand** to keep your score.');
-                }
-                return embed;
-            };
-
-            // Natural Blackjack check
             if (playerScore === 21) {
-                let payout = Math.floor(bet * 2.5); // 3:2 payout for natural blackjack
+                let payout = Math.floor(bet * 2.5);
                 await db.updateCoins(guild.id, user.id, payout);
-                return interaction.editReply({ 
-                    embeds: [getEmbed(true, `🎉 **Natural Blackjack!** You won 🪙 **${payout.toLocaleString()}** coins!`)] 
+                return interaction.editReply({
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [buildContainer(true, `🎉 **Natural Blackjack!** You won <:coin:1512926963239489606> **${payout.toLocaleString()}** coins!`, 0x00FF66)]
                 });
             }
 
+            const row = new ActionRowBuilder().addComponents(hitBtn, standBtn);
+            const initialContainer = buildContainer();
+            initialContainer.addActionRowComponents(row);
+
             const response = await interaction.editReply({
-                embeds: [getEmbed()],
-                components: [row],
+                flags: MessageFlags.IsComponentsV2,
+                components: [initialContainer],
                 fetchReply: true
             });
 
-            // Set up button collector
             const collector = response.createMessageComponentCollector({
                 filter: i => i.user.id === user.id,
-                time: 60000 // 1 minute
+                time: 60000
             });
 
             collector.on('collect', async i => {
@@ -147,7 +131,9 @@ module.exports = {
                     } else if (playerScore === 21) {
                         collector.stop('twentyone');
                     } else {
-                        await i.editReply({ embeds: [getEmbed()] });
+                        const updatedContainer = buildContainer();
+                        updatedContainer.addActionRowComponents(row);
+                        await i.editReply({ flags: MessageFlags.IsComponentsV2, components: [updatedContainer] });
                     }
                 } else if (i.customId === 'bj_stand') {
                     collector.stop('stand');
@@ -155,23 +141,18 @@ module.exports = {
             });
 
             collector.on('end', async (collected, reason) => {
-                // Remove buttons
                 const disabledRow = new ActionRowBuilder().addComponents(
                     ButtonBuilder.from(hitBtn).setDisabled(true),
                     ButtonBuilder.from(standBtn).setDisabled(true)
                 );
 
                 if (reason === 'time') {
-                    // Refund bet on inactivity to be user-friendly, or count as loss
                     await db.updateCoins(guild.id, user.id, bet);
-                    return interaction.editReply({
-                        content: '⏳ Game timed out! Your bet has been refunded.',
-                        embeds: [getEmbed(true, '⏳ **Timed Out**')],
-                        components: [disabledRow]
-                    });
+                    const timeoutContainer = buildContainer(true, '⏳ **Timed Out** — bet refunded.', 0x6b7280);
+                    timeoutContainer.addActionRowComponents(disabledRow);
+                    return interaction.editReply({ content: '⏳ Game timed out! Your bet has been refunded.', flags: MessageFlags.IsComponentsV2, components: [timeoutContainer] });
                 }
 
-                // Dealer Turn logic
                 if (reason === 'stand' || reason === 'twentyone') {
                     while (dealerScore < 17) {
                         dealerHand.push(drawCard());
@@ -180,38 +161,40 @@ module.exports = {
                 }
 
                 let finalStatus = '';
+                let color = 0x8b5cf6;
+
                 if (playerScore > 21) {
-                    finalStatus = `💥 **Bust!** You went over 21. You lost your bet of 🪙 **${bet.toLocaleString()}** coins.`;
+                    finalStatus = `💥 **Bust!** You went over 21. You lost your bet of <:coin:1512926963239489606> **${bet.toLocaleString()}** coins.`;
+                    color = 0xFF3333;
                 } else if (dealerScore > 21) {
                     let payout = bet * 2;
                     await db.updateCoins(guild.id, user.id, payout);
-                    finalStatus = `🎉 **Dealer Bust!** Friday went over 21. You won 🪙 **${payout.toLocaleString()}** coins!`;
+                    finalStatus = `🎉 **Dealer Bust!** Friday went over 21. You won <:coin:1512926963239489606> **${payout.toLocaleString()}** coins!`;
+                    color = 0x00FF66;
                 } else if (playerScore > dealerScore) {
                     let payout = bet * 2;
                     await db.updateCoins(guild.id, user.id, payout);
-                    finalStatus = `🎉 **You Win!** Your score of **${playerScore}** beat the dealer's **${dealerScore}**. You won 🪙 **${payout.toLocaleString()}** coins!`;
+                    finalStatus = `🎉 **You Win!** Score **${playerScore}** beat dealer's **${dealerScore}**. Won <:coin:1512926963239489606> **${payout.toLocaleString()}** coins!`;
+                    color = 0x00FF66;
                 } else if (playerScore < dealerScore) {
-                    finalStatus = `❌ **You Lose!** Dealer's score of **${dealerScore}** beat your **${playerScore}**. You lost your bet of 🪙 **${bet.toLocaleString()}** coins.`;
+                    finalStatus = `❌ **You Lose!** Dealer's **${dealerScore}** beat your **${playerScore}**. Lost <:coin:1512926963239489606> **${bet.toLocaleString()}** coins.`;
+                    color = 0xFF3333;
                 } else {
-                    // Push (Tie)
                     await db.updateCoins(guild.id, user.id, bet);
-                    finalStatus = `🤝 **Push!** It is a tie score of **${playerScore}**. Your bet of 🪙 **${bet.toLocaleString()}** coins was refunded.`;
+                    finalStatus = `🤝 **Push!** Tied at **${playerScore}**. Bet of <:coin:1512926963239489606> **${bet.toLocaleString()}** refunded.`;
+                    color = 0xFFCC00;
                 }
 
-                await interaction.editReply({
-                    embeds: [getEmbed(true, finalStatus)],
-                    components: [disabledRow]
-                });
+                const finalContainer = buildContainer(true, finalStatus, color);
+                finalContainer.addActionRowComponents(disabledRow);
+                await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [finalContainer] });
             });
 
         } catch (err) {
             console.error('[BLACKJACK ERROR]', err);
-            const _errMsg = { content: '❌ Failed to process Blackjack game.', ephemeral: true };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(_errMsg).catch(() => null);
-            } else {
-                await interaction.editReply(_errMsg).catch(() => null);
-            }
+            const errMsg = { content: '❌ Failed to process Blackjack game.', ephemeral: true };
+            if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => null);
+            else await interaction.editReply(errMsg).catch(() => null);
         }
     }
 };

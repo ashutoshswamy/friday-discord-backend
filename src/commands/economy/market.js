@@ -1,17 +1,17 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('market')
         .setDescription('Interact with the player-driven server item market.')
-        
-        // Subcommand: view
         .addSubcommand(sub =>
             sub.setName('view')
                 .setDescription('View active item listings posted by other players.'))
-        
-        // Subcommand: list
         .addSubcommand(sub =>
             sub.setName('list')
                 .setDescription('Post an item from your inventory up for sale on the global market.')
@@ -24,8 +24,6 @@ module.exports = {
                         .setDescription('The custom price in coins to sell the item for')
                         .setMinValue(1)
                         .setRequired(true)))
-        
-        // Subcommand: buy
         .addSubcommand(sub =>
             sub.setName('buy')
                 .setDescription('Purchase an item listing from the market.')
@@ -33,8 +31,6 @@ module.exports = {
                     opt.setName('id')
                         .setDescription('The ID of the market listing to buy')
                         .setRequired(true)))
-        
-        // Subcommand: cancel
         .addSubcommand(sub =>
             sub.setName('cancel')
                 .setDescription('Cancel an active listing you posted and reclaim the item.')
@@ -43,10 +39,6 @@ module.exports = {
                         .setDescription('The ID of your market listing to cancel')
                         .setRequired(true))),
 
-    /**
-     * Executes the market command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, user, options } = interaction;
         if (!guild) return;
@@ -54,11 +46,6 @@ module.exports = {
         const subcommand = options.getSubcommand();
 
         try {
-            const embed = new EmbedBuilder().setTimestamp();
-
-            // ------------------------------------------
-            // A. Subcommand: view
-            // ------------------------------------------
             if (subcommand === 'view') {
                 const listings = await db.getMarketListings(guild.id);
 
@@ -69,33 +56,33 @@ module.exports = {
                     });
                 }
 
-                embed.setTitle(`⚖️ Player-Driven Market - ${guild.name}`)
-                    .setColor('#00E5FF')
-                    .setDescription(
-                        `Welcome to the server bazaar! Buy items from other players or list your own collectibles.\n\n` +
-                        `Use \`/market buy [listing_id]\` to purchase items.\n` +
-                        `Use \`/market cancel [listing_id]\` to cancel your own listings.`
+                const listingsText = listings.map(listing =>
+                    `**📦 Listing #${listing.id}: ${listing.itemName}**\n` +
+                    `• Price: <:coin:1512926963239489606> \`${listing.price.toLocaleString()}\` coins\n` +
+                    `• Seller: <@${listing.sellerId}>\n` +
+                    `• Posted: <t:${Math.floor(new Date(listing.createdAt).getTime() / 1000)}:R>`
+                ).join('\n\n');
+
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00E5FF)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## ⚖️ Player-Driven Market\nWelcome to the server bazaar! Buy items from other players or list your own collectibles.\n\nUse \`/market buy [id]\` to purchase · \`/market cancel [id]\` to cancel your listings.`
+                        )
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(listingsText)
                     );
 
-                listings.forEach(listing => {
-                    embed.addFields({
-                        name: `📦 Listing #${listing.id}: **${listing.itemName}**`,
-                        value: `• **Price:** 🪙 \`${listing.price.toLocaleString()}\` coins\n• **Seller:** <@${listing.sellerId}>\n• **Posted:** <t:${Math.floor(new Date(listing.createdAt).getTime() / 1000)}:R>`
-                    });
-                });
-
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
-            // ------------------------------------------
-            // B. Subcommand: list
-            // ------------------------------------------
-            else if (subcommand === 'list') {
+            if (subcommand === 'list') {
                 const itemName = options.getString('item').trim();
                 const price = options.getInteger('price');
 
                 const inventory = await db.getInventory(guild.id, user.id);
-                // Find matching item (case-insensitive)
                 const matchedItem = inventory.find(i => i.toLowerCase() === itemName.toLowerCase());
 
                 if (!matchedItem) {
@@ -105,7 +92,6 @@ module.exports = {
                     });
                 }
 
-                // List the item (removes from inventory, inserts to market_listings table)
                 const success = await db.listMarketItem(guild.id, user.id, matchedItem, price);
 
                 if (!success) {
@@ -115,28 +101,31 @@ module.exports = {
                     });
                 }
 
-                embed.setTitle('⚖️ Market Listing Created')
-                    .setColor('#00E5FF')
-                    .setDescription(
-                        `Successfully posted **${matchedItem}** up for sale on the global bazaar!\n` +
-                        `Other players can now buy it using its listing ID.`
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00E5FF)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## ⚖️ Market Listing Created\nSuccessfully posted **${matchedItem}** on the global bazaar!\nOther players can now buy it using its listing ID.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
                     )
-                    .addFields(
-                        { name: 'Item Listed', value: `📦 **${matchedItem}**`, inline: true },
-                        { name: 'Price Set', value: `🪙 **${price.toLocaleString()}** coins`, inline: true },
-                        { name: 'Seller', value: `<@${user.id}>` }
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**Item Listed:** 📦 **${matchedItem}**\n` +
+                            `**Price Set:** <:coin:1512926963239489606> **${price.toLocaleString()}** coins\n` +
+                            `**Seller:** <@${user.id}>`
+                        )
                     );
 
-                await interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
-            // ------------------------------------------
-            // C. Subcommand: buy
-            // ------------------------------------------
-            else if (subcommand === 'buy') {
+            if (subcommand === 'buy') {
                 const listingId = options.getInteger('id');
-
-                // Process atomic transaction in DB utility
                 const result = await db.buyMarketItem(guild.id, user.id, listingId);
 
                 if (!result.success) {
@@ -146,28 +135,31 @@ module.exports = {
                     });
                 }
 
-                embed.setTitle('⚖️ Market Purchase Confirmed')
-                    .setColor('#00FF66')
-                    .setDescription(
-                        `Successfully purchased **${result.itemName}** from the server bazaar!\n` +
-                        `The item has been added to your inventory, and coins have been transferred.`
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x00FF66)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## ⚖️ Market Purchase Confirmed\nSuccessfully purchased **${result.itemName}** from the server bazaar!\nThe item has been added to your inventory.`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
                     )
-                    .addFields(
-                        { name: 'Item Acquired', value: `📦 **${result.itemName}**`, inline: true },
-                        { name: 'Price Paid', value: `🪙 **${result.price.toLocaleString()}** coins`, inline: true },
-                        { name: 'Seller Compensated', value: `<@${result.sellerId}>` }
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**Item Acquired:** 📦 **${result.itemName}**\n` +
+                            `**Price Paid:** <:coin:1512926963239489606> **${result.price.toLocaleString()}** coins\n` +
+                            `**Seller Compensated:** <@${result.sellerId}>`
+                        )
                     );
 
-                await interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
-            // ------------------------------------------
-            // D. Subcommand: cancel
-            // ------------------------------------------
-            else if (subcommand === 'cancel') {
+            if (subcommand === 'cancel') {
                 const listingId = options.getInteger('id');
-
-                // Reclaim the item (deletes listing, restores item to seller inventory)
                 const success = await db.cancelMarketListing(guild.id, user.id, listingId);
 
                 if (!success) {
@@ -177,14 +169,15 @@ module.exports = {
                     });
                 }
 
-                embed.setTitle('⚖️ Market Listing Cancelled')
-                    .setColor('#9CA3AF')
-                    .setDescription(
-                        `Successfully removed listing **#${listingId}** from the server bazaar!\n` +
-                        `The item has been safely returned to your inventory.`
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x9CA3AF)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## ⚖️ Market Listing Cancelled\nListing **#${listingId}** has been removed from the bazaar.\nThe item has been safely returned to your inventory.`
+                        )
                     );
 
-                await interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
             }
 
         } catch (err) {

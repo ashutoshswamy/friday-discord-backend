@@ -1,32 +1,35 @@
-const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 const { JOBS, TIER_LABELS, TIER_COLORS, getJobByKey } = require('../../utils/jobs');
 
 const JOB_CHOICES = Object.values(JOBS).map(j => ({ name: `${j.emoji} ${j.name} (Tier ${j.tier})`, value: j.key }));
-
 const TIER_EMOJIS = { 1: '🟢', 2: '🔵', 3: '🟣', 4: '🔴' };
 
-function buildTierEmbed(tier) {
+function buildTierContainer(tier) {
     const jobs = Object.values(JOBS).filter(j => j.tier === tier);
     const tierFirstJob = jobs[0];
+    const accentColor = parseInt(TIER_COLORS[tier].replace('#', ''), 16);
 
-    const embed = new EmbedBuilder()
-        .setTitle(`💼 Job Board — ${TIER_EMOJIS[tier]} ${TIER_LABELS[tier]} (Tier ${tier})`)
-        .setColor(TIER_COLORS[tier])
-        .setDescription(
-            `**Level Required:** ${tierFirstJob.levelRequired}+\n` +
-            `Apply with \`/job apply\`. Higher tiers pay more per \`/work\` shift.\n​`
+    const jobsText = jobs.map(j =>
+        `**${j.emoji} ${j.name}**\n*${j.description}*\n<:coin:1512926963239489606> **${j.minPay.toLocaleString()}–${j.maxPay.toLocaleString()}**/shift${j.xpBonus > 0 ? ` · **+${j.xpBonus.toLocaleString()} XP**` : ''}`
+    ).join('\n\n');
+
+    return new ContainerBuilder()
+        .setAccentColor(accentColor)
+        .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+                `## 💼 Job Board — ${TIER_EMOJIS[tier]} ${TIER_LABELS[tier]} (Tier ${tier})\n` +
+                `**Level Required:** ${tierFirstJob.levelRequired}+\n` +
+                `Apply with \`/job apply\`. Higher tiers pay more per \`/work\` shift.`
+            )
         )
-        .setTimestamp();
-
-    jobs.forEach(j => {
-        embed.addFields({
-            name: `${j.emoji} ${j.name}`,
-            value: `*${j.description}*\n🪙 **${j.minPay.toLocaleString()}–${j.maxPay.toLocaleString()}**/shift${j.xpBonus > 0 ? ` · **+${j.xpBonus.toLocaleString()} XP**` : ''}`,
-        });
-    });
-
-    return embed;
+        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(jobsText));
 }
 
 module.exports = {
@@ -61,7 +64,6 @@ module.exports = {
 
         const sub = options.getSubcommand();
 
-        // ── /job list ──────────────────────────────────────────────────
         if (sub === 'list') {
             let currentTier = 1;
 
@@ -75,11 +77,13 @@ module.exports = {
                     { label: `${TIER_EMOJIS[4]} Tier 4 — ${TIER_LABELS[4]} (Level 20+)`, value: '4' }
                 );
 
-            const row = new ActionRowBuilder().addComponents(tierSelect);
+            const container = buildTierContainer(currentTier);
+            container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+            container.addActionRowComponents(new ActionRowBuilder().addComponents(tierSelect));
 
             const response = await interaction.editReply({
-                embeds: [buildTierEmbed(currentTier)],
-                components: [row]
+                flags: MessageFlags.IsComponentsV2,
+                components: [container]
             });
 
             const collector = response.createMessageComponentCollector({
@@ -101,10 +105,11 @@ module.exports = {
                         { label: `${TIER_EMOJIS[4]} Tier 4 — ${TIER_LABELS[4]} (Level 20+)`, value: '4', default: currentTier === 4 }
                     );
 
-                await i.editReply({
-                    embeds: [buildTierEmbed(currentTier)],
-                    components: [new ActionRowBuilder().addComponents(updatedSelect)]
-                });
+                const updatedContainer = buildTierContainer(currentTier);
+                updatedContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+                updatedContainer.addActionRowComponents(new ActionRowBuilder().addComponents(updatedSelect));
+
+                await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [updatedContainer] });
             });
 
             collector.on('end', async () => {
@@ -113,15 +118,17 @@ module.exports = {
                     .setPlaceholder('🔍 Filter by Tier...')
                     .setDisabled(true)
                     .addOptions({ label: 'Expired', value: 'expired' });
-                await interaction.editReply({
-                    components: [new ActionRowBuilder().addComponents(disabledSelect)]
-                }).catch(() => null);
+
+                const expiredContainer = buildTierContainer(currentTier);
+                expiredContainer.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
+                expiredContainer.addActionRowComponents(new ActionRowBuilder().addComponents(disabledSelect));
+
+                await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => null);
             });
 
             return;
         }
 
-        // ── /job apply ─────────────────────────────────────────────────
         if (sub === 'apply') {
             const jobKey = options.getString('job');
             const job = getJobByKey(jobKey);
@@ -150,25 +157,36 @@ module.exports = {
                 });
             }
 
-            const embed = new EmbedBuilder()
-                .setTitle(`${job.emoji} Job Offer Accepted!`)
-                .setColor(TIER_COLORS[job.tier])
-                .setThumbnail(user.displayAvatarURL({ forceStatic: true }))
-                .setDescription(`Welcome aboard, **${user.username}**! You are now employed as a **${job.name}**.`)
-                .addFields(
-                    { name: 'Position',  value: `${job.emoji} ${job.name}`,                       inline: true },
-                    { name: 'Tier',      value: `${TIER_LABELS[job.tier]} (Tier ${job.tier})`,     inline: true },
-                    { name: 'Pay Range', value: `🪙 ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()} per /work shift`,  inline: true },
-                    { name: 'XP Bonus',  value: job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP per shift` : 'None', inline: true },
-                    { name: 'Req. Level', value: `Level ${job.levelRequired}+`,                   inline: true },
-                )
-                .setFooter({ text: 'Use /work to earn coins. Job switch cooldown: 1 hour.' })
-                .setTimestamp();
+            const accentColor = parseInt(TIER_COLORS[job.tier].replace('#', ''), 16);
 
-            return interaction.editReply({ embeds: [embed] });
+            const container = new ContainerBuilder()
+                .setAccentColor(accentColor)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## ${job.emoji} Job Offer Accepted!\nWelcome aboard, **${user.username}**! You are now employed as a **${job.name}**.`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `**Position:** ${job.emoji} ${job.name}\n` +
+                        `**Tier:** ${TIER_LABELS[job.tier]} (Tier ${job.tier})\n` +
+                        `**Pay Range:** <:coin:1512926963239489606> ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()} per /work shift\n` +
+                        `**XP Bonus:** ${job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP per shift` : 'None'}\n` +
+                        `**Required Level:** Level ${job.levelRequired}+`
+                    )
+                )
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(`-# Use /work to earn coins. Job switch cooldown: 1 hour.`)
+                );
+
+            return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
         }
 
-        // ── /job quit ──────────────────────────────────────────────────
         if (sub === 'quit') {
             const profile = await db.getProfile(guild.id, user.id);
 
@@ -190,15 +208,18 @@ module.exports = {
 
             const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
-            const confirmEmbed = new EmbedBuilder()
-                .setTitle('📤 Confirm Resignation')
-                .setColor('#FF4500')
-                .setDescription(
-                    `Are you sure you want to resign from ${prevJob ? `${prevJob.emoji} **${prevJob.name}**` : 'your current job'}?\n\n` +
-                    `You will revert to generic \`/work\` pay until you re-apply for a new position.`
-                );
+            const confirmContainer = new ContainerBuilder()
+                .setAccentColor(0xFF4500)
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `## 📤 Confirm Resignation\nAre you sure you want to resign from ${prevJob ? `${prevJob.emoji} **${prevJob.name}**` : 'your current job'}?\n\n` +
+                        `You will revert to generic \`/work\` pay until you re-apply for a new position.`
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addActionRowComponents(row);
 
-            const response = await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
+            const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [confirmContainer] });
 
             const collector = response.createMessageComponentCollector({
                 filter: i => i.user.id === user.id,
@@ -210,59 +231,68 @@ module.exports = {
                 if (i.customId === 'job_quit_confirm') {
                     await db.quitJob(guild.id, user.id);
 
-                    const embed = new EmbedBuilder()
-                        .setTitle('📤 Resigned')
-                        .setColor('#FF4500')
-                        .setDescription(`You have resigned from ${prevJob ? `${prevJob.emoji} **${prevJob.name}**` : 'your job'}.\nUse \`/job apply\` to start a new career.`)
-                        .setTimestamp();
+                    const resignedContainer = new ContainerBuilder()
+                        .setAccentColor(0xFF4500)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 📤 Resigned\nYou have resigned from ${prevJob ? `${prevJob.emoji} **${prevJob.name}**` : 'your job'}.\nUse \`/job apply\` to start a new career.`
+                            )
+                        );
 
-                    await i.update({ embeds: [embed], components: [] });
+                    await i.update({ flags: MessageFlags.IsComponentsV2, components: [resignedContainer] });
                 } else {
-                    await i.update({ content: '✅ Resignation cancelled. You remain employed.', embeds: [], components: [] });
+                    await i.update({ content: '✅ Resignation cancelled. You remain employed.', flags: MessageFlags.IsComponentsV2, components: [] });
                 }
             });
 
             collector.on('end', async (collected, reason) => {
                 if (reason === 'time' && collected.size === 0) {
-                    await interaction.editReply({ content: '⏰ Confirmation timed out. No changes made.', embeds: [], components: [] }).catch(() => null);
+                    await interaction.editReply({ content: '⏰ Confirmation timed out. No changes made.', flags: MessageFlags.IsComponentsV2, components: [] }).catch(() => null);
                 }
             });
 
             return;
         }
 
-        // ── /job profile ───────────────────────────────────────────────
         if (sub === 'profile') {
             const targetUser = options.getUser('user') || user;
             const profile = await db.getProfile(guild.id, targetUser.id);
             const job = profile.currentJob ? getJobByKey(profile.currentJob) : null;
 
-            const embed = new EmbedBuilder()
-                .setTitle(`💼 ${targetUser.username}'s Career`)
-                .setColor(job ? TIER_COLORS[job.tier] : '#6B7280')
-                .setThumbnail(targetUser.displayAvatarURL({ forceStatic: true }))
-                .setTimestamp();
+            const accentColor = job ? parseInt(TIER_COLORS[job.tier].replace('#', ''), 16) : 0x6B7280;
 
+            let profileText;
             if (job) {
                 const appliedDate = profile.jobAppliedAt
                     ? `<t:${Math.floor(profile.jobAppliedAt / 1000)}:R>`
                     : 'Unknown';
 
-                embed.setDescription(`Currently employed as **${job.name}**.`)
-                    .addFields(
-                        { name: 'Position',   value: `${job.emoji} ${job.name}`,                         inline: true },
-                        { name: 'Tier',       value: `${TIER_LABELS[job.tier]} (Tier ${job.tier})`,       inline: true },
-                        { name: 'Pay Range',  value: `🪙 ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()}/shift`,              inline: true },
-                        { name: 'XP Bonus',   value: job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP/shift` : 'None', inline: true },
-                        { name: 'Employed',   value: appliedDate,                                         inline: true },
-                        { name: 'Wallet',     value: `🪙 ${profile.coins.toLocaleString()} coins`,       inline: true },
-                    );
+                profileText =
+                    `**Position:** ${job.emoji} ${job.name}\n` +
+                    `**Tier:** ${TIER_LABELS[job.tier]} (Tier ${job.tier})\n` +
+                    `**Pay Range:** <:coin:1512926963239489606> ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()}/shift\n` +
+                    `**XP Bonus:** ${job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP/shift` : 'None'}\n` +
+                    `**Employed:** ${appliedDate}\n` +
+                    `**Wallet:** <:coin:1512926963239489606> ${profile.coins.toLocaleString()} coins`;
             } else {
-                embed.setDescription(`**${targetUser.username}** is currently unemployed.\nUse \`/job apply\` to start earning better pay!`)
-                    .addFields({ name: 'Status', value: '🚫 Unemployed — generic /work pay applies' });
+                profileText = `**Status:** 🚫 Unemployed — generic /work pay applies\nUse \`/job apply\` to start earning better pay!`;
             }
 
-            return interaction.editReply({ embeds: [embed] });
+            const container = new ContainerBuilder()
+                .setAccentColor(accentColor)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 💼 ${targetUser.username}'s Career\n${job ? `Currently employed as **${job.name}**.` : `**${targetUser.username}** is currently unemployed.`}`
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(profileText));
+
+            return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
         }
     },
 };

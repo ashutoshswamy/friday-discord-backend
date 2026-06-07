@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const {
+    SlashCommandBuilder, PermissionFlagsBits,
+    ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
+    SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -6,15 +10,11 @@ module.exports = {
         .setName('modstats')
         .setDescription('Displays moderation metrics and execution stats for a staff member.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ViewAuditLog)
-        .addUserOption(opt => 
+        .addUserOption(opt =>
             opt.setName('moderator')
                 .setDescription('The staff member whose metrics you want to see (defaults to you)')
                 .setRequired(false)),
 
-    /**
-     * Executes the modstats command.
-     * @param {import('discord.js').ChatInputCommandInteraction} interaction 
-     */
     async execute(interaction) {
         const { guild, user, options } = interaction;
         if (!guild) return;
@@ -22,27 +22,35 @@ module.exports = {
         const targetMod = options.getUser('moderator') || user;
 
         try {
-            // Retrieve stats from db
             const stats = await db.getModeratorStats(guild.id, targetMod.id);
-
             const totalActions = stats.WARN + stats.TIMEOUT + stats.KICK + stats.BAN;
 
-            const embed = new EmbedBuilder()
-                .setTitle(`📊 Staff Metrics: ${targetMod.username}`)
-                .setThumbnail(targetMod.displayAvatarURL({ forceStatic: true }))
-                .setColor('#FF9900')
-                .addFields(
-                    { name: 'Staff Member', value: `${targetMod}`, inline: true },
-                    { name: 'Staff ID', value: `\`${targetMod.id}\``, inline: true },
-                    { name: 'Total Actions Logged', value: `📈 **${totalActions}** actions`, inline: true },
-                    { name: 'Warnings Issued', value: `⚠️ **${stats.WARN}** warns`, inline: true },
-                    { name: 'Timeouts Applied', value: `🤐 **${stats.TIMEOUT}** mutes`, inline: true },
-                    { name: 'Members Kicked', value: `👢 **${stats.KICK}** kicks`, inline: true },
-                    { name: 'Permanent Bans', value: `🔨 **${stats.BAN}** bans`, inline: true }
+            const container = new ContainerBuilder()
+                .setAccentColor(0xFF9900)
+                .addSectionComponents(
+                    new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 📊 Staff Metrics: ${targetMod.username}\n**Staff Member:** <@${targetMod.id}>\n**Staff ID:** \`${targetMod.id}\``
+                            )
+                        )
+                        .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetMod.displayAvatarURL({ forceStatic: true })))
                 )
-                .setTimestamp();
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(`**Total Actions Logged:** 📈 **${totalActions}** actions`)
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `⚠️ **Warnings Issued:** ${stats.WARN}\n` +
+                        `🤐 **Timeouts Applied:** ${stats.TIMEOUT}\n` +
+                        `👢 **Members Kicked:** ${stats.KICK}\n` +
+                        `🔨 **Permanent Bans:** ${stats.BAN}`
+                    )
+                );
 
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
         } catch (err) {
             console.error('[MODSTATS ERROR]', err);
             const _errMsg = { content: '❌ Failed to load staff metrics.', ephemeral: true };
