@@ -6,6 +6,7 @@ const {
 } = require('discord.js');
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
+const { EMOJIS, EMOJI_IDS } = require('../../utils/emojis');
 
 module.exports = {
  data: new SlashCommandBuilder()
@@ -31,7 +32,7 @@ module.exports = {
  const profile = await db.getProfile(guild.id, user.id);
  if (profile.coins < bet) {
  return interaction.editReply({
- content: `Not enough coins! Balance: <:coin:1512926963239489606> **${profile.coins.toLocaleString()}**`,
+ content: `Not enough coins! Balance: ${EMOJIS.coin} **${profile.coins.toLocaleString()}**`,
  ephemeral: true
  });
  }
@@ -39,11 +40,11 @@ module.exports = {
  }
  }
 
- const headsBtn = new ButtonBuilder().setCustomId('cf_heads').setLabel('Heads').setEmoji('1512926963239489606').setStyle(ButtonStyle.Primary);
+ const headsBtn = new ButtonBuilder().setCustomId('cf_heads').setLabel('Heads').setEmoji(EMOJI_IDS.coin).setStyle(ButtonStyle.Primary);
  const tailsBtn = new ButtonBuilder().setCustomId('cf_tails').setLabel('Tails').setStyle(ButtonStyle.Secondary);
  const skipBtn = new ButtonBuilder().setCustomId('cf_skip').setLabel('Just Flip').setStyle(ButtonStyle.Secondary);
 
- const betLine = bet > 0 ? `\n<:coin:1512926963239489606> **${bet.toLocaleString()} coins** on the line!` : '';
+ const betLine = bet > 0 ? `\n${EMOJIS.coin} **${bet.toLocaleString()} coins** on the line!` : '';
 
  const promptContainer = new ContainerBuilder()
  .setAccentColor(0xFFD700)
@@ -51,7 +52,7 @@ module.exports = {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## <:coin:1512926963239489606> Coin Flip\nMake your call before the flip, or just watch it land!${betLine}`
+ `## ${EMOJIS.coin} Coin Flip\nMake your call before the flip, or just watch it land!${betLine}`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -76,7 +77,7 @@ module.exports = {
 
  const guess = i.customId === 'cf_skip' ? null : i.customId.replace('cf_', '');
  const result = Math.random() < 0.5 ? 'heads' : 'tails';
- const resultEmoji = result === 'heads' ? '<:coin:1512926963239489606>' : '';
+ const resultEmoji = result === 'heads' ? EMOJIS.coin : '';
  const resultLabel = result.charAt(0).toUpperCase() + result.slice(1);
 
  let color = 0xFFD700;
@@ -94,11 +95,11 @@ module.exports = {
  const guessLabel = guess.charAt(0).toUpperCase() + guess.slice(1);
  if (won) {
  outcomeText += `\n\n You called **${guessLabel}** — **You win!**`;
- if (bet > 0) outcomeText += `\n<:coin:1512926963239489606> **+${coinDelta.toLocaleString()} coins**`;
+ if (bet > 0) outcomeText += `\n${EMOJIS.coin} **+${coinDelta.toLocaleString()} coins**`;
  color = 0x00FF66;
  } else {
  outcomeText += `\n\n You called **${guessLabel}** — **Better luck next time!**`;
- if (bet > 0) outcomeText += `\n<:coin:1512926963239489606> **-${bet.toLocaleString()} coins**`;
+ if (bet > 0) outcomeText += `\n${EMOJIS.coin} **-${bet.toLocaleString()} coins**`;
  color = 0xFF3333;
  }
  } else if (bet > 0 && guild) {
@@ -109,7 +110,7 @@ module.exports = {
  let balanceLine = '';
  if (bet > 0 && guild) {
  const profile = await db.getProfile(guild.id, user.id);
- balanceLine = `\n Balance: <:coin:1512926963239489606> **${profile.coins.toLocaleString()}**`;
+ balanceLine = `\n Balance: ${EMOJIS.coin} **${profile.coins.toLocaleString()}**`;
  }
 
  const disabledHeads = ButtonBuilder.from(headsBtn).setDisabled(true).setStyle(guess === 'heads' ? ButtonStyle.Primary : ButtonStyle.Secondary);
@@ -121,7 +122,7 @@ module.exports = {
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## <:coin:1512926963239489606> Coin Flip Result\n${outcomeText}${balanceLine}`)
+ new TextDisplayBuilder().setContent(`## ${EMOJIS.coin} Coin Flip Result\n${outcomeText}${balanceLine}`)
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
  )

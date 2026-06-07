@@ -85,7 +85,7 @@ module.exports = {
  if (mktQuotes.length === 0) continue;
  const flag = getFlag(mkt);
  const preview = mktQuotes.slice(0, 3).map(q => {
- const trendIcon = q.changePercent >= 0 ? '' : '';
+ const trendIcon = q.changePercent >= 0 ? '📈' : '📉';
  return `• **${q.symbol}**: **${q.currency}${q.price.toLocaleString()}** (${trendIcon} \`${q.changePercent >= 0 ? '+' : ''}${q.changePercent}%\`)`;
  }).join('\n');
  const remaining = mktQuotes.length - 3;
@@ -115,7 +115,7 @@ module.exports = {
  const chunkSize = 10;
  let listStr = '';
  for (const q of mktQuotes) {
- const trendIcon = q.changePercent >= 0 ? '' : '';
+ const trendIcon = q.changePercent >= 0 ? '📈' : '📉';
  listStr += `• **${q.symbol}** (${q.name})\n Price: **${q.currency}${q.price.toLocaleString()}** | 24h: ${trendIcon} \`${q.changePercent >= 0 ? '+' : ''}${q.changePercent}%\`\n\n`;
  }
 
@@ -141,7 +141,7 @@ module.exports = {
  return interaction.editReply({ content: `Stock symbol **${symbol}** not found in the global catalog.`, ephemeral: true });
  }
 
- const trendIcon = quote.changePercent >= 0 ? ' ' : ' ';
+ const trendIcon = quote.changePercent >= 0 ? '📈' : '📉';
  const trendText = quote.changePercent >= 0 ? `+${quote.changePercent}%` : `${quote.changePercent}%`;
  const isUp = quote.changePercent >= 0;
  const accentColor = isUp ? 0x00FF66 : 0xFF3333;

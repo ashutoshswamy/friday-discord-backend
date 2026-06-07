@@ -8,9 +8,9 @@ const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 
 const CHOICES = {
- rock: { label: 'Rock', beats: 'scissors' },
- paper: { label: 'Paper', beats: 'rock' },
- scissors: { label: 'Scissors', beats: 'paper' },
+ rock: { label: '🪨 Rock', beats: 'scissors' },
+ paper: { label: '📄 Paper', beats: 'rock' },
+ scissors: { label: '✂️ Scissors', beats: 'paper' },
 };
 
 module.exports = {
@@ -45,9 +45,9 @@ module.exports = {
  }
  }
 
- const rock = new ButtonBuilder().setCustomId('rps_rock').setLabel('Rock').setStyle(ButtonStyle.Secondary);
- const paper = new ButtonBuilder().setCustomId('rps_paper').setLabel('Paper').setStyle(ButtonStyle.Secondary);
- const scissors = new ButtonBuilder().setCustomId('rps_scissors').setLabel('Scissors').setStyle(ButtonStyle.Secondary);
+ const rock = new ButtonBuilder().setCustomId('rps_rock').setLabel('🪨 Rock').setStyle(ButtonStyle.Secondary);
+ const paper = new ButtonBuilder().setCustomId('rps_paper').setLabel('📄 Paper').setStyle(ButtonStyle.Secondary);
+ const scissors = new ButtonBuilder().setCustomId('rps_scissors').setLabel('✂️ Scissors').setStyle(ButtonStyle.Secondary);
 
  const betLine = bet > 0 ? `\n<:coin:1512926963239489606> **${bet.toLocaleString()} coins** on the line!` : '';
 

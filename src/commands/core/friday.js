@@ -5,6 +5,7 @@ const {
 } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../../utils/db');
+const { EMOJIS } = require('../../utils/emojis');
 
 const FRIDAY_QUOTES = [
  "I am Friday. I monitor this server. I scan for anomalies.",
@@ -28,6 +29,9 @@ module.exports = {
  .addSubcommand(sub =>
  sub.setName('status')
  .setDescription('Renders bot diagnostic indicators, memory layouts, and latency.'))
+ .addSubcommand(sub =>
+ sub.setName('emojis')
+ .setDescription('Lists all Friday brand custom emojis.'))
  .addSubcommand(sub =>
  sub.setName('protocol')
  .setDescription('Executes specialized system automation protocol slates (Admin only).')
@@ -73,11 +77,12 @@ module.exports = {
  try {
  if (subcommand === 'quote') {
  const quote = FRIDAY_QUOTES[Math.floor(Math.random() * FRIDAY_QUOTES.length)];
+ const randomEmoji = [EMOJIS.fridaycool, EMOJIS.fridayhappy, EMOJIS.fridayhello, EMOJIS.fridaylove, EMOJIS.fridayhype][Math.floor(Math.random() * 5)];
 
  const container = new ContainerBuilder()
  .setAccentColor(0x8B5CF6)
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## Friday Core Protocol\n*"${quote}"*`)
+ new TextDisplayBuilder().setContent(`## ${randomEmoji} Friday Core Protocol\n*"${quote}"*`)
  );
 
  return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -97,7 +102,7 @@ module.exports = {
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## System Diagnostics & Metrics\n**Core Engine Name:**Friday Core`)
+ new TextDisplayBuilder().setContent(`## ${EMOJIS.fridaycool} System Diagnostics & Metrics\n**Core Engine Name:** Friday Core`)
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(client.user.displayAvatarURL({ forceStatic: true })))
  )
@@ -112,7 +117,25 @@ module.exports = {
  )
  )
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`-# System Integrity: 100% Operational`)
+ new TextDisplayBuilder().setContent(`-# ${EMOJIS.fridayhappy} System Integrity: 100% Operational`)
+ );
+
+ return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+ }
+
+ if (subcommand === 'emojis') {
+ const emojiList = Object.entries(EMOJIS)
+ .map(([name, emoji]) => `• **${name}:** ${emoji} \`${emoji}\``)
+ .join('\n');
+
+ const container = new ContainerBuilder()
+ .setAccentColor(0x8B5CF6)
+ .addSectionComponents(
+ new SectionBuilder()
+ .addTextDisplayComponents(
+ new TextDisplayBuilder().setContent(`## Friday Brand Emojis\nHere are the custom brand emojis stored in system configuration:\n\n${emojiList}`)
+ )
+ .setThumbnailAccessory(new ThumbnailBuilder().setURL(client.user.displayAvatarURL({ forceStatic: true })))
  );
 
  return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -133,7 +156,7 @@ module.exports = {
  .setAccentColor(0xFF3333)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Protocol: CLEAN SLATE\n **Executing system clean-slate diagnostics...**`
+ `## ${EMOJIS.fridaypanic} Protocol: CLEAN SLATE\n **Executing system clean-slate diagnostics...**`
  )
  )
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
@@ -179,7 +202,7 @@ module.exports = {
  const container = new ContainerBuilder()
  .setAccentColor(0x8B5CF6)
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## Friday Protocol: AI Query Response`)
+ new TextDisplayBuilder().setContent(`## ${EMOJIS.fridaythink} Friday Protocol: AI Query Response`)
  )
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(new TextDisplayBuilder().setContent(responseText))
@@ -221,7 +244,7 @@ module.exports = {
  const container = new ContainerBuilder()
  .setAccentColor(0x10B981)
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## Friday Protocol: Persona Rewrite\n**Style Persona:** **${style}**`)
+ new TextDisplayBuilder().setContent(`## ${EMOJIS.fridaycool} Friday Protocol: Persona Rewrite\n**Style Persona:** **${style}**`)
  )
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
@@ -284,7 +307,7 @@ module.exports = {
  const container = new ContainerBuilder()
  .setAccentColor(0x06B6D4)
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## Friday Protocol: Channel Briefing\n### Recent Chat Activity Summary:`)
+ new TextDisplayBuilder().setContent(`## ${EMOJIS.fridayhype} Friday Protocol: Channel Briefing\n### Recent Chat Activity Summary:`)
  )
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(new TextDisplayBuilder().setContent(responseText))

@@ -22,7 +22,7 @@ function buildGiveawayContainer(prize, winnersCount, endUnix, entrantCount = 0, 
  .setAccentColor(0xFF0099)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## GIVEAWAY${active ? '' : ' ENDED'} \n` +
+ `## 🎉 GIVEAWAY${active ? '' : ' ENDED'} \n` +
  `**Prize:** **${prize}**\n` +
  `**Winners:** ${winnersCount}\n` +
  (active
@@ -36,7 +36,7 @@ function buildGiveawayContainer(prize, winnersCount, endUnix, entrantCount = 0, 
  new ActionRowBuilder().addComponents(
  new ButtonBuilder()
  .setCustomId('giveaway_join_PLACEHOLDER')
- .setLabel('Enter Draw')
+ .setLabel('🎉 Enter Draw')
  .setStyle(ButtonStyle.Primary)
  )
  );
@@ -110,14 +110,14 @@ module.exports = {
  .setAccentColor(0xFF0099)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## GIVEAWAY \n**Prize:** **${prize}**\n**Winners:** ${winnersCount}\n**Ends:** <t:${endUnix}:R> (at <t:${endUnix}:f>)\n\n-# Click the button below to enter the draw!`
+ `## 🎉 GIVEAWAY \n**Prize:** **${prize}**\n**Winners:** ${winnersCount}\n**Ends:** <t:${endUnix}:R> (at <t:${endUnix}:f>)\n\n-# Click the button below to enter the draw!`
  )
  )
  .addActionRowComponents(
  new ActionRowBuilder().addComponents(
  new ButtonBuilder()
  .setCustomId(`giveaway_join_${msg.id}`)
- .setLabel('Enter Draw')
+ .setLabel('🎉 Enter Draw')
  .setStyle(ButtonStyle.Primary)
  )
  );
@@ -169,7 +169,7 @@ module.exports = {
  .setAccentColor(0xFF0099)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## GIVEAWAY RE-ROLLED! \n**Prize:** **${giveaway.prize}**\n**New Winners:** ${winnerPings}!\n\nCongratulations on your victory!`
+ `## 🎉 GIVEAWAY RE-ROLLED! \n**Prize:** **${giveaway.prize}**\n**New Winners:** ${winnerPings}!\n\nCongratulations on your victory!`
  )
  );
 
@@ -209,7 +209,7 @@ module.exports = {
  .setAccentColor(0x71717A)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## GIVEAWAY ENDED \n**Prize:** **${giveaway.prize}**\n\n **Draw Cancelled:**No valid entrants participated in the draw.`
+ `## 🎉 GIVEAWAY ENDED \n**Prize:** **${giveaway.prize}**\n\n **Draw Cancelled:**No valid entrants participated in the draw.`
  )
  )
  .addActionRowComponents(disabledRow);
@@ -227,7 +227,7 @@ module.exports = {
  .setAccentColor(0xFF0099)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## GIVEAWAY RESULTS \n**Prize Won:** **${giveaway.prize}**\n**Winners:** ${winnerPings}!\n\nThank you everyone for participating!`
+ `## 🎉 GIVEAWAY RESULTS \n**Prize Won:** **${giveaway.prize}**\n**Winners:** ${winnerPings}!\n\nThank you everyone for participating!`
  )
  )
  .addActionRowComponents(disabledRow);
@@ -236,7 +236,7 @@ module.exports = {
  .setAccentColor(0xFFD700)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Congratulations!\n${winnerPings} won the **${giveaway.prize}** giveaway!`
+ `## 🎉 Congratulations!\n${winnerPings} won the **${giveaway.prize}** giveaway!`
  )
  )
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))

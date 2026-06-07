@@ -6,7 +6,7 @@ const {
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 
-const SYMBOLS = ['[ 7 ]', '[BAR]', '[GEM]', '[CHR]', '[STR]', '[BEL]', '[GRP]'];
+const SYMBOLS = ['7️⃣', '🎰', '💎', '🍒', '⭐', '🔔', '🍇'];
 
 module.exports = {
  data: new SlashCommandBuilder()
@@ -48,8 +48,8 @@ module.exports = {
  let winStatus = '';
 
  if (reel1 === reel2 && reel2 === reel3) {
- if (reel1 === '[ 7 ]') { multiplier = 10; winStatus = '**MEGA JACKPOT!** Triple 7s!'; }
- else if (reel1 === '[GEM]') { multiplier = 8; winStatus = '**SUPER JACKPOT!** Triple Gems!'; }
+ if (reel1 === SYMBOLS[0]) { multiplier = 10; winStatus = '**MEGA JACKPOT!** Triple 7s!'; }
+ else if (reel1 === SYMBOLS[2]) { multiplier = 8; winStatus = '**SUPER JACKPOT!** Triple Gems!'; }
  else { multiplier = 5; winStatus = '**TRIPLE JACKPOT!**'; }
  } else if (reel1 === reel2 || reel2 === reel3 || reel1 === reel3) {
  multiplier = 2;
