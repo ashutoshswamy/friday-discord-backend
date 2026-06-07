@@ -5,6 +5,7 @@ const {
  ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
+const { EMOJIS, EMOJI_IDS } = require('../../utils/emojis');
 
 const SELLABLE_ITEMS = {
  'rabbit': 80, 'duck': 150, 'deer': 400, 'wild boar': 800, 'grizzly bear': 2000,
@@ -100,8 +101,9 @@ module.exports = {
  if (sellableOwned.length > 0) {
  const sellOptions = sellableOwned.slice(0, 25).map(name => ({
  label: `${name} (×${itemCounts[name]})`,
- description: `Sells for <:coin:1512926963239489606> ${SELLABLE_ITEMS[name.toLowerCase()]} each`,
- value: `sell_${name}`
+ description: `Sells for ${SELLABLE_ITEMS[name.toLowerCase()]} coins each`,
+ value: `sell_${name}`,
+ emoji: EMOJI_IDS.coin
  }));
 
  const sellSelect = new StringSelectMenuBuilder()
@@ -150,7 +152,7 @@ module.exports = {
  const refreshedCounts = {};
  refreshedItems.forEach(name => { refreshedCounts[name] = (refreshedCounts[name] || 0) + 1; });
 
- const extraText = `**Junk Sold:** ${soldCount} item(s) for <:coin:1512926963239489606> **+${totalEarned.toLocaleString()}** coins!`;
+ const extraText = `**Junk Sold:** ${soldCount} item(s) for ${EMOJIS.coin} **+${totalEarned.toLocaleString()}** coins!`;
  const refreshedSellable = Object.keys(refreshedCounts).filter(n => SELLABLE_ITEMS[n.toLowerCase()] !== undefined);
 
  const newSellBtn = new ButtonBuilder()
@@ -167,8 +169,9 @@ module.exports = {
  if (refreshedSellable.length > 0) {
  const newSellOptions = refreshedSellable.slice(0, 25).map(name => ({
  label: `${name} (×${refreshedCounts[name]})`,
- description: `Sells for <:coin:1512926963239489606> ${SELLABLE_ITEMS[name.toLowerCase()]} each`,
- value: `sell_${name}`
+ description: `Sells for ${SELLABLE_ITEMS[name.toLowerCase()]} coins each`,
+ value: `sell_${name}`,
+ emoji: EMOJI_IDS.coin
  }));
  const newSellSelect = new StringSelectMenuBuilder()
  .setCustomId('inv_sell_select')
@@ -206,13 +209,6 @@ module.exports = {
  const refreshedCounts = {};
  refreshedItems.forEach(name => { refreshedCounts[name] = (refreshedCounts[name] || 0) + 1; });
 
- const extraText = `**Item Sold:** 1× **${itemName}** for <:coin:1512926963239489606> **+${price.toLocaleString()}** coins!`;
- const refreshedSellable = Object.keys(refreshedCounts).filter(n => SELLABLE_ITEMS[n.toLowerCase()] !== undefined);
-
- const newSellBtn = new ButtonBuilder()
- .setCustomId('inv_sell_all_junk')
- .setLabel('Sell All Junk')
- .setStyle(ButtonStyle.Success);
  const newUseBtn = new ButtonBuilder()
  .setCustomId('inv_use_item')
  .setLabel('Use an Item')

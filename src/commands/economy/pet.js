@@ -4,6 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
+const { EMOJIS } = require('../../utils/emojis');
 
 module.exports = {
  data: new SlashCommandBuilder()
@@ -36,7 +37,7 @@ module.exports = {
  opt.setName('method')
  .setDescription('Choose feed method: Pay 100 coins or feed a Worm from your inventory')
  .addChoices(
- { name: '<:coin:1512926963239489606> Pay 100 coins (Restores 25 hunger)', value: 'coins' },
+ { name: '🪙 Pay 100 coins (Restores 25 hunger)', value: 'coins' },
  { name: ' Feed "Common Worm" (Restores 50 hunger)', value: 'worm' }
  )
  .setRequired(true)))
@@ -79,7 +80,7 @@ module.exports = {
  const profile = await db.getProfile(guild.id, user.id);
  if (profile.coins < 200) {
  return interaction.editReply({
- content: `Adoption fee is <:coin:1512926963239489606> **200** coins! You currently have <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins in your active wallet.`,
+ content: `Adoption fee is ${EMOJIS.coin} **200** coins! You currently have ${EMOJIS.coin} **${profile.coins.toLocaleString()}** coins in your active wallet.`,
  ephemeral: true
  });
  }
@@ -103,7 +104,7 @@ module.exports = {
  new TextDisplayBuilder().setContent(
  `**Companion Name:** **${petName}**\n` +
  `**Pet Type:** **${petType}**\n` +
- `**Adoption Cost:** <:coin:1512926963239489606> **200** coins`
+ `**Adoption Cost:** ${EMOJIS.coin} **200** coins`
  )
  );
 
@@ -173,7 +174,7 @@ module.exports = {
  const profile = await db.getProfile(guild.id, user.id);
  if (profile.coins < 100) {
  return interaction.editReply({
- content: `You do not have <:coin:1512926963239489606> **100** coins in your active wallet to buy pet food!`,
+ content: `You do not have ${EMOJIS.coin} **100** coins in your active wallet to buy pet food!`,
  ephemeral: true
  });
  }
@@ -181,7 +182,7 @@ module.exports = {
  await db.updateCoins(guild.id, user.id, -100);
  newHunger = Math.min(100, activeHunger + 25);
  await db.updatePetStats(guild.id, user.id, { hunger: newHunger, lastFed: new Date().toISOString() });
- feedDesc = `You spent **<:coin:1512926963239489606> 100 coins** to feed **${pet.name}** a bag of premium pet food!\nHunger meter: ** ${newHunger}/100**.`;
+ feedDesc = `You spent **${EMOJIS.coin} 100 coins** to feed **${pet.name}** a bag of premium pet food!\nHunger meter: ** ${newHunger}/100**.`;
 
  } else if (method === 'worm') {
  const inventory = await db.getInventory(guild.id, user.id);

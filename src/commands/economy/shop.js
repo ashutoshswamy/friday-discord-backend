@@ -5,6 +5,7 @@ const {
  ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
+const { EMOJIS, EMOJI_IDS } = require('../../utils/emojis');
 
 module.exports = {
  data: new SlashCommandBuilder()
@@ -39,7 +40,7 @@ module.exports = {
  .setRequired(false)
  .addChoices(
  { name: ' Grant XP Boost', value: 'XP' },
- { name: '<:coin:1512926963239489606> Grant Wallet Coins Cache', value: 'COINS' }
+ { name: '🪙 Grant Wallet Coins Cache', value: 'COINS' }
  ))
  .addIntegerOption(opt =>
  opt.setName('action_value')
@@ -81,13 +82,14 @@ module.exports = {
 
  const itemsText = items.map(item => {
  const roleText = item.roleRewardId ? `\n Grants: <@&${item.roleRewardId}>` : '';
- return `** ${item.name}** — <:coin:1512926963239489606> **${item.cost.toLocaleString()}** coins\n *${item.description}*${roleText}`;
+ return `** ${item.name}** — ${EMOJIS.coin} **${item.cost.toLocaleString()}** coins\n *${item.description}*${roleText}`;
  }).join('\n\n');
 
  const buyOptions = items.slice(0, 25).map(item => ({
  label: item.name,
- description: `<:coin:1512926963239489606> ${item.cost.toLocaleString()} coins${item.roleRewardId ? ' · Grants a role' : ''}`,
- value: `buy_${item.name}`
+ description: `${item.cost.toLocaleString()} coins${item.roleRewardId ? ' · Grants a role' : ''}`,
+ value: `buy_${item.name}`,
+ emoji: EMOJI_IDS.coin
  }));
 
  const buySelect = new StringSelectMenuBuilder()
@@ -141,7 +143,7 @@ module.exports = {
  }
  }
 
- let detailText = `**Item Purchased:** **${itemName}** → your inventory\n**Cost Paid:** <:coin:1512926963239489606> **${result.cost.toLocaleString()}** coins`;
+ let detailText = `**Item Purchased:** **${itemName}** → your inventory\n**Cost Paid:** ${EMOJIS.coin} **${result.cost.toLocaleString()}** coins`;
 
  if (result.roleRewardId) {
  detailText += `\n**Role Reward:** ${roleGranted ? `**${roleText}** granted!` : `Could not grant **${roleText}** (check bot role position).`}`;
@@ -236,7 +238,7 @@ module.exports = {
 
  let detailText =
  `**Name:** **${name}**\n` +
- `**Price:** <:coin:1512926963239489606> **${cost.toLocaleString()}** coins\n` +
+ `**Price:** ${EMOJIS.coin} **${cost.toLocaleString()}** coins\n` +
  `**Description:** ${description}`;
 
  if (actionType) detailText += `\n**Effect:**Consumable — **${actionType}** grants **${actionValue.toLocaleString()}** on use`;
