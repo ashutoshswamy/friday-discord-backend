@@ -1,4 +1,21 @@
-const { Events, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ActionRowBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const {
+    Events,
+    EmbedBuilder,
+    PermissionFlagsBits,
+    ButtonBuilder,
+    ActionRowBuilder,
+    ButtonStyle,
+    AttachmentBuilder,
+    ContainerBuilder,
+    SectionBuilder,
+    TextDisplayBuilder,
+    ThumbnailBuilder,
+    MediaGalleryBuilder,
+    MediaGalleryItemBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 
 module.exports = {
@@ -36,7 +53,12 @@ module.exports = {
             } catch (error) {
                 console.error(`[ERROR] Error occurred executing command /${interaction.commandName}:`, error);
 
-                const errorMessage = { content: 'There was an error while executing this command!', ephemeral: true };
+                const errContainer = new ContainerBuilder()
+                    .setAccentColor(0xEF4444)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent('❌ There was an error while executing this command!')
+                    );
+                const errorMessage = { flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true };
 
                 if (interaction.replied || interaction.deferred) {
                     await interaction.followUp(errorMessage).catch(console.error);
@@ -62,22 +84,43 @@ module.exports = {
                 const role = guild.roles.cache.get(roleId);
                 
                 if (!role) {
-                    return interaction.reply({ content: '❌ This role no longer exists in the server!', ephemeral: true });
+                    const errContainer = new ContainerBuilder()
+                        .setAccentColor(0xEF4444)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('❌ This role no longer exists in the server!')
+                        );
+                    return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                 }
 
                 try {
                     // Check if member already has the role
                     if (member.roles.cache.has(roleId)) {
                         await member.roles.remove(role, 'Reaction Role: Button clicked');
-                        return interaction.reply({ content: `✅ Successfully removed the role **${role.name}**!`, ephemeral: true });
+                        const okContainer = new ContainerBuilder()
+                            .setAccentColor(0x10B981)
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(`✅ Successfully removed the role **${role.name}**!`)
+                            );
+                        return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [okContainer], ephemeral: true });
                     } else {
                         await member.roles.add(role, 'Reaction Role: Button clicked');
-                        return interaction.reply({ content: `✅ Successfully added the role **${role.name}**!`, ephemeral: true });
+                        const okContainer = new ContainerBuilder()
+                            .setAccentColor(0x10B981)
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(`✅ Successfully added the role **${role.name}**!`)
+                            );
+                        return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [okContainer], ephemeral: true });
                     }
                 } catch (err) {
                     console.error('[REACTION ROLE ERROR] Failed to toggle role:', err);
+                    const errContainer = new ContainerBuilder()
+                        .setAccentColor(0xEF4444)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('❌ Failed to toggle role. Verify my bot role has the "Manage Roles" permission and is higher than the target role.')
+                        );
                     return interaction.reply({ 
-                        content: '❌ Failed to toggle role. Verify my bot role has the "Manage Roles" permission and is higher than the target role.', 
+                        flags: MessageFlags.IsComponentsV2,
+                        components: [errContainer], 
                         ephemeral: true 
                     });
                 }
@@ -110,35 +153,47 @@ module.exports = {
                         ]
                     });
 
-                    const closeButton = new ButtonBuilder()
-                        .setCustomId('ticket_close')
-                        .setLabel('🔒 Close Ticket')
-                        .setStyle(ButtonStyle.Danger);
-
-                    const row = new ActionRowBuilder().addComponents(closeButton);
-
-                    const welcomeEmbed = new EmbedBuilder()
-                        .setTitle('🎟️ Support Ticket Created')
-                        .setColor('#00FFCC')
-                        .setDescription(
-                            `Welcome to your ticket, ${user}!\n` +
-                            `Please describe your inquiry, and our support team will assist you shortly.\n\n` +
-                            `Click the button below to close this support ticket.`
+                    const welcomeContainer = new ContainerBuilder()
+                        .setAccentColor(0x00FFCC)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(
+                                `## 🎟️ Support Ticket Created\n` +
+                                `Welcome to your ticket, ${user}!\n` +
+                                `Please describe your inquiry, and our support team will assist you shortly.\n\n` +
+                                `Click the button below to close this support ticket.`
+                            )
                         )
-                        .setTimestamp();
+                        .addActionRowComponents(
+                            new ActionRowBuilder().addComponents(
+                                new ButtonBuilder()
+                                    .setCustomId('ticket_close')
+                                    .setLabel('🔒 Close Ticket')
+                                    .setStyle(ButtonStyle.Danger)
+                            )
+                        );
 
                     await ticketChannel.send({
                         content: `${user} | Support Staff`,
-                        embeds: [welcomeEmbed],
-                        components: [row]
+                        flags: MessageFlags.IsComponentsV2,
+                        components: [welcomeContainer]
                     });
 
                     await db.addTicket(guild.id, ticketChannel.id, channelName, user.id, user.tag).catch(() => null);
 
-                    return interaction.editReply({ content: `✅ Ticket created successfully! Go to ${ticketChannel}.` });
+                    const successContainer = new ContainerBuilder()
+                        .setAccentColor(0x10B981)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`✅ Ticket created successfully! Go to ${ticketChannel}.`)
+                        );
+                    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [successContainer] });
                 } catch (err) {
                     console.error('[TICKET ERROR] Failed to create channel:', err);
-                    return interaction.editReply({ content: '❌ Failed to open a support ticket. Please check my permission settings.' });
+                    const errContainer = new ContainerBuilder()
+                        .setAccentColor(0xEF4444)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('❌ Failed to open a support ticket. Please check my permission settings.')
+                        );
+                    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [errContainer] });
                 }
             }
 
@@ -147,8 +202,14 @@ module.exports = {
                 const channel = interaction.channel;
                 if (!channel) return;
 
+                const closeContainer = new ContainerBuilder()
+                    .setAccentColor(0x3B82F6)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent('🔒 Closing this ticket in 5 seconds... Generating transcript...')
+                    );
                 await interaction.reply({ 
-                    content: '🔒 Closing this ticket in 5 seconds... Generating transcript...', 
+                    flags: MessageFlags.IsComponentsV2,
+                    components: [closeContainer], 
                     ephemeral: false 
                 });
 
@@ -194,16 +255,31 @@ module.exports = {
                 client.giveaways = client.giveaways || new Map();
                 
                 if (!client.giveaways.has(giveawayId)) {
-                    return interaction.reply({ content: '❌ This giveaway is no longer active!', ephemeral: true });
+                    const errContainer = new ContainerBuilder()
+                        .setAccentColor(0xEF4444)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('❌ This giveaway is no longer active!')
+                        );
+                    return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                 }
                 
                 const giveaway = client.giveaways.get(giveawayId);
                 if (giveaway.entrants.has(user.id)) {
-                    return interaction.reply({ content: 'ℹ️ You have already entered this giveaway!', ephemeral: true });
+                    const infoContainer = new ContainerBuilder()
+                        .setAccentColor(0x3B82F6)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('ℹ️ You have already entered this giveaway!')
+                        );
+                    return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [infoContainer], ephemeral: true });
                 }
                 
                 giveaway.entrants.add(user.id);
-                return interaction.reply({ content: '🎉 You have successfully entered the giveaway! Good luck!', ephemeral: true });
+                const okContainer = new ContainerBuilder()
+                    .setAccentColor(0x10B981)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent('🎉 You have successfully entered the giveaway! Good luck!')
+                    );
+                return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [okContainer], ephemeral: true });
             }
 
             // E. Events: RSVP Button Click
@@ -212,29 +288,65 @@ module.exports = {
                 client.events = client.events || new Map();
                 
                 if (!client.events.has(eventId)) {
-                    return interaction.reply({ content: '❌ This event is no longer active!', ephemeral: true });
+                    const errContainer = new ContainerBuilder()
+                        .setAccentColor(0xEF4444)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('❌ This event is no longer active!')
+                        );
+                    return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                 }
                 
                 const eventObj = client.events.get(eventId);
+                let repliedText = '';
                 if (eventObj.rsvps.has(user.id)) {
                     eventObj.rsvps.delete(user.id);
-                    await interaction.reply({ content: 'ℹ️ Removed your RSVP for this event.', ephemeral: true });
+                    repliedText = 'ℹ️ Removed your RSVP for this event.';
                 } else {
                     eventObj.rsvps.add(user.id);
-                    await interaction.reply({ content: '✅ Successfully RSVP\'d to this event! See you there!', ephemeral: true });
+                    repliedText = '✅ Successfully RSVP\'d to this event! See you there!';
                 }
 
-                // Update original embed
+                const infoContainer = new ContainerBuilder()
+                    .setAccentColor(repliedText.startsWith('✅') ? 0x10B981 : 0x3B82F6)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(repliedText)
+                    );
+                await interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [infoContainer], ephemeral: true });
+
+                // Update original event message container
                 const message = interaction.message;
-                const embed = EmbedBuilder.from(message.embeds[0]);
-                
-                // Find and edit RSVP field
-                const fieldIndex = embed.data.fields.findIndex(f => f.name.includes('RSVP'));
-                if (fieldIndex !== -1) {
-                    embed.data.fields[fieldIndex].value = `👥 **${eventObj.rsvps.size}** RSVPs\n${Array.from(eventObj.rsvps).slice(0, 10).map(id => `<@${id}>`).join(', ') || '*No one yet*'}`;
-                }
-                
-                await message.edit({ embeds: [embed] });
+                const iconUrl = guild.iconURL({ forceStatic: true });
+                const rsvpText = `👥 **${eventObj.rsvps.size}** RSVPs\n${Array.from(eventObj.rsvps).slice(0, 10).map(id => `<@${id}>`).join(', ') || '*No one yet*'}`;
+
+                const updatedContainer = new ContainerBuilder()
+                    .setAccentColor(0xFFCC00)
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(`## Guild Event: ${eventObj.title}\n${eventObj.desc}`)
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'))
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `**Date / Time:** \`${eventObj.date}\`\n **Location:** \`${eventObj.location}\`\n **RSVPs:** ${rsvpText}`
+                        )
+                    )
+                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                    .addActionRowComponents(
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`event_rsvp_${eventId}`)
+                                .setLabel('RSVP / Attend')
+                                .setStyle(ButtonStyle.Success)
+                        )
+                    )
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(`-# Click the button above to RSVP for this event`)
+                    );
+
+                await message.edit({ flags: MessageFlags.IsComponentsV2, components: [updatedContainer] });
                 await db.updateEventRsvpCount(eventId, eventObj.rsvps.size).catch(() => null);
                 return;
             }
@@ -259,20 +371,56 @@ module.exports = {
                 const thumbnail = interaction.fields.getTextInputValue('thumbnail');
 
                 try {
-                    const embed = new EmbedBuilder()
-                        .setDescription(desc || null)
-                        .setColor(color)
-                        .setTimestamp();
+                    const container = new ContainerBuilder()
+                        .setAccentColor(parseInt(color.replace('#', ''), 16) || 0x00FFCC);
+                    
+                    let text = '';
+                    if (title) text += `## ${title}\n`;
+                    if (desc) text += desc;
+                    
+                    if (text) {
+                        container.addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(text)
+                        );
+                    }
+                    if (thumbnail && thumbnail.startsWith('http')) {
+                        container.setThumbnailAccessory(
+                            new ThumbnailBuilder().setURL(thumbnail)
+                        );
+                    }
+                    if (image && image.startsWith('http')) {
+                        container.addMediaGalleryComponents(
+                            new MediaGalleryBuilder().addItems(
+                                new MediaGalleryItemBuilder().setURL(image)
+                            )
+                        );
+                    }
 
-                    if (title) embed.setTitle(title);
-                    if (image && image.startsWith('http')) embed.setImage(image);
-                    if (thumbnail && thumbnail.startsWith('http')) embed.setThumbnail(thumbnail);
+                    await interaction.channel.send({ 
+                        flags: MessageFlags.IsComponentsV2,
+                        components: [container] 
+                    });
 
-                    await interaction.channel.send({ embeds: [embed] });
-                    return interaction.editReply({ content: '✅ Embed successfully sent!' });
+                    const successContainer = new ContainerBuilder()
+                        .setAccentColor(0x10B981)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('✅ Embed successfully sent!')
+                        );
+                    return interaction.editReply({ 
+                        flags: MessageFlags.IsComponentsV2,
+                        components: [successContainer] 
+                    });
                 } catch (err) {
                     console.error('[EMBED BUILDER ERROR] Failed to construct embed:', err);
-                    return interaction.editReply({ content: '❌ Failed to construct embed. Please verify image URLs are correct and color is a valid Hex code.' });
+                    const errContainer = new ContainerBuilder()
+                        .setAccentColor(0xEF4444)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('❌ Failed to construct embed. Please verify image URLs are correct and color is a valid Hex code.')
+                        );
+                    return interaction.editReply({ 
+                        flags: MessageFlags.IsComponentsV2,
+                        components: [errContainer] 
+                    });
                 }
             }
 
@@ -297,10 +445,21 @@ module.exports = {
                     };
 
                     await db.addCustomCommand(guild.id, triggerName, null, true, embedData);
-                    return interaction.editReply({ content: `✅ Embed Custom Command \`!${triggerName}\` successfully configured!` });
+
+                    const successContainer = new ContainerBuilder()
+                        .setAccentColor(0x10B981)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(`✅ Embed Custom Command \`!${triggerName}\` successfully configured!`)
+                        );
+                    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [successContainer] });
                 } catch (err) {
                     console.error('[CUSTOMCMD BUILDER ERROR] Failed to save embed custom command:', err);
-                    return interaction.editReply({ content: '❌ Failed to register the custom command.' });
+                    const errContainer = new ContainerBuilder()
+                        .setAccentColor(0xEF4444)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent('❌ Failed to register the custom command.')
+                        );
+                    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [errContainer] });
                 }
             }
         }

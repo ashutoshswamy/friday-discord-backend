@@ -1,4 +1,16 @@
-const { Events, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
+const {
+    Events,
+    EmbedBuilder,
+    AttachmentBuilder,
+    PermissionFlagsBits,
+    ContainerBuilder,
+    SectionBuilder,
+    TextDisplayBuilder,
+    ThumbnailBuilder,
+    MediaGalleryBuilder,
+    MediaGalleryItemBuilder,
+    MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 const { renderRankCard } = require('../../utils/renderRankCard');
 
@@ -39,15 +51,35 @@ module.exports = {
             const customCmd = await db.getCustomCommand(guild.id, possibleTrigger);
             if (customCmd) {
                 if (customCmd.isEmbed && customCmd.embedData) {
-                    const embed = new EmbedBuilder()
-                        .setTitle(customCmd.embedData.title || null)
-                        .setDescription(customCmd.embedData.description || null)
-                        .setColor(customCmd.embedData.color || '#00FFCC')
-                        .setImage(customCmd.embedData.image || null)
-                        .setThumbnail(customCmd.embedData.thumbnail || null)
-                        .setTimestamp();
+                    const container = new ContainerBuilder()
+                        .setAccentColor(parseInt((customCmd.embedData.color || '#00FFCC').replace('#', ''), 16) || 0x00FFCC);
                     
-                    await channel.send({ embeds: [embed] }).catch(() => null);
+                    let text = '';
+                    if (customCmd.embedData.title) text += `## ${customCmd.embedData.title}\n`;
+                    if (customCmd.embedData.description) text += customCmd.embedData.description;
+                    
+                    if (text) {
+                        container.addTextDisplayComponents(
+                            new TextDisplayBuilder().setContent(text)
+                        );
+                    }
+                    if (customCmd.embedData.thumbnail) {
+                        container.setThumbnailAccessory(
+                            new ThumbnailBuilder().setURL(customCmd.embedData.thumbnail)
+                        );
+                    }
+                    if (customCmd.embedData.image) {
+                        container.addMediaGalleryComponents(
+                            new MediaGalleryBuilder().addItems(
+                                new MediaGalleryItemBuilder().setURL(customCmd.embedData.image)
+                            )
+                        );
+                    }
+                    
+                    await channel.send({ 
+                        flags: MessageFlags.IsComponentsV2,
+                        components: [container] 
+                    }).catch(() => null);
                 } else if (customCmd.content) {
                     await channel.send(customCmd.content).catch(() => null);
                 }

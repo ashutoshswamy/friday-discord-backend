@@ -1,4 +1,12 @@
-const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  AttachmentBuilder,
+  ContainerBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+  TextDisplayBuilder,
+  MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const axios = require('axios');
@@ -56,10 +64,24 @@ module.exports = {
 
   if (mode === 'xp') {
   entries = await db.getLeaderboard(guild.id);
-  if (!entries.length) return interaction.editReply({ content: 'No rank profiles yet. Chat to start earning XP!' });
+  if (!entries.length) {
+    const emptyContainer = new ContainerBuilder()
+      .setAccentColor(0xEF4444)
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('❌ No rank profiles yet. Chat to start earning XP!')
+      );
+    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [emptyContainer] });
+  }
   } else {
   entries = await db.getEconomyLeaderboard(guild.id);
-  if (!entries.length) return interaction.editReply({ content: 'No economy profiles yet. Start working to earn coins!' });
+  if (!entries.length) {
+    const emptyContainer = new ContainerBuilder()
+      .setAccentColor(0xEF4444)
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('❌ No economy profiles yet. Start working to earn coins!')
+      );
+    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [emptyContainer] });
+  }
   }
 
   const cardConfig = await db.getLeaderboardCardConfig(guild.id).catch(() => ({ theme: 'cyber', accentColor: null }));
@@ -450,11 +472,31 @@ module.exports = {
 
   const buffer = canvas.toBuffer('image/png');
   const attachment = new AttachmentBuilder(buffer, { name: `leaderboard-${guild.id}.png` });
-  await interaction.editReply({ files: [attachment] });
+
+  const container = new ContainerBuilder()
+    .setAccentColor(mode === 'xp' ? 0xFFD700 : 0x00e676)
+    .addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(
+        new MediaGalleryItemBuilder()
+          .setURL(`attachment://leaderboard-${guild.id}.png`)
+          .setDescription(`${guild.name} ${mode === 'xp' ? 'XP' : 'Economy'} Leaderboard`)
+      )
+    );
+
+  await interaction.editReply({
+    flags: MessageFlags.IsComponentsV2,
+    components: [container],
+    files: [attachment]
+  });
 
   } catch (err) {
   console.error('[ERROR] Leaderboard command failed:', err);
-  const errMsg = { content: '❌ Failed to render the leaderboard card.', ephemeral: true };
+  const errContainer = new ContainerBuilder()
+    .setAccentColor(0xEF4444)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('❌ Failed to render the leaderboard card.')
+    );
+  const errMsg = { flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true };
   if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => null);
   else await interaction.editReply(errMsg).catch(() => null);
   }

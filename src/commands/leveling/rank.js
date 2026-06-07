@@ -1,4 +1,12 @@
-const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  AttachmentBuilder,
+  ContainerBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+  TextDisplayBuilder,
+  MessageFlags
+} = require('discord.js');
 const db = require('../../utils/db');
 const { renderRankCard } = require('../../utils/renderRankCard');
 
@@ -18,17 +26,34 @@ module.exports = {
 
  if (!guild) return;
 
- if (targetUser.bot) {
- return interaction.reply({ content: 'Bots do not accumulate XP or levels!', ephemeral: true });
- }
+  if (targetUser.bot) {
+    const botErrContainer = new ContainerBuilder()
+      .setAccentColor(0xEF4444)
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('❌ Bots do not accumulate XP or levels!')
+      );
+    return interaction.reply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [botErrContainer],
+      ephemeral: true
+    });
+  }
 
  await interaction.deferReply();
 
  try {
- const profile = await db.getProfile(guild.id, targetUser.id);
- if (!profile) {
- return interaction.editReply({ content: 'Failed to load level profile.' });
- }
+  const profile = await db.getProfile(guild.id, targetUser.id);
+  if (!profile) {
+    const noProfileContainer = new ContainerBuilder()
+      .setAccentColor(0xEF4444)
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('❌ Failed to load level profile.')
+      );
+    return interaction.editReply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [noProfileContainer]
+    });
+  }
 
  const profiles = await db.getGuildProfiles(guild.id);
  profiles.sort((a, b) => b.level !== a.level ? b.level - a.level : b.xp - a.xp);
@@ -44,11 +69,34 @@ module.exports = {
  db
  );
 
- const attachment = new AttachmentBuilder(buffer, { name: `rank-${targetUser.id}.png` });
- await interaction.editReply({ files: [attachment] });
- } catch (err) {
- console.error('[ERROR] Rank command failed:', err);
- await interaction.editReply({ content: 'An error occurred while retrieving rank statistics.' });
- }
+  const attachment = new AttachmentBuilder(buffer, { name: `rank-${targetUser.id}.png` });
+
+  const container = new ContainerBuilder()
+    .setAccentColor(0x8B5CF6)
+    .addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(
+        new MediaGalleryItemBuilder()
+          .setURL(`attachment://rank-${targetUser.id}.png`)
+          .setDescription(`${targetUser.username}'s Rank Card`)
+      )
+    );
+
+  await interaction.editReply({
+    flags: MessageFlags.IsComponentsV2,
+    components: [container],
+    files: [attachment]
+  });
+  } catch (err) {
+  console.error('[ERROR] Rank command failed:', err);
+  const errContainer = new ContainerBuilder()
+    .setAccentColor(0xEF4444)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('❌ An error occurred while retrieving rank statistics.')
+    );
+  await interaction.editReply({
+    flags: MessageFlags.IsComponentsV2,
+    components: [errContainer]
+  });
+  }
  }
 };

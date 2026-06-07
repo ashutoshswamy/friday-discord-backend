@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
  noDefer: true,
@@ -65,11 +65,17 @@ module.exports = {
 
  const messageCount = Array.isArray(messagesToDelete) ? messagesToDelete.length : (messagesToDelete.size || 0);
 
- if (messageCount === 0) {
- return interaction.editReply({ 
- content: 'No messages matched the selected filter in the latest channel scan.' 
- });
- }
+  if (messageCount === 0) {
+    const container = new ContainerBuilder()
+      .setAccentColor(0xEF4444)
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('❌ No messages matched the selected filter in the latest channel scan.')
+      );
+    return interaction.editReply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [container]
+    });
+  }
 
  // Perform bulk delete
  // The second parameter 'true' filters out messages older than 14 days automatically (saving crashes)
@@ -83,20 +89,38 @@ module.exports = {
  };
  const filterLabel = filter ? filterLabels[filter] : '';
 
- if (deleted.size === 0) {
- return interaction.editReply({ 
- content: 'Failed to delete messages. They may be older than 14 days, which Discord restricts from bulk deletion.' 
- });
- }
+  if (deleted.size === 0) {
+    const container = new ContainerBuilder()
+      .setAccentColor(0xEF4444)
+      .addTextDisplayComponents(
+        new TextDisplayBuilder().setContent('❌ Failed to delete messages. They may be older than 14 days, which Discord restricts from bulk deletion.')
+      );
+    return interaction.editReply({
+      flags: MessageFlags.IsComponentsV2,
+      components: [container]
+    });
+  }
 
- await interaction.editReply({ 
- content: `Successfully deleted **${deleted.size}** message(s)${filterLabel} from this channel.`
- });
+  const container = new ContainerBuilder()
+    .setAccentColor(0x10B981)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`✅ Successfully deleted **${deleted.size}** message(s)${filterLabel} from this channel.`)
+    );
+  await interaction.editReply({ 
+    flags: MessageFlags.IsComponentsV2,
+    components: [container]
+  });
  } catch (err) {
  console.error('[ERROR] Purge failed:', err);
- await interaction.editReply({ 
- content: 'Failed to delete messages due to an internal error.' 
- });
+  const container = new ContainerBuilder()
+    .setAccentColor(0xEF4444)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('❌ Failed to delete messages due to an internal error.')
+    );
+  await interaction.editReply({ 
+    flags: MessageFlags.IsComponentsV2,
+    components: [container]
+  });
  }
  }
 };
