@@ -66,7 +66,7 @@ module.exports = {
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `**Catch Stored:**Added **${reward.name}** to your inventory\n` +
+ `**Catch Stored:** Added **${reward.name}** to your inventory\n` +
  `-# Use \`/sell\` to cash it in!`
  )
  );

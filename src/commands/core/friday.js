@@ -97,7 +97,7 @@ module.exports = {
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## System Diagnostics & Metrics\n**Core Engine Name:**Friday Core`)
+ new TextDisplayBuilder().setContent(`## System Diagnostics & Metrics\n**Core Engine Name:** Friday Core`)
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(client.user.displayAvatarURL({ forceStatic: true })))
  )
@@ -159,7 +159,7 @@ module.exports = {
  const apiKey = process.env.GEMINI_API_KEY;
  if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey.trim() === '') {
  return interaction.reply({
- content: '**Gemini API Key is not configured.**Please add a valid `GEMINI_API_KEY` to your `.env` file.',
+ content: '**Gemini API Key is not configured.** Please add a valid `GEMINI_API_KEY` to your `.env` file.',
  ephemeral: true
  });
  }
@@ -190,7 +190,7 @@ module.exports = {
  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
  } catch (apiError) {
  console.error('[GEMINI API ERROR IN ASK]', apiError);
- return interaction.editReply({ content: '**AI Generation Failure:**Encountered an error while communicating with the Gemini API.' });
+ return interaction.editReply({ content: '**AI Generation Failure:** Encountered an error while communicating with the Gemini API.' });
  }
  }
 
@@ -198,7 +198,7 @@ module.exports = {
  const apiKey = process.env.GEMINI_API_KEY;
  if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey.trim() === '') {
  return interaction.reply({
- content: '**Gemini API Key is not configured.**Please add a valid `GEMINI_API_KEY` to your `.env` file.',
+ content: '**Gemini API Key is not configured.** Please add a valid `GEMINI_API_KEY` to your `.env` file.',
  ephemeral: true
  });
  }
@@ -238,7 +238,7 @@ module.exports = {
  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
  } catch (apiError) {
  console.error('[GEMINI API ERROR IN REWRITE]', apiError);
- return interaction.editReply({ content: '**AI Generation Failure:**Encountered an error while communicating with the Gemini API.' });
+ return interaction.editReply({ content: '**AI Generation Failure:** Encountered an error while communicating with the Gemini API.' });
  }
  }
 
@@ -246,7 +246,7 @@ module.exports = {
  const apiKey = process.env.GEMINI_API_KEY;
  if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey.trim() === '') {
  return interaction.reply({
- content: '**Gemini API Key is not configured.**Please add a valid `GEMINI_API_KEY` to your `.env` file.',
+ content: '**Gemini API Key is not configured.** Please add a valid `GEMINI_API_KEY` to your `.env` file.',
  ephemeral: true
  });
  }
@@ -295,7 +295,7 @@ module.exports = {
  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
  } catch (apiError) {
  console.error('[GEMINI API ERROR IN SUMMARIZE]', apiError);
- return interaction.editReply({ content: '**AI Generation Failure:**Encountered an error while reading history or communicating with the Gemini API.' });
+ return interaction.editReply({ content: '**AI Generation Failure:** Encountered an error while reading history or communicating with the Gemini API.' });
  }
  }
 

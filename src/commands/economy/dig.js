@@ -63,7 +63,7 @@ module.exports = {
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `**Excavation Stored:**Added **${reward.name}** to your inventory\n` +
+ `**Excavation Stored:** Added **${reward.name}** to your inventory\n` +
  `-# Use \`/sell\` to cash it in!`
  )
  );
