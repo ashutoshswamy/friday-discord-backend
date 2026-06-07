@@ -6,6 +6,34 @@ const {
 } = require('discord.js');
 const db = require('../../utils/db');
 
+const SELLABLE_ITEMS = {
+ 'junk seaweed': 20, 'old boot': 50,
+ 'clam': 100, 'common bass': 150,
+ 'pufferfish': 350, 'salmon': 300,
+ 'goldfish': 500, 'lobster': 900,
+ 'tropical coral fish': 800,
+ 'shark tooth': 2000,
+ 'ancient pearl': 6000,
+ 'mythical whale': 5000,
+ 'rabbit': 180, 'eagle feather': 400,
+ 'duck': 250, 'deer': 500,
+ 'deer antler': 600, 'wild boar': 800,
+ 'wolf pelt': 1200,
+ 'grizzly bear': 2500,
+ 'dragon scale': 8000,
+ 'common worm': 15, 'old coin': 300,
+ 'cracked geode': 150, 'dirt fossil': 200,
+ 'ancient vase': 800,
+ 'sapphire': 2500, 'ruby': 4000,
+ 'diamond': 9000,
+ 'buried gold chest': 3000,
+ 'silver ring': 1000,
+ 'common gem': 750,
+ 'rare gem': 3500,
+ 'legendary gem': 12000,
+ 'lootbox': 300
+};
+
 async function buildBalanceContainer(guild, targetUser) {
  const profile = await db.getProfile(guild.id, targetUser.id);
  if (!profile) return null;
@@ -13,7 +41,11 @@ async function buildBalanceContainer(guild, targetUser) {
  const stocksData = await db.getUserStocksTotalValue(guild.id, targetUser.id).catch(() => ({ totalValue: 0 }));
  const intradayData = await db.getUserIntradayTotalValue(guild.id, targetUser.id).catch(() => ({ totalValue: 0 }));
  const totalStockAssets = Math.round((stocksData.totalValue || 0) + (intradayData.totalValue || 0));
- const netWorth = profile.coins + (profile.bank || 0) + totalStockAssets;
+
+ const inventoryItems = await db.getInventory(guild.id, targetUser.id).catch(() => []);
+ const inventoryValue = inventoryItems.reduce((sum, name) => sum + (SELLABLE_ITEMS[name.toLowerCase()] || 0), 0);
+
+ const netWorth = profile.coins + (profile.bank || 0) + totalStockAssets + inventoryValue;
 
  const container = new ContainerBuilder()
  .setAccentColor(0x00FFCC)
@@ -32,6 +64,7 @@ async function buildBalanceContainer(guild, targetUser) {
  `**Active Wallet:** <:coin:1512926963239489606> **${profile.coins.toLocaleString()}** coins\n` +
  `**Bank Vault:** <:coin:1512926963239489606> **${(profile.bank || 0).toLocaleString()}** coins\n` +
  `**Stock Portfolio:** <:coin:1512926963239489606> **${totalStockAssets.toLocaleString()}** coins\n` +
+ `**Inventory Assets:** <:coin:1512926963239489606> **${inventoryValue.toLocaleString()}** coins\n` +
  `**Net Worth:** <:coin:1512926963239489606> **${netWorth.toLocaleString()}** coins`
  )
  );
