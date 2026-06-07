@@ -12,7 +12,7 @@ const pages = {
  bodyText: `**System Specifications:**\n• Loaded Protocols: \`79 slash commands\`\n• Dynamic Systems: \`Leveling, Economy, Jobs, Pets, Player Bazaar, AutoMod, Onboarding\`\n• UI Control Panel: [Web Dashboard](https://fridaybot.ashutoshswamy.in)`,
  fields: [
  { name: ' Core & AI Systems', value: 'Google Gemini AI generation, conversational ask, text rewriting, quotes, dashboard telemetry.' },
- { name: '<:coin:1512926963239489606> Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily/weekly/monthly coin cycles, job careers, hourly shift wages, scavenging.' },
+ { name: 'Economy & Banking', value: 'Wallets, secured un-robable bank vault transfers, daily/weekly/monthly coin cycles, job careers, hourly shift wages, scavenging.' },
  { name: ' Casino & Gambling', value: 'Interactive Blackjack table, slots spinner, roulette payouts, arena cockfights, heists.' },
  { name: ' Scavenging & Shop', value: 'Hunting wild game, fishing lakes, shovel excavations, 30+ sellable loot drops, consumable items, player market bazaar.' },
  { name: ' Stocks & Trading', value: 'Real-time global stock quotes (NASDAQ/NSE/CRYPTO), long-term share investments, 5× leveraged intraday long/short positions.' },
@@ -40,11 +40,11 @@ const pages = {
  ]
  },
  help_economy: {
- title: '<:coin:1512926963239489606> Wallet, Wages & Banking Protocols',
+ title: 'Wallet, Wages & Banking Protocols',
  accentColor: 0xFFCC00,
  description: 'Handles server currency flow, active wallet holdings, secure vault configurations, and starter wage generators.',
  fields: [
- { name: '`/balance [user]`', value: 'Displays comprehensive wealth overview: <:coin:1512926963239489606> wallet cash, bank vault holdings, and total net worth.' },
+ { name: '`/balance [user]`', value: 'Displays comprehensive wealth overview: wallet cash, bank vault holdings, and total net worth.' },
  { name: '`/deposit [amount/all]`', value: 'Deposits active wallet holdings safely inside bank vault. Vault coins are 100% immune to `/rob` heists.' },
  { name: '`/withdraw [amount/all]`', value: 'Withdraws stored coins from the un-robable bank vault to active wallet.' },
  { name: '`/pay [user] [amount]`', value: 'Atomically transfers wallet coins to another member.' },
