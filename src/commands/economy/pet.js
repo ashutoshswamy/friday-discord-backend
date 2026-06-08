@@ -6,7 +6,7 @@ const {
  ComponentType, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { EMOJIS } = require('../../utils/emojis');
+const { EMOJIS, getEmoji } = require('../../utils/emojis');
 
 module.exports = {
  data: new SlashCommandBuilder()
@@ -213,7 +213,7 @@ module.exports = {
  await db.removeItemFromInventory(guild.id, user.id, 'Common Worm');
  newHunger = Math.min(100, activeHunger + 50);
  await db.updatePetStats(guild.id, user.id, { hunger: newHunger, lastFed: new Date().toISOString() });
- feedDesc = `You fed **${pet.name}** a tasty **Common Worm** from your inventory!\nHunger meter: ** ${newHunger}/100**.`;
+ feedDesc = `You fed **${pet.name}** a tasty ${getEmoji('Common Worm')} **Common Worm** from your inventory!\nHunger meter: ** ${newHunger}/100**.`;
  }
 
  const container = new ContainerBuilder()

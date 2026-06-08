@@ -251,33 +251,56 @@ module.exports = {
 
  if (subcommand === 'catalog') {
   const toolsText =
-   `**Tools** *(required for grind commands)*\n` +
-   `• ${getEmoji('hunting rifle')} **Hunting Rifle** — required for \`/hunt\` · Suggested price: ${EMOJIS.coin} 500\n` +
-   `• ${getEmoji('fishing pole')} **Fishing Pole** — required for \`/fish\` · Suggested price: ${EMOJIS.coin} 400\n` +
-   `• ${getEmoji('shovel')} **Shovel** — required for \`/dig\` · Suggested price: ${EMOJIS.coin} 300`;
+   `**Tools** *(auto-listed in \`/shop view\` · required for grind commands)*\n` +
+   `• ${getEmoji('hunting rifle')} **Hunting Rifle** — ${EMOJIS.coin} 1,000 · required for \`/hunt\`\n` +
+   `• ${getEmoji('fishing pole')} **Fishing Pole** — ${EMOJIS.coin} 500 · required for \`/fish\`\n` +
+   `• ${getEmoji('shovel')} **Shovel** — ${EMOJIS.coin} 350 · required for \`/dig\`\n` +
+   `• ${getEmoji('pickaxe')} **Pickaxe** — ${EMOJIS.coin} 600 · required for \`/mine\`\n` +
+   `• ${getEmoji('axe')} **Axe** — ${EMOJIS.coin} 400 · required for \`/chop\`\n` +
+   `• ${getEmoji('hacker laptop')} **Hacker Laptop** — ${EMOJIS.coin} 1,500 · required for \`/hack\``;
+
+  const seedsText =
+   `**Seeds** *(auto-listed in \`/shop view\` · plant via \`/farm plant\`)*\n` +
+   `• ${getEmoji('wheat seed')} **Wheat Seed** — ${EMOJIS.coin} 20 · grows in 2m\n` +
+   `• ${getEmoji('tomato seed')} **Tomato Seed** — ${EMOJIS.coin} 40 · grows in 5m\n` +
+   `• ${getEmoji('carrot seed')} **Carrot Seed** — ${EMOJIS.coin} 70 · grows in 10m\n` +
+   `• ${getEmoji('golden apple seed')} **Golden Apple Seed** — ${EMOJIS.coin} 400 · grows in 30m`;
 
   const consumablesText =
    `**Consumables** *(used via \`/use\`)*\n` +
-   `• ${getEmoji('pizza')} **Pizza** — grants 150 XP instantly · Suggested: ${EMOJIS.coin} 800\n` +
-   `• ${getEmoji('xp potion')} **XP Potion** — grants 300 XP instantly · Suggested: ${EMOJIS.coin} 1,500\n` +
-   `• ${getEmoji('energy drink')} **Energy Drink** — grants 300 coins to wallet · Suggested: ${EMOJIS.coin} 500\n` +
-   `• ${getEmoji('work gloves')} **Work Gloves** — grants 500 coins to wallet · Suggested: ${EMOJIS.coin} 800\n` +
-   `• ${getEmoji('coin bomb')} **Coin Bomb** — explodes for 800–4,000 random coins · Suggested: ${EMOJIS.coin} 2,000\n` +
-   `• ${getEmoji('lootbox')} **Lootbox** — random prize (coins, XP, Silver Ring) · Suggested: ${EMOJIS.coin} 1,200\n` +
-   `• ${getEmoji('mystery crate')} **Mystery Crate** — upgraded lootbox with gem drops · Suggested: ${EMOJIS.coin} 3,500`;
+   `• ${getEmoji('pizza')} **Pizza** — ${EMOJIS.coin} 250 · grants 150 XP *(in shop)*\n` +
+   `• ${getEmoji('energy drink')} **Energy Drink** — ${EMOJIS.coin} 180 · grants 300 coins *(in shop)*\n` +
+   `• ${getEmoji('lootbox')} **Lootbox** — ${EMOJIS.coin} 800 · random coins, XP, or Silver Ring *(in shop)*\n` +
+   `• ${getEmoji('xp potion')} **XP Potion** — ${EMOJIS.coin} 1,500 · grants 300 XP *(in shop)*\n` +
+   `• ${getEmoji('work gloves')} **Work Gloves** — ${EMOJIS.coin} 800 · grants 500 coins *(in shop)*\n` +
+   `• ${getEmoji('coin bomb')} **Coin Bomb** — 800–4,000 random coins *(rare grind drop)*\n` +
+   `• ${getEmoji('mystery crate')} **Mystery Crate** — gem drops + big coin/XP rolls *(rare grind drop)*`;
 
   const collectiblesText =
    `**Collectibles** *(sell via \`/sell\` or trade on \`/market\`)*\n` +
    `• ${getEmoji('common gem')} **Common Gem** — sell value ${EMOJIS.coin} 750\n` +
-   `• ${getEmoji('rare gem')} **Rare Gem** — sell value ${EMOJIS.coin} 3,500 · drops from Mystery Crate\n` +
-   `• ${getEmoji('legendary gem')} **Legendary Gem** — sell value ${EMOJIS.coin} 12,000 · rare Mystery Crate drop\n` +
-   `• ${getEmoji('silver ring')} **Silver Ring** — sell value ${EMOJIS.coin} 1,000 · Lootbox rare drop`;
+   `• ${getEmoji('silver ring')} **Silver Ring** — sell value ${EMOJIS.coin} 1,000 · Lootbox rare drop\n` +
+   `• ${getEmoji('rare gem')} **Rare Gem** — sell value ${EMOJIS.coin} 3,500 · Mystery Crate drop\n` +
+   `• ${getEmoji('legendary gem')} **Legendary Gem** — sell value ${EMOJIS.coin} 12,000 · rare Mystery Crate drop`;
+
+  const craftablesText =
+   `**Craftables** *(combine grind drops via \`/craft\`)*\n` +
+   `• ${getEmoji('basic fertilizer')} **Basic Fertilizer** — +50% crop growth speed\n` +
+   `• ${getEmoji('growth serum')} **Growth Serum** — near-instant crop growth\n` +
+   `• ${getEmoji('yield booster')} **Yield Booster** — doubles harvested crops\n` +
+   `• ${getEmoji('pesticide')} **Pesticide** — cures crop pest infestations\n` +
+   `• ${getEmoji('golden sap')} **Golden Sap** — high-value resin (sell ${EMOJIS.coin} 8,000)\n` +
+   `-# Tools (Axe, Fishing Pole, Shovel, Hacker Laptop), Lootbox & Energy Drink are also craftable — see \`/craft list\`.`;
 
  const grindDropsText =
   `**Grind Drops** *(auto-dropped, sell via \`/sell\` or trade via \`/market\`)*\n` +
-  `Hunt: Rabbit · Eagle Feather · Duck · Deer · Deer Antler · Wild Boar · Wolf Pelt · Grizzly Bear · Dragon Scale\n` +
-  `Fish: Clam · Common Bass · Pufferfish · Salmon · Goldfish · Lobster · Tropical Coral Fish · Shark Tooth · Ancient Pearl · Mythical Whale\n` +
-  `Dig: Common Worm · Old Coin · Cracked Geode · Dirt Fossil · Ancient Vase · Sapphire · Ruby · Diamond · Buried Gold Chest`;
+  `${getEmoji('rabbit')} Hunt: Rabbit · Duck · Eagle Feather · Deer · Deer Antler · Wild Boar · Wolf Pelt · Grizzly Bear · Dragon Scale\n` +
+  `${getEmoji('clam')} Fish: Junk Seaweed · Old Boot · Clam · Common Bass · Salmon · Pufferfish · Goldfish · Tropical Coral Fish · Lobster · Shark Tooth · Mythical Whale · Ancient Pearl\n` +
+  `${getEmoji('old coin')} Dig: Common Worm · Cracked Geode · Dirt Fossil · Old Coin · Ancient Vase · Sapphire · Buried Gold Chest · Ruby · Diamond\n` +
+  `${getEmoji('iron ore')} Mine: Coal · Iron Ore · Gold Ore · Quartz Crystal · Emerald · Ruby Shard · Diamond Ore · Crystal Shard · Mythril Core\n` +
+  `${getEmoji('oak log')} Chop: Pine Log · Oak Log · Birch Log · Mahogany Log · Yew Log · Elderwood Log · Golden Sap\n` +
+  `${getEmoji('mainframe core')} Hack: Decrypted Hard Drive · Mainframe Core · Stolen Crypto Key\n` +
+  `${getEmoji('harvested wheat')} Farm: Wheat · Tomato · Carrot · Golden Apple harvests (Silver & Gold tiers sell higher)`;
 
  const container = new ContainerBuilder()
   .setAccentColor(0xFF8C00)
@@ -285,7 +308,7 @@ module.exports = {
    new SectionBuilder()
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(
-      `## Built-in Item Catalog\nAll standard items admins can add via \`/shop add\`. Items with effects work automatically with \`/use\`.`
+      `## Built-in Item Catalog\nEvery built-in item in Friday's economy. Tools, seeds & core consumables are auto-listed in \`/shop view\`; others are crafted, dropped, or admin-added. Items with effects work automatically with \`/use\`.`
      )
     )
     .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
@@ -293,15 +316,19 @@ module.exports = {
   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(toolsText))
   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+  .addTextDisplayComponents(new TextDisplayBuilder().setContent(seedsText))
+  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(consumablesText))
   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(collectiblesText))
+  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+  .addTextDisplayComponents(new TextDisplayBuilder().setContent(craftablesText))
   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(grindDropsText))
   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
   .addTextDisplayComponents(
    new TextDisplayBuilder().setContent(
-    `-# Admins: use \`/shop add [name] [cost]\` to list any item above · Players trade on \`/market\``
+    `-# Admins: \`/shop add [name] [cost]\` lists any item above · Players craft on \`/craft\` and trade on \`/market\``
    )
   );
 

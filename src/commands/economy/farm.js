@@ -4,13 +4,13 @@ const {
  SeparatorBuilder, SeparatorSpacingSize, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { EMOJIS } = require('../../utils/emojis');
+const { EMOJIS, getEmoji } = require('../../utils/emojis');
 
 const SEED_CONFIGS = {
- 'wheat seed': { name: 'Wheat', time: 120, reward: 'Wheat', emoji: '', xpReward: 50 },
- 'tomato seed': { name: 'Tomato', time: 300, reward: 'Tomato', emoji: '', xpReward: 100 },
- 'carrot seed': { name: 'Carrot', time: 600, reward: 'Carrot', emoji: '', xpReward: 180 },
- 'golden apple seed': { name: 'Golden Apple', time: 1800, reward: 'Golden Apple', emoji: '', xpReward: 400 }
+ 'wheat seed': { name: 'Wheat', time: 120, reward: 'Wheat', xpReward: 50 },
+ 'tomato seed': { name: 'Tomato', time: 300, reward: 'Tomato', xpReward: 100 },
+ 'carrot seed': { name: 'Carrot', time: 600, reward: 'Carrot', xpReward: 180 },
+ 'golden apple seed': { name: 'Golden Apple', time: 1800, reward: 'Golden Apple', xpReward: 400 }
 };
 
 const PLOT_UPGRADE_COSTS = {
@@ -154,7 +154,6 @@ module.exports = {
 
       const timeText = remainingMs <= 0 ? ' **Ready to Harvest!**' : ` Grows in: **${formatRemainingTime(remainingMs)}** (${progressPct}%)`;
       const seedName = `${crop.crop_name.toLowerCase()} seed`;
-      const config = SEED_CONFIGS[seedName] || { emoji: '' };
 
       const waterDrops = ''.repeat(crop.water_count) + ''.repeat(3 - crop.water_count);
       const pestText = crop.pests ? '  **INFESTED WITH PESTS!** (Cannot harvest; treat with Pesticide using `/farm treat`)' : ' None';
@@ -164,7 +163,7 @@ module.exports = {
       else if (crop.fertilizer === 'growth') fertText = ' Growth Serum (Instant applied)';
       else if (crop.fertilizer === 'yield') fertText = ' Yield Booster (Double yield applied)';
 
-      cropsText += `### Plot #${i}: ${config.emoji} ${crop.crop_name} ${statusEmoji}\n` +
+      cropsText += `### Plot #${i}: ${getEmoji(seedName)} ${crop.crop_name} ${statusEmoji}\n` +
        `• Status: ${timeText}\n` +
        `• Watering: [${waterDrops}] (Watered ${crop.water_count}/3 times)\n` +
        `• Fertilizer: ${fertText}\n` +
@@ -253,7 +252,7 @@ module.exports = {
         new TextDisplayBuilder().setContent(
          `##  Seed Sown on Plot #${plotIndex}!\n` +
           `You tilled the soil and sowed a **${seedInput}**.\n\n` +
-          `• **Crop:** ${config.emoji} ${config.name}\n` +
+          `• **Crop:** ${getEmoji(normalizedSeed)} ${config.name}\n` +
           `• **Growth Duration:** **${formatRemainingTime(config.time * 1000)}**\n` +
           `• **Status:** Watering or applying fertilizers accelerates growth.`
         )
@@ -521,7 +520,7 @@ module.exports = {
         new TextDisplayBuilder().setContent(
          `##  Harvest Successful on Plot #${plotIndex}!\n` +
           `You harvested the fully grown ${crop.crop_name}.\n\n` +
-          `• **Yield:** **${count}x** **${rewardName.replace(/\b\w/g, c => c.toUpperCase())}**\n` +
+          `• **Yield:** **${count}x** ${getEmoji(rewardName)} **${rewardName.replace(/\b\w/g, c => c.toUpperCase())}**\n` +
           `• **Quality:** **${qualityName}**` +
           xpMsg
         )

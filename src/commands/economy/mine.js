@@ -5,6 +5,7 @@ const {
 } = require('discord.js');
 const db = require('../../utils/db');
 const { getEmoji } = require('../../utils/emojis');
+const { rollBonusDrop } = require('../../utils/drops');
 
 const cooldowns = new Map();
 
@@ -52,6 +53,7 @@ module.exports = {
    const reward = LOOT_CHANCES.find(loot => roll <= loot.chance);
    await db.addItemToInventory(guild.id, user.id, reward.name);
    await db.incrementQuestProgress(guild.id, user.id, 'mine', reward.name, 1);
+   const bonus = await rollBonusDrop(guild.id, user.id);
 
    const container = new ContainerBuilder()
     .setAccentColor(0x78716C)
@@ -65,7 +67,7 @@ module.exports = {
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(
-      `**Ore Extracted:** Added ${getEmoji(reward.name)} **${reward.name}** to your inventory\n` +
+      `**Ore Extracted:** Added ${getEmoji(reward.name)} **${reward.name}** to your inventory${bonus ? bonus.line : ''}\n` +
       `-# Use \`/sell\` to cash it in at the merchant!`
      )
     );

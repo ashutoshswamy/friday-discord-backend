@@ -84,6 +84,22 @@ const DEFAULT_SHOP_ITEMS = [
         actionValue: 300
     },
     {
+        name: 'XP Potion',
+        cost: 1500,
+        description: 'Concentrated leveling brew. Drinking it grants 300 XP instantly!',
+        roleRewardId: null,
+        actionType: 'XP',
+        actionValue: 300
+    },
+    {
+        name: 'Work Gloves',
+        cost: 800,
+        description: `Sturdy labor gloves. Putting them on awards ${EMOJIS.coin}500 coins!`,
+        roleRewardId: null,
+        actionType: 'COINS',
+        actionValue: 500
+    },
+    {
         name: 'Pickaxe',
         cost: 600,
         description: 'Heavy steel pickaxe required to excavate ores and minerals using /mine.',

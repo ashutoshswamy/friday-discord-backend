@@ -6,6 +6,7 @@ const {
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 const { getEmoji } = require('../../utils/emojis');
+const { rollBonusDrop } = require('../../utils/drops');
 
 const WOOD_CHANCES = [
  { name: 'Pine Log',       chance: 0.35, msg: 'You chopped down a slender pine and gathered a **Pine Log**.' },
@@ -43,6 +44,7 @@ module.exports = {
    const reward = WOOD_CHANCES.find(loot => roll <= loot.chance);
    await db.addItemToInventory(guild.id, user.id, reward.name);
    await db.incrementQuestProgress(guild.id, user.id, 'chop', reward.name, 1);
+   const bonus = await rollBonusDrop(guild.id, user.id);
 
    const container = new ContainerBuilder()
     .setAccentColor(0x8B5A2B) // Brownish wood color
@@ -56,7 +58,7 @@ module.exports = {
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(
-      `**Harvest Stored:** Added ${getEmoji(reward.name)} **${reward.name}** to your inventory\n` +
+      `**Harvest Stored:** Added ${getEmoji(reward.name)} **${reward.name}** to your inventory${bonus ? bonus.line : ''}\n` +
       `-# Use \`/sell\` to cash it in!`
      )
     );

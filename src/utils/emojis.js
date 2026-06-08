@@ -28,6 +28,7 @@ const EMOJIS = {
   'prize box': '<:fridaylootbox:1513601440336052364>', // maps to lootbox emoji
   'mystery crate': '<:fridaymysterycrate:1513601442533871828>',
   'work gloves': '<:fridayworkgloves:1513601453632262194>',
+  'coin bomb': '<:fridaycoinbomb:1513601429531660431>',
   'basic fertilizer': '<:fridaybasicfertilizer:1513601424716726452>',
   'growth serum': '<:fridaygrowthserum:1513601438230642948>',
   'yield booster': '<:fridayyieldbooster:1513601457952264342>',
@@ -141,6 +142,7 @@ const EMOJI_IDS = {
   'prize box': '1513601440336052364',
   'mystery crate': '1513601442533871828',
   'work gloves': '1513601453632262194',
+  'coin bomb': '1513601429531660431',
   'basic fertilizer': '1513601424716726452',
   'growth serum': '1513601438230642948',
   'yield booster': '1513601457952264342',
