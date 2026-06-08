@@ -693,10 +693,10 @@ module.exports = function(client) {
 
             const endUnix = Math.floor((Date.now() + durationMs) / 1000);
             const embed = new EmbedBuilder()
-                .setTitle('🎉 GIVEAWAY LAUNCHED! 🎉')
+                .setTitle('GIVEAWAY LAUNCHED!')
                 .setDescription(
-                    `**Prize:** 🎁 **${prize}**\n` +
-                    `**Winners Count:** 👥 ${winners}\n` +
+                    `**Prize:** **${prize}**\n` +
+                    `**Winners Count:** ${winners}\n` +
                     `**Time Remaining:** Ends **<t:${endUnix}:R>** (at <t:${endUnix}:f>)\n\n` +
                     `Click the button below to join the draw!`
                 )
@@ -705,13 +705,13 @@ module.exports = function(client) {
                 .setTimestamp();
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('giveaway_join_TEMP').setLabel('🎉 Enter Draw').setStyle(ButtonStyle.Primary)
+                new ButtonBuilder().setCustomId('giveaway_join_TEMP').setLabel('Enter Draw').setStyle(ButtonStyle.Primary)
             );
 
             const msg = await channel.send({ embeds: [embed], components: [row] });
 
             const realRow = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`giveaway_join_${msg.id}`).setLabel('🎉 Enter Draw').setStyle(ButtonStyle.Primary)
+                new ButtonBuilder().setCustomId(`giveaway_join_${msg.id}`).setLabel('Enter Draw').setStyle(ButtonStyle.Primary)
             );
             await msg.edit({ components: [realRow] });
 
@@ -737,28 +737,28 @@ module.exports = function(client) {
                         if (!m) return;
                         const entrants = Array.from(g.entrants);
                         const disabledRow = new ActionRowBuilder().addComponents(
-                            new ButtonBuilder().setCustomId(`giveaway_ended_${msg.id}`).setLabel('🔒 Closed').setStyle(ButtonStyle.Secondary).setDisabled(true)
+                            new ButtonBuilder().setCustomId(`giveaway_ended_${msg.id}`).setLabel('Closed').setStyle(ButtonStyle.Secondary).setDisabled(true)
                         );
                         if (!entrants.length) {
-                            await m.edit({ embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY ENDED 🎉').setColor('#71717a').setDescription(`**Prize:** 🎁 **${g.prize}**\n\n❌ No valid entrants.`).setTimestamp()], components: [disabledRow] });
+                            await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY ENDED').setColor('#71717a').setDescription(`**Prize:** **${g.prize}**\n\nNo valid entrants.`).setTimestamp()], components: [disabledRow] });
                             await db.endGiveaway(msg.id, [], 0);
                             return;
                         }
                         const winners_ = shuffleArray(entrants).slice(0, g.winnersCount);
                         const pings = winners_.map(w => `<@${w}>`).join(', ');
-                        await m.edit({ embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY RESULTS 🎉').setColor('#FF0099').setDescription(`**Prize Won:** 🎁 **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
+                        await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY RESULTS').setColor('#FF0099').setDescription(`**Prize Won:** **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
                         const winnerEmbed = new EmbedBuilder()
-                            .setTitle('🏆 Congratulations!')
+                            .setTitle('Congratulations!')
                             .setColor('#FFD700')
                             .setDescription(`${pings} won the **${g.prize}** giveaway!`)
                             .addFields(
-                                { name: '🎁 Prize', value: g.prize, inline: true },
-                                { name: '👥 Total Entries', value: `${entrants.length}`, inline: true },
-                                { name: '🏅 Winners', value: pings, inline: false }
+                                { name: 'Prize', value: g.prize, inline: true },
+                                { name: 'Total Entries', value: `${entrants.length}`, inline: true },
+                                { name: 'Winners', value: pings, inline: false }
                             )
                             .setFooter({ text: `Giveaway ID: ${msg.id}` })
                             .setTimestamp();
-                        await ch.send({ content: `🎉 Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
+                        await ch.send({ content: `Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
                         await db.endGiveaway(msg.id, winners_, entrants.length);
                     } catch (err) {
                         console.error('[GIVEAWAY TIMER ERROR]', err);
@@ -789,28 +789,28 @@ module.exports = function(client) {
             if (ch) {
                 const m = await ch.messages.fetch(messageId).catch(() => null);
                 const disabledRow = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId(`giveaway_ended_${messageId}`).setLabel('🔒 Closed').setStyle(ButtonStyle.Secondary).setDisabled(true)
+                    new ButtonBuilder().setCustomId(`giveaway_ended_${messageId}`).setLabel('Closed').setStyle(ButtonStyle.Secondary).setDisabled(true)
                 );
                 const entrants = Array.from(g.entrants);
                 if (!entrants.length) {
-                    if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY ENDED 🎉').setColor('#71717a').setDescription(`**Prize:** 🎁 **${g.prize}**\n\n❌ No valid entrants.`).setTimestamp()], components: [disabledRow] });
+                    if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY ENDED').setColor('#71717a').setDescription(`**Prize:** **${g.prize}**\n\nNo valid entrants.`).setTimestamp()], components: [disabledRow] });
                     await db.endGiveaway(messageId, [], 0);
                 } else {
                     const winners = shuffleArray(entrants).slice(0, g.winnersCount);
                     const pings = winners.map(w => `<@${w}>`).join(', ');
-                    if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY RESULTS 🎉').setColor('#FF0099').setDescription(`**Prize Won:** 🎁 **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
+                    if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY RESULTS').setColor('#FF0099').setDescription(`**Prize Won:** **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
                     const winnerEmbed = new EmbedBuilder()
-                        .setTitle('🏆 Congratulations!')
+                        .setTitle('Congratulations!')
                         .setColor('#FFD700')
                         .setDescription(`${pings} won the **${g.prize}** giveaway!`)
                         .addFields(
-                            { name: '🎁 Prize', value: g.prize, inline: true },
-                            { name: '👥 Total Entries', value: `${entrants.length}`, inline: true },
-                            { name: '🏅 Winners', value: pings, inline: false }
+                            { name: 'Prize', value: g.prize, inline: true },
+                            { name: 'Total Entries', value: `${entrants.length}`, inline: true },
+                            { name: 'Winners', value: pings, inline: false }
                         )
                         .setFooter({ text: `Giveaway ID: ${messageId}` })
                         .setTimestamp();
-                    await ch.send({ content: `🎉 Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
+                    await ch.send({ content: `Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
                     await db.endGiveaway(messageId, winners, entrants.length);
                 }
             }
@@ -835,7 +835,7 @@ module.exports = function(client) {
             if (!ch) return res.status(404).json({ error: 'Channel not found' });
             const winners = shuffleArray(entrants).slice(0, g.winnersCount);
             const pings = winners.map(w => `<@${w}>`).join(', ');
-            await ch.send({ content: `🎉 Reroll! Congratulations ${pings}! You won **${g.prize}**!`, embeds: [new EmbedBuilder().setTitle('🎉 GIVEAWAY RE-ROLLED! 🎉').setColor('#FF0099').setDescription(`**Prize:** 🎁 **${g.prize}**\n**New Winners:** ${pings}!`).setTimestamp()] });
+            await ch.send({ content: `Reroll! Congratulations ${pings}! You won **${g.prize}**!`, embeds: [new EmbedBuilder().setTitle('GIVEAWAY RE-ROLLED!').setColor('#FF0099').setDescription(`**Prize:** **${g.prize}**\n**New Winners:** ${pings}!`).setTimestamp()] });
             res.json({ ok: true });
         } catch (err) {
             console.error('[GIVEAWAY REROLL API ERROR]', err);
@@ -858,26 +858,26 @@ module.exports = function(client) {
             if (!channel) return res.status(404).json({ error: 'Channel not found' });
 
             const embed = new EmbedBuilder()
-                .setTitle(`📅 Guild Event: ${title}`)
+                .setTitle(`Guild Event: ${title}`)
                 .setColor('#FFCC00')
                 .setThumbnail(guild.iconURL({ forceStatic: true }))
                 .setDescription(description)
                 .addFields(
-                    { name: '⏰ Date / Time', value: `\`${date}\``, inline: true },
-                    { name: '📍 Location', value: `\`${location}\``, inline: true },
-                    { name: '👥 RSVPs (0)', value: '*No one yet*', inline: false }
+                    { name: 'Date / Time', value: `\`${date}\``, inline: true },
+                    { name: 'Location', value: `\`${location}\``, inline: true },
+                    { name: 'RSVPs (0)', value: '*No one yet*', inline: false }
                 )
                 .setFooter({ text: 'Click RSVP below to attend · Created from Dashboard' })
                 .setTimestamp();
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('event_rsvp_TEMP').setLabel('⏰ RSVP / Attend').setStyle(ButtonStyle.Success)
+                new ButtonBuilder().setCustomId('event_rsvp_TEMP').setLabel('RSVP / Attend').setStyle(ButtonStyle.Success)
             );
 
             const msg = await channel.send({ embeds: [embed], components: [row] });
 
             const realRow = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId(`event_rsvp_${msg.id}`).setLabel('⏰ RSVP / Attend').setStyle(ButtonStyle.Success)
+                new ButtonBuilder().setCustomId(`event_rsvp_${msg.id}`).setLabel('RSVP / Attend').setStyle(ButtonStyle.Success)
             );
             await msg.edit({ components: [realRow] });
 
@@ -1146,7 +1146,7 @@ module.exports = function(client) {
             const warnCount = allWarns.length;
 
             // DM warned user
-            await member.send(`⚠️ **Warning Issued**\nYou have been warned in **${discordGuild.name}**.\n• **Reason:** ${realReason}`).catch(() => null);
+            await member.send(`**Warning Issued**\nYou have been warned in **${discordGuild.name}**.\n• **Reason:** ${realReason}`).catch(() => null);
 
             // Execute Escalations — check all rules for exact threshold match
             const rules = await db.getPunishmentRules(guildId);

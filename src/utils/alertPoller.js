@@ -140,14 +140,14 @@ async function pollYoutube(client) {
             const embed = new EmbedBuilder()
                 .setColor('#FF0000')
                 .setAuthor({ name: video.author, iconURL: 'https://www.youtube.com/favicon.ico' })
-                .setTitle(`📹 ${video.title}`)
+                .setTitle(video.title)
                 .setURL(video.url)
                 .setDescription(`**${video.author}** just uploaded a new video!`)
                 .setTimestamp();
 
             if (video.thumbnail) embed.setImage(video.thumbnail);
 
-            await discordChannel.send({ content: `🔴 **New YouTube Upload!**`, embeds: [embed] });
+            await discordChannel.send({ content: '**New YouTube Upload!**', embeds: [embed] });
         } catch (err) {
             console.error(`[ALERTS] YouTube poll error for ${alert.youtubeUrl}:`, err.message);
         }
@@ -210,7 +210,7 @@ async function pollTwitch(client) {
             const embed = new EmbedBuilder()
                 .setColor('#9146FF')
                 .setAuthor({ name: stream.user_name, iconURL: 'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c1.png' })
-                .setTitle(`🎮 ${stream.title || `${stream.user_name} is live!`}`)
+                .setTitle(stream.title || `${stream.user_name} is live!`)
                 .setURL(`https://www.twitch.tv/${stream.user_login}`)
                 .addFields(
                     { name: 'Game', value: stream.game_name || 'Unknown', inline: true },
@@ -221,7 +221,7 @@ async function pollTwitch(client) {
             if (thumbUrl) embed.setImage(thumbUrl);
 
             await discordChannel.send({
-                content: `🟣 **${stream.user_name} is now live on Twitch!**\nhttps://www.twitch.tv/${stream.user_login}`,
+                content: `**${stream.user_name} is now live on Twitch!**\nhttps://www.twitch.tv/${stream.user_login}`,
                 embeds: [embed]
             });
         }

@@ -38,6 +38,16 @@ module.exports = {
                 return;
             }
 
+            // Block DM usage
+            if (!interaction.guild) {
+                const dmContainer = new ContainerBuilder()
+                    .setAccentColor(0xEF4444)
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent('This command can only be used inside a server, not in DMs.')
+                    );
+                return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [dmContainer], ephemeral: true });
+            }
+
             // Auto-defer unless the command handles its own deferral/modals
             if (!command.noDefer) {
                 try {
@@ -56,7 +66,7 @@ module.exports = {
                 const errContainer = new ContainerBuilder()
                     .setAccentColor(0xEF4444)
                     .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent('❌ There was an error while executing this command!')
+                        new TextDisplayBuilder().setContent('There was an error while executing this command!')
                     );
                 const errorMessage = { flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true };
 
@@ -87,7 +97,7 @@ module.exports = {
                     const errContainer = new ContainerBuilder()
                         .setAccentColor(0xEF4444)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('❌ This role no longer exists in the server!')
+                            new TextDisplayBuilder().setContent('This role no longer exists in the server!')
                         );
                     return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                 }
@@ -99,7 +109,7 @@ module.exports = {
                         const okContainer = new ContainerBuilder()
                             .setAccentColor(0x10B981)
                             .addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`✅ Successfully removed the role **${role.name}**!`)
+                                new TextDisplayBuilder().setContent(`Successfully removed the role **${role.name}**!`)
                             );
                         return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [okContainer], ephemeral: true });
                     } else {
@@ -107,7 +117,7 @@ module.exports = {
                         const okContainer = new ContainerBuilder()
                             .setAccentColor(0x10B981)
                             .addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`✅ Successfully added the role **${role.name}**!`)
+                                new TextDisplayBuilder().setContent(`Successfully added the role **${role.name}**!`)
                             );
                         return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [okContainer], ephemeral: true });
                     }
@@ -116,7 +126,7 @@ module.exports = {
                     const errContainer = new ContainerBuilder()
                         .setAccentColor(0xEF4444)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('❌ Failed to toggle role. Verify my bot role has the "Manage Roles" permission and is higher than the target role.')
+                            new TextDisplayBuilder().setContent('Failed to toggle role. Verify my bot role has the "Manage Roles" permission and is higher than the target role.')
                         );
                     return interaction.reply({ 
                         flags: MessageFlags.IsComponentsV2,
@@ -157,7 +167,7 @@ module.exports = {
                         .setAccentColor(0x00FFCC)
                         .addTextDisplayComponents(
                             new TextDisplayBuilder().setContent(
-                                `## 🎟️ Support Ticket Created\n` +
+                                `## Support Ticket Created\n` +
                                 `Welcome to your ticket, ${user}!\n` +
                                 `Please describe your inquiry, and our support team will assist you shortly.\n\n` +
                                 `Click the button below to close this support ticket.`
@@ -167,7 +177,7 @@ module.exports = {
                             new ActionRowBuilder().addComponents(
                                 new ButtonBuilder()
                                     .setCustomId('ticket_close')
-                                    .setLabel('🔒 Close Ticket')
+                                    .setLabel('Close Ticket')
                                     .setStyle(ButtonStyle.Danger)
                             )
                         );
@@ -183,7 +193,7 @@ module.exports = {
                     const successContainer = new ContainerBuilder()
                         .setAccentColor(0x10B981)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent(`✅ Ticket created successfully! Go to ${ticketChannel}.`)
+                            new TextDisplayBuilder().setContent(`Ticket created successfully! Go to ${ticketChannel}.`)
                         );
                     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [successContainer] });
                 } catch (err) {
@@ -191,7 +201,7 @@ module.exports = {
                     const errContainer = new ContainerBuilder()
                         .setAccentColor(0xEF4444)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('❌ Failed to open a support ticket. Please check my permission settings.')
+                            new TextDisplayBuilder().setContent('Failed to open a support ticket. Please check my permission settings.')
                         );
                     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [errContainer] });
                 }
@@ -205,7 +215,7 @@ module.exports = {
                 const closeContainer = new ContainerBuilder()
                     .setAccentColor(0x3B82F6)
                     .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent('🔒 Closing this ticket in 5 seconds... Generating transcript...')
+                        new TextDisplayBuilder().setContent('Closing this ticket in 5 seconds... Generating transcript...')
                     );
                 await interaction.reply({ 
                     flags: MessageFlags.IsComponentsV2,
@@ -231,7 +241,7 @@ module.exports = {
                             const attachment = new AttachmentBuilder(buffer, { name: `${channel.name}-transcript.txt` });
 
                             await owner.send({
-                                content: `🎟️ Your ticket **${channel.name}** in **${guild.name}** has been closed. Here is your conversation transcript:`,
+                                content: `Your ticket **${channel.name}** in **${guild.name}** has been closed. Here is your conversation transcript:`,
                                 files: [attachment]
                             }).catch(() => null);
                         }
@@ -258,7 +268,7 @@ module.exports = {
                     const errContainer = new ContainerBuilder()
                         .setAccentColor(0xEF4444)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('❌ This giveaway is no longer active!')
+                            new TextDisplayBuilder().setContent('This giveaway is no longer active!')
                         );
                     return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                 }
@@ -268,7 +278,7 @@ module.exports = {
                     const infoContainer = new ContainerBuilder()
                         .setAccentColor(0x3B82F6)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('ℹ️ You have already entered this giveaway!')
+                            new TextDisplayBuilder().setContent('You have already entered this giveaway!')
                         );
                     return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [infoContainer], ephemeral: true });
                 }
@@ -277,7 +287,7 @@ module.exports = {
                 const okContainer = new ContainerBuilder()
                     .setAccentColor(0x10B981)
                     .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent('🎉 You have successfully entered the giveaway! Good luck!')
+                        new TextDisplayBuilder().setContent('You have successfully entered the giveaway! Good luck!')
                     );
                 return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [okContainer], ephemeral: true });
             }
@@ -291,23 +301,25 @@ module.exports = {
                     const errContainer = new ContainerBuilder()
                         .setAccentColor(0xEF4444)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('❌ This event is no longer active!')
+                            new TextDisplayBuilder().setContent('This event is no longer active!')
                         );
                     return interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [errContainer], ephemeral: true });
                 }
                 
                 const eventObj = client.events.get(eventId);
                 let repliedText = '';
+                let rsvpAdded = false;
                 if (eventObj.rsvps.has(user.id)) {
                     eventObj.rsvps.delete(user.id);
-                    repliedText = 'ℹ️ Removed your RSVP for this event.';
+                    repliedText = 'Removed your RSVP for this event.';
                 } else {
                     eventObj.rsvps.add(user.id);
-                    repliedText = '✅ Successfully RSVP\'d to this event! See you there!';
+                    rsvpAdded = true;
+                    repliedText = 'Successfully RSVP\'d to this event! See you there!';
                 }
 
                 const infoContainer = new ContainerBuilder()
-                    .setAccentColor(repliedText.startsWith('✅') ? 0x10B981 : 0x3B82F6)
+                    .setAccentColor(rsvpAdded ? 0x10B981 : 0x3B82F6)
                     .addTextDisplayComponents(
                         new TextDisplayBuilder().setContent(repliedText)
                     );
@@ -316,7 +328,7 @@ module.exports = {
                 // Update original event message container
                 const message = interaction.message;
                 const iconUrl = guild.iconURL({ forceStatic: true });
-                const rsvpText = `👥 **${eventObj.rsvps.size}** RSVPs\n${Array.from(eventObj.rsvps).slice(0, 10).map(id => `<@${id}>`).join(', ') || '*No one yet*'}`;
+                const rsvpText = `**${eventObj.rsvps.size}** RSVPs\n${Array.from(eventObj.rsvps).slice(0, 10).map(id => `<@${id}>`).join(', ') || '*No one yet*'}`;
 
                 const updatedContainer = new ContainerBuilder()
                     .setAccentColor(0xFFCC00)
@@ -404,7 +416,7 @@ module.exports = {
                     const successContainer = new ContainerBuilder()
                         .setAccentColor(0x10B981)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('✅ Embed successfully sent!')
+                            new TextDisplayBuilder().setContent('Embed successfully sent!')
                         );
                     return interaction.editReply({ 
                         flags: MessageFlags.IsComponentsV2,
@@ -415,7 +427,7 @@ module.exports = {
                     const errContainer = new ContainerBuilder()
                         .setAccentColor(0xEF4444)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('❌ Failed to construct embed. Please verify image URLs are correct and color is a valid Hex code.')
+                            new TextDisplayBuilder().setContent('Failed to construct embed. Please verify image URLs are correct and color is a valid Hex code.')
                         );
                     return interaction.editReply({ 
                         flags: MessageFlags.IsComponentsV2,
@@ -449,7 +461,7 @@ module.exports = {
                     const successContainer = new ContainerBuilder()
                         .setAccentColor(0x10B981)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent(`✅ Embed Custom Command \`!${triggerName}\` successfully configured!`)
+                            new TextDisplayBuilder().setContent(`Embed Custom Command \`!${triggerName}\` successfully configured!`)
                         );
                     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [successContainer] });
                 } catch (err) {
@@ -457,7 +469,7 @@ module.exports = {
                     const errContainer = new ContainerBuilder()
                         .setAccentColor(0xEF4444)
                         .addTextDisplayComponents(
-                            new TextDisplayBuilder().setContent('❌ Failed to register the custom command.')
+                            new TextDisplayBuilder().setContent('Failed to register the custom command.')
                         );
                     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [errContainer] });
                 }

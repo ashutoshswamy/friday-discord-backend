@@ -8,7 +8,7 @@ const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
 const { JOBS, TIER_LABELS, TIER_COLORS, getJobByKey } = require('../../utils/jobs');
 
-const JOB_CHOICES = Object.values(JOBS).map(j => ({ name: `${j.emoji} ${j.name} (Tier ${j.tier})`, value: j.key }));
+const JOB_CHOICES = Object.values(JOBS).map(j => ({ name: `${j.name} (Tier ${j.tier})`, value: j.key }));
 const TIER_EMOJIS = { 1: '', 2: '', 3: '', 4: '' };
 
 function buildTierContainer(tier) {
@@ -17,14 +17,14 @@ function buildTierContainer(tier) {
  const accentColor = parseInt(TIER_COLORS[tier].replace('#', ''), 16);
 
  const jobsText = jobs.map(j =>
- `**${j.emoji} ${j.name}**\n*${j.description}*\n${EMOJIS.coin} **${j.minPay.toLocaleString()}–${j.maxPay.toLocaleString()}**/shift${j.xpBonus > 0 ? ` · **+${j.xpBonus.toLocaleString()} XP**` : ''}`
+ `**${j.name}**\n*${j.description}*\n${EMOJIS.coin} **${j.minPay.toLocaleString()}–${j.maxPay.toLocaleString()}**/shift${j.xpBonus > 0 ? ` · **+${j.xpBonus.toLocaleString()} XP**` : ''}`
  ).join('\n\n');
 
  return new ContainerBuilder()
  .setAccentColor(accentColor)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Job Board — ${TIER_EMOJIS[tier]} ${TIER_LABELS[tier]} (Tier ${tier})\n` +
+ `## Job Board — ${TIER_LABELS[tier]} (Tier ${tier})\n` +
  `**Level Required:** ${tierFirstJob.levelRequired}+\n` +
  `Apply with \`/job apply\`. Higher tiers pay more per \`/work\` shift.`
  )
@@ -72,10 +72,10 @@ module.exports = {
  .setCustomId('job_tier_select')
  .setPlaceholder('Filter by Tier...')
  .addOptions(
- { label: `${TIER_EMOJIS[1]} Tier 1 — ${TIER_LABELS[1]} (Level 1+)`, value: '1', default: true },
- { label: `${TIER_EMOJIS[2]} Tier 2 — ${TIER_LABELS[2]} (Level 5+)`, value: '2' },
- { label: `${TIER_EMOJIS[3]} Tier 3 — ${TIER_LABELS[3]} (Level 10+)`, value: '3' },
- { label: `${TIER_EMOJIS[4]} Tier 4 — ${TIER_LABELS[4]} (Level 20+)`, value: '4' }
+ { label: `Tier 1 — ${TIER_LABELS[1]} (Level 1+)`, value: '1', default: true },
+ { label: `Tier 2 — ${TIER_LABELS[2]} (Level 5+)`, value: '2' },
+ { label: `Tier 3 — ${TIER_LABELS[3]} (Level 10+)`, value: '3' },
+ { label: `Tier 4 — ${TIER_LABELS[4]} (Level 20+)`, value: '4' }
  );
 
  const container = buildTierContainer(currentTier);
@@ -100,10 +100,10 @@ module.exports = {
  .setCustomId('job_tier_select')
  .setPlaceholder('Filter by Tier...')
  .addOptions(
- { label: `${TIER_EMOJIS[1]} Tier 1 — ${TIER_LABELS[1]} (Level 1+)`, value: '1', default: currentTier === 1 },
- { label: `${TIER_EMOJIS[2]} Tier 2 — ${TIER_LABELS[2]} (Level 5+)`, value: '2', default: currentTier === 2 },
- { label: `${TIER_EMOJIS[3]} Tier 3 — ${TIER_LABELS[3]} (Level 10+)`, value: '3', default: currentTier === 3 },
- { label: `${TIER_EMOJIS[4]} Tier 4 — ${TIER_LABELS[4]} (Level 20+)`, value: '4', default: currentTier === 4 }
+ { label: `Tier 1 — ${TIER_LABELS[1]} (Level 1+)`, value: '1', default: currentTier === 1 },
+ { label: `Tier 2 — ${TIER_LABELS[2]} (Level 5+)`, value: '2', default: currentTier === 2 },
+ { label: `Tier 3 — ${TIER_LABELS[3]} (Level 10+)`, value: '3', default: currentTier === 3 },
+ { label: `Tier 4 — ${TIER_LABELS[4]} (Level 20+)`, value: '4', default: currentTier === 4 }
  );
 
  const updatedContainer = buildTierContainer(currentTier);
@@ -140,13 +140,13 @@ module.exports = {
 
  if (profile.level < job.levelRequired) {
  return interaction.editReply({
- content: `You need to be **Level ${job.levelRequired}** to become a ${job.emoji} **${job.name}**. You are currently Level **${profile.level}**.`,
+ content: `You need to be **Level ${job.levelRequired}** to become a **${job.name}**. You are currently Level **${profile.level}**.`,
  ephemeral: true,
  });
  }
 
  if (profile.currentJob === jobKey) {
- return interaction.editReply({ content: `ℹ You already work as a ${job.emoji} **${job.name}**.`, ephemeral: true });
+ return interaction.editReply({ content: `You already work as a **${job.name}**.`, ephemeral: true });
  }
 
  const result = await db.applyJob(guild.id, user.id, jobKey);
@@ -166,7 +166,7 @@ module.exports = {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## ${job.emoji} Job Offer Accepted!\nWelcome aboard, **${user.username}**! You are now employed as a **${job.name}**.`
+ `## Job Offer Accepted!\nWelcome aboard, **${user.username}**! You are now employed as a **${job.name}**.`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -174,7 +174,7 @@ module.exports = {
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `**Position:** ${job.emoji} ${job.name}\n` +
+ `**Position:** ${job.name}\n` +
  `**Tier:** ${TIER_LABELS[job.tier]} (Tier ${job.tier})\n` +
  `**Pay Range:** ${EMOJIS.coin} ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()} per /work shift\n` +
  `**XP Bonus:** ${job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP per shift` : 'None'}\n` +
@@ -192,7 +192,7 @@ module.exports = {
  const profile = await db.getProfile(guild.id, user.id);
 
  if (!profile.currentJob) {
- return interaction.editReply({ content: `ℹ You don't have a job to quit.`, ephemeral: true });
+ return interaction.editReply({ content: `You don't have a job to quit.`, ephemeral: true });
  }
 
  const prevJob = getJobByKey(profile.currentJob);
@@ -213,7 +213,7 @@ module.exports = {
  .setAccentColor(0xFF4500)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Confirm Resignation\nAre you sure you want to resign from ${prevJob ? `${prevJob.emoji} **${prevJob.name}**` : 'your current job'}?\n\n` +
+ `## Confirm Resignation\nAre you sure you want to resign from ${prevJob ? `**${prevJob.name}**` : 'your current job'}?\n\n` +
  `You will revert to generic \`/work\` pay until you re-apply for a new position.`
  )
  )
@@ -236,7 +236,7 @@ module.exports = {
  .setAccentColor(0xFF4500)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Resigned\nYou have resigned from ${prevJob ? `${prevJob.emoji} **${prevJob.name}**` : 'your job'}.\nUse \`/job apply\` to start a new career.`
+ `## Resigned\nYou have resigned from ${prevJob ? `**${prevJob.name}**` : 'your job'}.\nUse \`/job apply\` to start a new career.`
  )
  );
 
@@ -269,7 +269,7 @@ module.exports = {
  : 'Unknown';
 
  profileText =
- `**Position:** ${job.emoji} ${job.name}\n` +
+ `**Position:** ${job.name}\n` +
  `**Tier:** ${TIER_LABELS[job.tier]} (Tier ${job.tier})\n` +
  `**Pay Range:** ${EMOJIS.coin} ${job.minPay.toLocaleString()}–${job.maxPay.toLocaleString()}/shift\n` +
  `**XP Bonus:** ${job.xpBonus > 0 ? `+${job.xpBonus.toLocaleString()} XP/shift` : 'None'}\n` +

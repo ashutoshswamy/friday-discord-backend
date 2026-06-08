@@ -220,7 +220,7 @@ module.exports = {
 
                     // Send alert message in channel, automatically delete after 5 seconds to keep chat clean
                     const alertMsg = await channel.send(
-                        `⚠️ **AutoMod Triggered:** ${author}, your message was deleted due to: *${infractionReason}*. ` +
+                        `**AutoMod Triggered:** ${author}, your message was deleted due to: *${infractionReason}*. ` +
                         `You have been warned. (Warning ID: \`${warning.id}\` | Warns: **${warnCount}**)`
                     ).catch(() => null);
 
@@ -240,7 +240,7 @@ module.exports = {
 
                                     const durationMins = rule.durationMs / 60000;
                                     const embed = new EmbedBuilder()
-                                        .setTitle('🤐 AutoMod Punishment Applied')
+                                        .setTitle('AutoMod Punishment Applied')
                                         .setColor('#FF4500')
                                         .setDescription(`${author} has been timed out for **${durationMins} minutes** after exceeding the warning threshold of **${rule.warnThreshold}** warns.`)
                                         .setTimestamp();
@@ -254,7 +254,7 @@ module.exports = {
                                     await db.logInfraction(guild.id, author.id, client.user.id, 'KICK', `AutoMod Kick (Exceeded warns)`);
 
                                     const embed = new EmbedBuilder()
-                                        .setTitle('👢 AutoMod Punishment Applied')
+                                        .setTitle('AutoMod Punishment Applied')
                                         .setColor('#FF4500')
                                         .setDescription(`**${author.tag}** has been kicked from the server after exceeding the warning threshold of **${rule.warnThreshold}** warns.`)
                                         .setTimestamp();
@@ -271,9 +271,9 @@ module.exports = {
                                     await db.logInfraction(guild.id, author.id, client.user.id, 'BAN', `AutoMod Ban (Exceeded warns)`);
 
                                     const embed = new EmbedBuilder()
-                                        .setTitle('🔨 AutoMod Punishment Applied')
+                                        .setTitle('AutoMod Punishment Applied')
                                         .setColor('#FF0000')
-                                        .setDescription(`❌ **${author.tag}** has been banned from the server after exceeding the warning threshold of **${rule.warnThreshold}** warns.`)
+                                        .setDescription(`**${author.tag}** has been banned from the server after exceeding the warning threshold of **${rule.warnThreshold}** warns.`)
                                         .setTimestamp();
 
                                     await channel.send({ embeds: [embed] }).catch(() => null);
@@ -329,7 +329,7 @@ module.exports = {
 
                         const attachment = new AttachmentBuilder(cardBuffer, { name: `levelup-${author.id}.png` });
                         const levelAlert = await channel.send({
-                            content: `🎉 **Level Up!** ${author} just reached **Level ${result.newLevel}**! Keep it up!`,
+                            content: `**Level Up!** ${author} just reached **Level ${result.newLevel}**! Keep it up!`,
                             files: [attachment],
                         }).catch(() => null);
 
@@ -337,7 +337,7 @@ module.exports = {
                         console.error('[ERROR] Level-up card render failed:', cardErr);
                         // Fallback to plain embed if card render fails
                         const embed = new EmbedBuilder()
-                            .setTitle('🎉 Level Up!')
+                            .setTitle('Level Up!')
                             .setColor('#00FFCC')
                             .setThumbnail(author.displayAvatarURL({ forceStatic: true }))
                             .setDescription(`GG ${author}! You advanced to **Level ${result.newLevel}**!`)
@@ -364,7 +364,7 @@ module.exports = {
                             });
 
                             // Optionally, notify the user inside the channel
-                            const rewardMsg = await channel.send(`🏆 ${author} was awarded the role **${role.name}** for reaching Level **${result.newLevel}**!`).catch(() => null);
+                            const rewardMsg = await channel.send(`${author} was awarded the role **${role.name}** for reaching Level **${result.newLevel}**!`).catch(() => null);
                             if (rewardMsg) {
                                 setTimeout(() => rewardMsg.delete().catch(() => null), 8000);
                             }

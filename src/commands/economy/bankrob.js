@@ -113,7 +113,7 @@ module.exports = {
           if (clicker.bot) return i.reply({ content: 'Bots cannot join heists.', ephemeral: true });
           if (clicker.id === targetUser.id) return i.reply({ content: 'You cannot join a robbery against your own vault!', ephemeral: true });
           if (crew.some(member => member.id === clicker.id)) {
-            return i.reply({ content: 'ℹ You are already part of this heist crew!', ephemeral: true });
+            return i.reply({ content: 'You are already part of this heist crew!', ephemeral: true });
           }
 
           try {

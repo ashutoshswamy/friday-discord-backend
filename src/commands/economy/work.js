@@ -96,7 +96,7 @@ module.exports = {
         .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
         .addTextDisplayComponents(
           new TextDisplayBuilder().setContent(
-            `**Position:** ${job ? `${job.emoji} ${job.name}` : ' Unemployed'}\n` +
+            `**Position:** ${job ? job.name : 'Unemployed'}\n` +
             `**Salary:** ${EMOJIS.coin} **+${reward.toLocaleString()}** coins\n` +
             `**XP Bonus:** ${xpBonus > 0 ? `+${xpBonus.toLocaleString()} XP` : 'None'}\n` +
             `**Wallet:** ${EMOJIS.coin} **${finalBalance.coins.toLocaleString()}** coins`

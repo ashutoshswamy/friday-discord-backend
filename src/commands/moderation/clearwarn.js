@@ -37,7 +37,7 @@ module.exports = {
  const countDeleted = await db.clearAllWarnings(guild.id, targetUser.id);
 
  if (countDeleted === 0) {
- return interaction.editReply({ content: `ℹ **${targetUser.tag}** has no active warnings to clear.`, ephemeral: true });
+ return interaction.editReply({ content: `**${targetUser.tag}** has no active warnings to clear.`, ephemeral: true });
  }
 
  await db.logInfraction(guild.id, targetUser.id, user.id, 'CLEAR_ALL_WARNS', `Cleared all (${countDeleted}) warnings`);

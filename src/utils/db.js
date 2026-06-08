@@ -18,7 +18,7 @@ if (
     console.log('[SUCCESS] Database: Connected to Supabase.');
 } else {
     console.warn(
-        '\n⚠️ [WARNING] Supabase is NOT configured yet!\n' +
+        '\n[WARNING] Supabase is NOT configured yet!\n' +
         'Please supply your SUPABASE_URL and SUPABASE_KEY in the .env file to enable cloud logging, leveling, and economy.\n'
     );
 }
@@ -51,7 +51,7 @@ const DEFAULT_SHOP_ITEMS = [
     {
         name: 'Pizza',
         cost: 250,
-        description: 'Consumable food item. Eating a Pizza grants 🏆150 XP instantly!',
+        description: 'Consumable food item. Eating a Pizza grants 150 XP instantly!',
         roleRewardId: null,
         actionType: 'XP',
         actionValue: 150
