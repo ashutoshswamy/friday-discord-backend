@@ -1651,7 +1651,7 @@ module.exports = {
     // 7. Giveaway History
     // ==========================================
 
-    async saveGiveaway(guildId, channelId, messageId, prize, winnersCount) {
+    async saveGiveaway(guildId, channelId, messageId, prize, winnersCount, endsAt) {
         if (!supabase) return;
         await supabase.from('giveaways').upsert({
             id: messageId,
@@ -1659,8 +1659,27 @@ module.exports = {
             channel_id: channelId,
             prize,
             winners_count: winnersCount,
+            ends_at: endsAt ? new Date(endsAt).toISOString() : null,
             status: 'active'
         });
+    },
+
+    async getActiveGiveaways() {
+        if (!supabase) return [];
+        const { data, error } = await supabase
+            .from('giveaways')
+            .select('id, guild_id, channel_id, prize, winners_count, ends_at')
+            .eq('status', 'active')
+            .not('ends_at', 'is', null);
+        if (error) return [];
+        return data.map(g => ({
+            messageId: g.id,
+            guildId: g.guild_id,
+            channelId: g.channel_id,
+            prize: g.prize,
+            winnersCount: g.winners_count,
+            endsAt: new Date(g.ends_at).getTime()
+        }));
     },
 
     async endGiveaway(messageId, winnerIds, entrantsCount) {

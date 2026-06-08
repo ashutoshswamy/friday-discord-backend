@@ -15,8 +15,8 @@ const client = new Client({
 
 // A Collection is a utility class that extends JavaScript's Map, holding our commands
 client.commands = new Collection();
-client.messageAuditLog = [];
-client.voiceAuditLog = [];
+client.messageAuditLog = new Map(); // Map<guildId, entry[]>
+client.voiceAuditLog = new Map();   // Map<guildId, entry[]>
 
 // Load event and command handlers
 console.log('Initializing bot handlers...');
@@ -24,9 +24,16 @@ require('./handlers/commandHandler')(client);
 require('./handlers/eventHandler')(client);
 
 // Set up in-memory audit log listeners
+function pushAuditEntry(map, guildId, entry, limit = 100) {
+    if (!map.has(guildId)) map.set(guildId, []);
+    const entries = map.get(guildId);
+    entries.unshift(entry);
+    if (entries.length > limit) entries.pop();
+}
+
 client.on('messageDelete', message => {
     if (!message.guild || message.author?.bot) return;
-    client.messageAuditLog.unshift({
+    pushAuditEntry(client.messageAuditLog, message.guild.id, {
         guildId: message.guild.id,
         userId: message.author.id,
         userTag: message.author.tag,
@@ -35,13 +42,12 @@ client.on('messageDelete', message => {
         channelName: message.channel.name,
         timestamp: Date.now()
     });
-    if (client.messageAuditLog.length > 200) client.messageAuditLog.pop();
 });
 
 client.on('messageUpdate', (oldMessage, newMessage) => {
     if (!oldMessage.guild || oldMessage.author?.bot) return;
     if (oldMessage.content === newMessage.content) return;
-    client.messageAuditLog.unshift({
+    pushAuditEntry(client.messageAuditLog, oldMessage.guild.id, {
         guildId: oldMessage.guild.id,
         userId: oldMessage.author.id,
         userTag: oldMessage.author.tag,
@@ -51,7 +57,6 @@ client.on('messageUpdate', (oldMessage, newMessage) => {
         channelName: oldMessage.channel.name,
         timestamp: Date.now()
     });
-    if (client.messageAuditLog.length > 200) client.messageAuditLog.pop();
 });
 
 client.on('voiceStateUpdate', (oldState, newState) => {
@@ -78,7 +83,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
         } else return;
     }
     
-    client.voiceAuditLog.unshift({
+    pushAuditEntry(client.voiceAuditLog, oldState.guild.id, {
         guildId: oldState.guild.id,
         userId: oldState.member.id,
         userTag: oldState.member.user.tag,
@@ -86,7 +91,6 @@ client.on('voiceStateUpdate', (oldState, newState) => {
         details,
         timestamp: Date.now()
     });
-    if (client.voiceAuditLog.length > 200) client.voiceAuditLog.pop();
 });
 
 // Register error event listener on client to prevent EventEmitter crashes
@@ -96,12 +100,22 @@ client.on('error', error => {
 
 // Register global safety catchers for unhandled promise rejections and uncaught process exceptions
 process.on('unhandledRejection', error => {
-    console.error('[UNHANDLED REJECTION] Prevented process crash:', error);
+    console.error('[UNHANDLED REJECTION]', error);
+    process.exit(1);
 });
 
 process.on('uncaughtException', error => {
-    console.error('[UNCAUGHT EXCEPTION] Prevented process crash:', error);
+    console.error('[UNCAUGHT EXCEPTION]', error);
+    process.exit(1);
 });
+
+function gracefulShutdown(signal) {
+    console.log(`[SHUTDOWN] ${signal} received — closing gracefully`);
+    client.destroy();
+    process.exit(0);
+}
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
 
 // Log in to Discord with your client's token
 if (!process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN === 'your_bot_token_here') {

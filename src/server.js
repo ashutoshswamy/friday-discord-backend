@@ -1,11 +1,18 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const rateLimit = require('express-rate-limit');
 const { randomInt } = require('crypto');
 const { ChannelType, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 const db = require('./utils/db');
+
+const log = {
+    info:  (...a) => console.log(`[${new Date().toISOString()}] [INFO]`, ...a),
+    warn:  (...a) => console.warn(`[${new Date().toISOString()}] [WARN]`, ...a),
+    error: (...a) => console.error(`[${new Date().toISOString()}] [ERROR]`, ...a),
+};
 
 // Cryptographically secure Fisher-Yates shuffle
 function shuffleArray(arr) {
@@ -41,6 +48,8 @@ module.exports = function(client) {
     // Disable ETag generation (not needed for API/ping routes)
     app.disable('etag');
 
+    app.use(helmet({ contentSecurityPolicy: false }));
+
     // Enable CORS for frontend only
     app.use(cors({ origin: FRONTEND_URL, credentials: true }));
     app.use(express.json());
@@ -62,6 +71,15 @@ module.exports = function(client) {
         standardHeaders: true,
         legacyHeaders: false,
         message: { error: 'Too many moderation actions. Slow down.' }
+    });
+
+    // Tight rate limiter for OAuth callback — prevents code probing
+    const authCallbackLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 10,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { error: 'Too many login attempts. Try again later.' }
     });
 
     // ----------------------------------------------------------------
@@ -139,7 +157,7 @@ module.exports = function(client) {
     // ----------------------------------------------------------------
 
     // OAuth2 Callback Handler
-    app.post('/api/auth/callback', async (req, res) => {
+    app.post('/api/auth/callback', authCallbackLimiter, async (req, res) => {
         const { code } = req.body;
         if (!code) return res.status(400).json({ error: 'Missing authorization code' });
 
@@ -199,7 +217,7 @@ module.exports = function(client) {
                     guilds: guilds
                 },
                 JWT_SECRET,
-                { expiresIn: '7d' }
+                { expiresIn: '1h' }
             );
 
             res.json({
@@ -480,6 +498,9 @@ module.exports = function(client) {
         if (!warnThreshold || !punishmentType) {
             return res.status(400).json({ error: 'warnThreshold and punishmentType are required' });
         }
+        if (!['TIMEOUT', 'KICK', 'BAN'].includes(punishmentType)) {
+            return res.status(400).json({ error: 'punishmentType must be TIMEOUT, KICK, or BAN' });
+        }
 
         try {
             const rule = await db.addPunishmentRule(guildId, warnThreshold, punishmentType, durationMs || 0);
@@ -669,6 +690,52 @@ module.exports = function(client) {
         return null;
     }
 
+    async function fireGiveaway(g) {
+        client.giveaways.delete(g.messageId);
+        const ch = client.channels.cache.get(g.channelId);
+        if (!ch) { await db.endGiveaway(g.messageId, [], 0); return; }
+        const m = await ch.messages.fetch(g.messageId).catch(() => null);
+        const disabledRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId(`giveaway_ended_${g.messageId}`).setLabel('Closed').setStyle(ButtonStyle.Secondary).setDisabled(true)
+        );
+        const entrants = Array.from(g.entrants);
+        if (!entrants.length) {
+            if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY ENDED').setColor('#71717a').setDescription(`**Prize:** **${g.prize}**\n\nNo valid entrants.`).setTimestamp()], components: [disabledRow] });
+            await db.endGiveaway(g.messageId, [], 0);
+            return;
+        }
+        const winners = shuffleArray(entrants).slice(0, g.winnersCount);
+        const pings = winners.map(w => `<@${w}>`).join(', ');
+        if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY RESULTS').setColor('#FF0099').setDescription(`**Prize Won:** **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
+        const winnerEmbed = new EmbedBuilder()
+            .setTitle('Congratulations!')
+            .setColor('#FFD700')
+            .setDescription(`${pings} won the **${g.prize}** giveaway!`)
+            .addFields(
+                { name: 'Prize', value: g.prize, inline: true },
+                { name: 'Total Entries', value: `${entrants.length}`, inline: true },
+                { name: 'Winners', value: pings, inline: false }
+            )
+            .setFooter({ text: `Giveaway ID: ${g.messageId}` })
+            .setTimestamp();
+        await ch.send({ content: `Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
+        await db.endGiveaway(g.messageId, winners, entrants.length);
+    }
+
+    function scheduleGiveaway(g) {
+        const remaining = Math.max(0, g.endsAt - Date.now());
+        g.timer = setTimeout(async () => {
+            try {
+                const current = client.giveaways.get(g.messageId);
+                if (!current || !current.active) return;
+                current.active = false;
+                await fireGiveaway(current);
+            } catch (err) {
+                console.error('[GIVEAWAY TIMER ERROR]', err);
+            }
+        }, remaining);
+    }
+
     app.get('/api/guilds/:guildId/giveaways', authenticateToken, requireGuildAdmin, (req, res) => {
         client.giveaways = client.giveaways || new Map();
         const active = [];
@@ -716,7 +783,7 @@ module.exports = function(client) {
             await msg.edit({ components: [realRow] });
 
             client.giveaways = client.giveaways || new Map();
-            client.giveaways.set(msg.id, {
+            const g = {
                 messageId: msg.id,
                 channelId,
                 guildId: req.params.guildId,
@@ -725,48 +792,12 @@ module.exports = function(client) {
                 entrants: new Set(),
                 active: true,
                 endsAt: Date.now() + durationMs,
-                timer: setTimeout(async () => {
-                    try {
-                        const g = client.giveaways.get(msg.id);
-                        if (!g || !g.active) return;
-                        g.active = false;
-                        client.giveaways.delete(msg.id);
-                        const ch = client.channels.cache.get(channelId);
-                        if (!ch) return;
-                        const m = await ch.messages.fetch(msg.id).catch(() => null);
-                        if (!m) return;
-                        const entrants = Array.from(g.entrants);
-                        const disabledRow = new ActionRowBuilder().addComponents(
-                            new ButtonBuilder().setCustomId(`giveaway_ended_${msg.id}`).setLabel('Closed').setStyle(ButtonStyle.Secondary).setDisabled(true)
-                        );
-                        if (!entrants.length) {
-                            await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY ENDED').setColor('#71717a').setDescription(`**Prize:** **${g.prize}**\n\nNo valid entrants.`).setTimestamp()], components: [disabledRow] });
-                            await db.endGiveaway(msg.id, [], 0);
-                            return;
-                        }
-                        const winners_ = shuffleArray(entrants).slice(0, g.winnersCount);
-                        const pings = winners_.map(w => `<@${w}>`).join(', ');
-                        await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY RESULTS').setColor('#FF0099').setDescription(`**Prize Won:** **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
-                        const winnerEmbed = new EmbedBuilder()
-                            .setTitle('Congratulations!')
-                            .setColor('#FFD700')
-                            .setDescription(`${pings} won the **${g.prize}** giveaway!`)
-                            .addFields(
-                                { name: 'Prize', value: g.prize, inline: true },
-                                { name: 'Total Entries', value: `${entrants.length}`, inline: true },
-                                { name: 'Winners', value: pings, inline: false }
-                            )
-                            .setFooter({ text: `Giveaway ID: ${msg.id}` })
-                            .setTimestamp();
-                        await ch.send({ content: `Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
-                        await db.endGiveaway(msg.id, winners_, entrants.length);
-                    } catch (err) {
-                        console.error('[GIVEAWAY TIMER ERROR]', err);
-                    }
-                }, durationMs),
-            });
+                timer: null,
+            };
+            scheduleGiveaway(g);
+            client.giveaways.set(msg.id, g);
 
-            await db.saveGiveaway(req.params.guildId, channelId, msg.id, prize, parseInt(winners));
+            await db.saveGiveaway(req.params.guildId, channelId, msg.id, prize, parseInt(winners), g.endsAt);
             res.json({ ok: true, messageId: msg.id });
         } catch (err) {
             console.error('[GIVEAWAY API ERROR]', err);
@@ -782,38 +813,9 @@ module.exports = function(client) {
 
         g.active = false;
         clearTimeout(g.timer);
-        client.giveaways.delete(messageId);
 
         try {
-            const ch = client.channels.cache.get(g.channelId);
-            if (ch) {
-                const m = await ch.messages.fetch(messageId).catch(() => null);
-                const disabledRow = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId(`giveaway_ended_${messageId}`).setLabel('Closed').setStyle(ButtonStyle.Secondary).setDisabled(true)
-                );
-                const entrants = Array.from(g.entrants);
-                if (!entrants.length) {
-                    if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY ENDED').setColor('#71717a').setDescription(`**Prize:** **${g.prize}**\n\nNo valid entrants.`).setTimestamp()], components: [disabledRow] });
-                    await db.endGiveaway(messageId, [], 0);
-                } else {
-                    const winners = shuffleArray(entrants).slice(0, g.winnersCount);
-                    const pings = winners.map(w => `<@${w}>`).join(', ');
-                    if (m) await m.edit({ embeds: [new EmbedBuilder().setTitle('GIVEAWAY RESULTS').setColor('#FF0099').setDescription(`**Prize Won:** **${g.prize}**\n**Winners:** ${pings}!\n\nThank you for participating!`).setTimestamp()], components: [disabledRow] });
-                    const winnerEmbed = new EmbedBuilder()
-                        .setTitle('Congratulations!')
-                        .setColor('#FFD700')
-                        .setDescription(`${pings} won the **${g.prize}** giveaway!`)
-                        .addFields(
-                            { name: 'Prize', value: g.prize, inline: true },
-                            { name: 'Total Entries', value: `${entrants.length}`, inline: true },
-                            { name: 'Winners', value: pings, inline: false }
-                        )
-                        .setFooter({ text: `Giveaway ID: ${messageId}` })
-                        .setTimestamp();
-                    await ch.send({ content: `Congratulations ${pings}! You won **${g.prize}**!`, embeds: [winnerEmbed] });
-                    await db.endGiveaway(messageId, winners, entrants.length);
-                }
-            }
+            await fireGiveaway(g);
             res.json({ ok: true });
         } catch (err) {
             console.error('[GIVEAWAY END API ERROR]', err);
@@ -1034,6 +1036,9 @@ module.exports = function(client) {
         if (amount === undefined || !action) {
             return res.status(400).json({ error: 'Amount and Action are required' });
         }
+        if (!['ADD', 'REMOVE', 'SET'].includes(action)) {
+            return res.status(400).json({ error: 'action must be ADD, REMOVE, or SET' });
+        }
 
         try {
             const profile = await db.getProfile(guildId, userId);
@@ -1058,6 +1063,9 @@ module.exports = function(client) {
 
         if (amount === undefined || !action) {
             return res.status(400).json({ error: 'Amount and Action are required' });
+        }
+        if (!['ADD', 'REMOVE', 'SET'].includes(action)) {
+            return res.status(400).json({ error: 'action must be ADD, REMOVE, or SET' });
         }
 
         try {
@@ -1229,6 +1237,8 @@ module.exports = function(client) {
         const { durationMs, reason } = req.body;
 
         if (!durationMs) return res.status(400).json({ error: 'Duration is required' });
+        const clampedDuration = Math.min(Math.max(1, Number(durationMs)), 2419200000);
+        if (!Number.isFinite(clampedDuration)) return res.status(400).json({ error: 'Invalid duration' });
 
         const discordGuild = client.guilds.cache.get(guildId);
         if (!discordGuild) return res.status(404).json({ error: 'Guild not found' });
@@ -1245,7 +1255,7 @@ module.exports = function(client) {
             }
 
             const realReason = reason || 'Admin Dashboard Timeout';
-            await member.timeout(Number(durationMs), realReason);
+            await member.timeout(clampedDuration, realReason);
             await db.logInfraction(guildId, userId, req.user.id, 'TIMEOUT', realReason);
 
             res.json({ success: true });
@@ -1329,6 +1339,8 @@ module.exports = function(client) {
         try {
             const member = await discordGuild.members.fetch(userId).catch(() => null);
             if (!member) return res.status(404).json({ error: 'Member not found in server' });
+            const hierarchyError = await checkModerationHierarchy(discordGuild, req.user.id, member);
+            if (hierarchyError) return res.status(403).json({ error: hierarchyError });
             await member.timeout(null, reason || 'Admin Dashboard: Timeout removed');
             res.json({ success: true });
         } catch (err) {
@@ -1470,7 +1482,7 @@ module.exports = function(client) {
             res.json({ ok: true, messageId: msg.id });
         } catch (err) {
             console.error('[POLL API]', err);
-            res.status(500).json({ error: 'Failed to create poll: ' + err.message });
+            res.status(500).json({ error: 'Failed to create poll' });
         }
     });
 
@@ -1524,7 +1536,7 @@ module.exports = function(client) {
             res.json({ ok: true, results });
         } catch (err) {
             console.error('[POLL CLOSE API]', err);
-            res.status(500).json({ error: 'Failed to close poll: ' + err.message });
+            res.status(500).json({ error: 'Failed to close poll' });
         }
     });
 
@@ -1674,11 +1686,10 @@ module.exports = function(client) {
     // Economy Dashboard — Inventory, Pets, Market
     // ----------------------------------------------------------------
 
-    // Lazy-load the shared supabase client from db.js
-    function getSupabase() {
-        const { createClient } = require('@supabase/supabase-js');
-        return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-    }
+    // Reuse the singleton Supabase client from db.js instead of creating one per-request
+    const { createClient } = require('@supabase/supabase-js');
+    const _supabaseSingleton = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+    function getSupabase() { return _supabaseSingleton; }
 
     // Derive item category from name
     const deriveItemType = (name) => {
@@ -2032,7 +2043,7 @@ module.exports = function(client) {
             res.json({ success: true, ...result });
         } catch (err) {
             console.error('[PORTFOLIO ADMIN API]', err);
-            res.status(400).json({ error: err.message });
+            res.status(400).json({ error: 'Failed to update stock holding' });
         }
     });
 
@@ -2049,7 +2060,7 @@ module.exports = function(client) {
             res.json({ success: true, message: 'All guild data has been reset.' });
         } catch (err) {
             console.error('[RESET API]', err);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Failed to reset guild data' });
         }
     });
 
@@ -2081,7 +2092,29 @@ module.exports = function(client) {
     }, 60 * 60 * 1000);
 
     // Start Express API Server listening
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`[SUCCESS] Dashboard API Server: Running on http://localhost:${PORT}`);
     });
+
+    // Rehydrate active giveaways from DB so timers survive restarts
+    db.getActiveGiveaways().then(activeGiveaways => {
+        client.giveaways = client.giveaways || new Map();
+        for (const row of activeGiveaways) {
+            if (client.giveaways.has(row.messageId)) continue;
+            const g = { ...row, entrants: new Set(), active: true, timer: null };
+            scheduleGiveaway(g);
+            client.giveaways.set(g.messageId, g);
+        }
+        if (activeGiveaways.length > 0) {
+            console.log(`[GIVEAWAY] Rehydrated ${activeGiveaways.length} active giveaway(s) from DB`);
+        }
+    }).catch(err => console.error('[GIVEAWAY REHYDRATE ERROR]', err));
+
+    function shutdownServer(signal) {
+        console.log(`[SERVER] ${signal} — draining connections`);
+        server.close(() => process.exit(0));
+        setTimeout(() => process.exit(1), 10000).unref();
+    }
+    process.on('SIGTERM', () => shutdownServer('SIGTERM'));
+    process.on('SIGINT',  () => shutdownServer('SIGINT'));
 };

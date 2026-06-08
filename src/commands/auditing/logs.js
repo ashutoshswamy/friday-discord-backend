@@ -26,8 +26,8 @@ module.exports = {
 
  try {
  if (subcommand === 'message') {
- const logs = client.messageAuditLog || [];
- let filtered = logs.filter(l => l.guildId === guild.id);
+ const logs = client.messageAuditLog?.get(guild.id) || [];
+ let filtered = [...logs];
  if (targetUser) filtered = filtered.filter(l => l.userId === targetUser.id);
 
  if (filtered.length === 0) {
@@ -58,8 +58,8 @@ module.exports = {
  }
 
  if (subcommand === 'voice') {
- const logs = client.voiceAuditLog || [];
- let filtered = logs.filter(l => l.guildId === guild.id);
+ const logs = client.voiceAuditLog?.get(guild.id) || [];
+ let filtered = [...logs];
  if (targetUser) filtered = filtered.filter(l => l.userId === targetUser.id);
 
  if (filtered.length === 0) {
