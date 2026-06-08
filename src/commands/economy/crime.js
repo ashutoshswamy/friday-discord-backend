@@ -16,7 +16,7 @@ const SCENARIOS = {
   options: [
    {
     id: 'pp_sleight',
-    label: '🔍 Sleight of Hand',
+    label: ' Sleight of Hand',
     style: ButtonStyle.Primary,
     chance: 0.65,
     minCoins: 100, maxCoins: 250,
@@ -27,7 +27,7 @@ const SCENARIOS = {
    },
    {
     id: 'pp_bump',
-    label: '💨 Bump & Run',
+    label: ' Bump & Run',
     style: ButtonStyle.Secondary,
     chance: 0.45,
     minCoins: 180, maxCoins: 350,
@@ -46,7 +46,7 @@ const SCENARIOS = {
   options: [
    {
     id: 'cj_smash',
-    label: '🔨 Smash & Grab',
+    label: ' Smash & Grab',
     style: ButtonStyle.Danger,
     chance: 0.50,
     minCoins: 400, maxCoins: 800,
@@ -57,7 +57,7 @@ const SCENARIOS = {
    },
    {
     id: 'cj_hotwire',
-    label: '🔑 Hotwire',
+    label: ' Hotwire',
     style: ButtonStyle.Secondary,
     chance: 0.35,
     minCoins: 650, maxCoins: 1200,
@@ -68,7 +68,7 @@ const SCENARIOS = {
    },
    {
     id: 'cj_jam',
-    label: '📱 Signal Jammer',
+    label: ' Signal Jammer',
     style: ButtonStyle.Primary,
     chance: 0.75,
     minCoins: 800, maxCoins: 1500,
@@ -88,7 +88,7 @@ const SCENARIOS = {
   options: [
    {
     id: 'bf_phish',
-    label: '💻 Phishing Node',
+    label: ' Phishing Node',
     style: ButtonStyle.Primary,
     chance: 0.45,
     minCoins: 1200, maxCoins: 2800,
@@ -100,7 +100,7 @@ const SCENARIOS = {
    },
    {
     id: 'bf_social',
-    label: '🏦 Social Engineering',
+    label: ' Social Engineering',
     style: ButtonStyle.Secondary,
     chance: 0.30,
     minCoins: 2000, maxCoins: 4500,
@@ -111,7 +111,7 @@ const SCENARIOS = {
    },
    {
     id: 'bf_forge',
-    label: '🖨️ Forged Wire Transfer',
+    label: '️ Forged Wire Transfer',
     style: ButtonStyle.Danger,
     chance: 0.15,
     minCoins: 4000, maxCoins: 8500,
@@ -184,18 +184,20 @@ module.exports = {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## 🚨 Crime Scenario: ${scenario.label}\n` +
+        `##  Crime Scenario: ${scenario.label}\n` +
         `**Street Experience:** Crime Level **${crimeProfile.level}** (XP: ${crimeProfile.xp}/${crimeProfile.level * 500})\n\n` +
         `*${scenario.prompt}*`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
-    )
+     )
     .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# Select your tactical approach below. Hacking options require a Hacker Laptop.'));
+
+   initialContainer.addActionRowComponents(row);
 
    const response = await interaction.editReply({
     flags: MessageFlags.IsComponentsV2,
-    components: [initialContainer, row]
+    components: [initialContainer]
    });
 
    const collector = response.createMessageComponentCollector({
@@ -238,7 +240,7 @@ module.exports = {
      const xpResult = await db.addCrimeXp(guild.id, user.id, chosenOption.xp);
      xpMsg = `\n**Crime XP Gained:** **+${chosenOption.xp} XP** (Level **${xpResult.newLevel}** · ${xpResult.newXp}/${xpResult.newLevel * 500})`;
      if (xpResult.levelUp) {
-      xpMsg += `\n🎉 **LEVEL UP!** Your street credibility increased! You are now **Crime Level ${xpResult.newLevel}**!`;
+      xpMsg += `\n **LEVEL UP!** Your street credibility increased! You are now **Crime Level ${xpResult.newLevel}**!`;
      }
 
      resultText = `**Success!** ${chosenOption.successMsg}\n\n` +
@@ -261,7 +263,7 @@ module.exports = {
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(`## 🚨 Crime Result: ${scenario.label}\n${resultText}`)
+        new TextDisplayBuilder().setContent(`##  Crime Result: ${scenario.label}\n${resultText}`)
        )
      )
      .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
@@ -283,7 +285,7 @@ module.exports = {
        new SectionBuilder()
         .addTextDisplayComponents(
          new TextDisplayBuilder().setContent(
-          `## 🚨 Crime Aborted\nYou hesitated for too long! The opportunity passed, and the target slipped away.`
+          `##  Crime Aborted\nYou hesitated for too long! The opportunity passed, and the target slipped away.`
          )
         )
       );

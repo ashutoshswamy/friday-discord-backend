@@ -45,7 +45,7 @@ module.exports = {
    const container = new ContainerBuilder()
     .setAccentColor(0x8B5CF6)
     .addTextDisplayComponents(
-     new TextDisplayBuilder().setContent(`## Trade Session\n<@${user.id}> ↔ <@${targetUser.id}>`)
+     new TextDisplayBuilder().setContent(`## Trade Session\n<@${user.id}>  <@${targetUser.id}>`)
     )
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
     .addTextDisplayComponents(

@@ -56,9 +56,9 @@ module.exports = {
     let drawAlert = '';
     if (drawResult) {
      if (drawResult.rolledOver) {
-      drawAlert = `🔔 **Daily Draw Completed:** No tickets were purchased. The jackpot rolled over to ${EMOJIS.coin} **${drawResult.jackpotWon.toLocaleString()}** coins!\n\n`;
+      drawAlert = ` **Daily Draw Completed:** No tickets were purchased. The jackpot rolled over to ${EMOJIS.coin} **${drawResult.jackpotWon.toLocaleString()}** coins!\n\n`;
      } else {
-      drawAlert = `🎉 **Daily Draw Completed:** <@${drawResult.winnerId}> won the jackpot of ${EMOJIS.coin} **${drawResult.jackpotWon.toLocaleString()}** coins! Congratulations!\n\n`;
+      drawAlert = ` **Daily Draw Completed:** <@${drawResult.winnerId}> won the jackpot of ${EMOJIS.coin} **${drawResult.jackpotWon.toLocaleString()}** coins! Congratulations!\n\n`;
      }
     }
 
@@ -70,7 +70,7 @@ module.exports = {
 
     let lastWinText = 'No draws have occurred yet.';
     if (lastWinner) {
-     lastWinText = `👑 <@${lastWinner.winnerId}> won ${EMOJIS.coin} **${lastWinner.jackpotWon.toLocaleString()}** coins (<t:${Math.floor(lastWinner.drawDate.getTime() / 1000)}:R>)`;
+     lastWinText = ` <@${lastWinner.winnerId}> won ${EMOJIS.coin} **${lastWinner.jackpotWon.toLocaleString()}** coins (<t:${Math.floor(lastWinner.drawDate.getTime() / 1000)}:R>)`;
     }
 
     const container = new ContainerBuilder()
@@ -79,7 +79,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🎟️ Friday Daily Lottery\n` +
+         `## ️ Friday Daily Lottery\n` +
           `${drawAlert}` +
           `Purchase tickets to increase your chances of winning the server-wide jackpot! Each ticket contributes directly to the total prize pool.\n\n` +
           `• **Current Jackpot:** ${EMOJIS.coin} **${config.jackpot.toLocaleString()}** coins\n` +
@@ -115,7 +115,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🎟️ Tickets Purchased!\n` +
+         `## ️ Tickets Purchased!\n` +
           `You successfully entered the Friday Daily Lottery draw!\n\n` +
           `• **Tickets Bought:** **${amount}** tickets\n` +
           `• **Cost Deducted:** ${EMOJIS.coin} **${result.costPaid.toLocaleString()}** coins\n` +
@@ -139,7 +139,7 @@ module.exports = {
       .setAccentColor(0x34495E) // Dark blue/gray
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## 🎟️ Lottery Draw Results\n` +
+        `## ️ Lottery Draw Results\n` +
          `No tickets were purchased for this draw. The jackpot of ${EMOJIS.coin} **${drawResult.jackpotWon.toLocaleString()}** coins rolled over to the next round.`
        )
       );
@@ -152,7 +152,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🎟️ Lottery Draw Results\n` +
+         `## ️ Lottery Draw Results\n` +
           `The lottery has been drawn! Congratulations to the winner!\n\n` +
           `• **Winner:** <@${drawResult.winnerId}>\n` +
           `• **Jackpot Won:** ${EMOJIS.coin} **${drawResult.jackpotWon.toLocaleString()}** coins`

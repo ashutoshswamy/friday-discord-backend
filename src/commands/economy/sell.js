@@ -134,7 +134,7 @@ module.exports = {
 
     clanXpMsg = `\n**Clan XP Contributed:** **+${clanXpGained} XP** to **${clan.name}**`;
     if (xpResult.levelUp) {
-      clanXpMsg += `\n🎉 **CLAN LEVELED UP!** **${clan.name}** is now **Level ${xpResult.newLevel}**!`;
+      clanXpMsg += `\n **CLAN LEVELED UP!** **${clan.name}** is now **Level ${xpResult.newLevel}**!`;
     }
   }
 
@@ -144,7 +144,7 @@ module.exports = {
 
   let detailsText = '';
   if (itemData && itemData.eventText) {
-    detailsText += `⚠️ **Market Event Active:** *${itemData.eventText}*\n\n`;
+    detailsText += `️ **Market Event Active:** *${itemData.eventText}*\n\n`;
   }
 
   detailsText += `**Unit Price (Dynamic Market):** ${EMOJIS.coin} **${activePrice.toLocaleString()}** coins\n` +

@@ -8,7 +8,7 @@ const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
 const { EMOJIS } = require('../../utils/emojis');
 
-const SUITS = ['♠', '♥', '♦', '♣'];
+const SUITS = ['', '', '', ''];
 const VALUES = [
   { name: '2', val: 2 }, { name: '3', val: 3 }, { name: '4', val: 4 },
   { name: '5', val: 5 }, { name: '6', val: 6 }, { name: '7', val: 7 },

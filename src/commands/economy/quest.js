@@ -64,7 +64,7 @@ module.exports = {
     quests.forEach((q, idx) => {
      const desc = getQuestDescription(q);
      const isCompleted = q.current_amount >= q.target_amount;
-     const statusIcon = q.claimed ? '✅ (Claimed)' : isCompleted ? '⭐ (Ready to Claim!)' : '⏳ (In Progress)';
+     const statusIcon = q.claimed ? ' (Claimed)' : isCompleted ? ' (Ready to Claim!)' : ' (In Progress)';
      
      const progressPct = Math.min(100, Math.floor((q.current_amount / q.target_amount) * 100));
      const filledBlocks = Math.round(progressPct / 10);
@@ -91,7 +91,7 @@ module.exports = {
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(`## 📜 Daily Quests Board\nComplete tasks today to earn extra currency and level experience. Quests reset daily.\n\n${questText}`)
+        new TextDisplayBuilder().setContent(`##  Daily Quests Board\nComplete tasks today to earn extra currency and level experience. Quests reset daily.\n\n${questText}`)
        )
        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      )
@@ -121,7 +121,7 @@ module.exports = {
        new SectionBuilder()
         .addTextDisplayComponents(
          new TextDisplayBuilder().setContent(
-          `## 📜 Quest Reward Claimed!\n` +
+          `##  Quest Reward Claimed!\n` +
            `You completed the daily challenge and received your bounty!\n\n` +
            `**Bounty Collected:** ${EMOJIS.coin} **+${result.reward_coins.toLocaleString()}** coins added to wallet!\n` +
            `**Experience Earned:** **+${result.reward_xp}** XP gained.`
@@ -148,7 +148,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 📜 Quest Reward Claimed!\n` +
+         `##  Quest Reward Claimed!\n` +
           `You completed the daily challenge and received your bounty!\n\n` +
           `**Bounty Collected:** ${EMOJIS.coin} **+${result.reward_coins.toLocaleString()}** coins added to wallet!\n` +
           `**Experience Earned:** **+${result.reward_xp}** XP gained.`

@@ -42,7 +42,7 @@ module.exports = {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## 💻 Mainframe Terminal Connection\n` +
+        `##  Mainframe Terminal Connection\n` +
         `` +
         `\`\`\`\n` +
         `[INTRUDER ALERT] Cybernetic bypass protocols active.\n` +
@@ -107,7 +107,7 @@ module.exports = {
        new SectionBuilder()
         .addTextDisplayComponents(
          new TextDisplayBuilder().setContent(
-          `## 💻 HACK SUCCESS: ${targetName}\n` +
+          `##  HACK SUCCESS: ${targetName}\n` +
           `\`\`\`diff\n` +
           `+ CONNECTION ESTABLISHED\n` +
           `+ FIREWALLS BYPASSED SUCCESSFULLY\n` +
@@ -132,7 +132,7 @@ module.exports = {
        new SectionBuilder()
         .addTextDisplayComponents(
          new TextDisplayBuilder().setContent(
-          `## 🚨 HACK FAILED: ${targetName}\n` +
+          `##  HACK FAILED: ${targetName}\n` +
           `\`\`\`diff\n` +
           `- !!! INTRUSION DETECTED !!!\n` +
           `- FIREWALL COUNTERMEASURES ACTIVATED\n` +
@@ -155,7 +155,7 @@ module.exports = {
        new SectionBuilder()
         .addTextDisplayComponents(
          new TextDisplayBuilder().setContent(
-          `## 💻 Terminal Disconnected\n` +
+          `##  Terminal Disconnected\n` +
           `Intrusion session timed out. Mainframe security cycled its encryption keys.`
          )
         )

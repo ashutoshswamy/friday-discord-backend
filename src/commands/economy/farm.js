@@ -7,10 +7,10 @@ const db = require('../../utils/db');
 const { EMOJIS } = require('../../utils/emojis');
 
 const SEED_CONFIGS = {
- 'wheat seed': { name: 'Wheat', time: 120, reward: 'Wheat', emoji: '🌾', xpReward: 50 },
- 'tomato seed': { name: 'Tomato', time: 300, reward: 'Tomato', emoji: '🍅', xpReward: 100 },
- 'carrot seed': { name: 'Carrot', time: 600, reward: 'Carrot', emoji: '🥕', xpReward: 180 },
- 'golden apple seed': { name: 'Golden Apple', time: 1800, reward: 'Golden Apple', emoji: '🍎', xpReward: 400 }
+ 'wheat seed': { name: 'Wheat', time: 120, reward: 'Wheat', emoji: '', xpReward: 50 },
+ 'tomato seed': { name: 'Tomato', time: 300, reward: 'Tomato', emoji: '', xpReward: 100 },
+ 'carrot seed': { name: 'Carrot', time: 600, reward: 'Carrot', emoji: '', xpReward: 180 },
+ 'golden apple seed': { name: 'Golden Apple', time: 1800, reward: 'Golden Apple', emoji: '', xpReward: 400 }
 };
 
 const PLOT_UPGRADE_COSTS = {
@@ -50,10 +50,10 @@ module.exports = {
       .setDescription('Select the seed to plant')
       .setRequired(true)
       .addChoices(
-       { name: '🌾 Wheat Seed (2m growth)', value: 'Wheat Seed' },
-       { name: '🍅 Tomato Seed (5m growth)', value: 'Tomato Seed' },
-       { name: '🥕 Carrot Seed (10m growth)', value: 'Carrot Seed' },
-       { name: '🍎 Golden Apple Seed (30m growth)', value: 'Golden Apple Seed' }
+       { name: ' Wheat Seed (2m growth)', value: 'Wheat Seed' },
+       { name: ' Tomato Seed (5m growth)', value: 'Tomato Seed' },
+       { name: ' Carrot Seed (10m growth)', value: 'Carrot Seed' },
+       { name: ' Golden Apple Seed (30m growth)', value: 'Golden Apple Seed' }
       )
     )
     .addIntegerOption(opt =>
@@ -83,9 +83,9 @@ module.exports = {
       .setDescription('Select the fertilizer to apply')
       .setRequired(true)
       .addChoices(
-       { name: '🟫 Basic Fertilizer (50% faster remaining growth)', value: 'basic' },
-       { name: '🧪 Growth Serum (Instant growth)', value: 'growth' },
-       { name: '🟢 Yield Booster (Double harvested crops count)', value: 'yield' }
+       { name: ' Basic Fertilizer (50% faster remaining growth)', value: 'basic' },
+       { name: ' Growth Serum (Instant growth)', value: 'growth' },
+       { name: ' Yield Booster (Double harvested crops count)', value: 'yield' }
       )
     )
     .addIntegerOption(opt =>
@@ -148,21 +148,21 @@ module.exports = {
       const remainingMs = crop.harvest_ready.getTime() - now;
       const progressPct = Math.min(100, Math.floor(((crop.growth_time * 1000 - remainingMs) / (crop.growth_time * 1000)) * 100));
       
-      let statusEmoji = '🌱';
-      if (progressPct >= 100) statusEmoji = '✅';
-      else if (progressPct >= 50) statusEmoji = '🌿';
+      let statusEmoji = '';
+      if (progressPct >= 100) statusEmoji = '';
+      else if (progressPct >= 50) statusEmoji = '';
 
-      const timeText = remainingMs <= 0 ? '✅ **Ready to Harvest!**' : `⏳ Grows in: **${formatRemainingTime(remainingMs)}** (${progressPct}%)`;
+      const timeText = remainingMs <= 0 ? ' **Ready to Harvest!**' : ` Grows in: **${formatRemainingTime(remainingMs)}** (${progressPct}%)`;
       const seedName = `${crop.crop_name.toLowerCase()} seed`;
-      const config = SEED_CONFIGS[seedName] || { emoji: '🌱' };
+      const config = SEED_CONFIGS[seedName] || { emoji: '' };
 
-      const waterDrops = '💧'.repeat(crop.water_count) + '❌'.repeat(3 - crop.water_count);
-      const pestText = crop.pests ? ' 🐛 **INFESTED WITH PESTS!** (Cannot harvest; treat with Pesticide using `/farm treat`)' : ' None';
+      const waterDrops = ''.repeat(crop.water_count) + ''.repeat(3 - crop.water_count);
+      const pestText = crop.pests ? '  **INFESTED WITH PESTS!** (Cannot harvest; treat with Pesticide using `/farm treat`)' : ' None';
       
       let fertText = 'None';
-      if (crop.fertilizer === 'basic') fertText = '🟫 Basic Fertilizer (50% speedup applied)';
-      else if (crop.fertilizer === 'growth') fertText = '🧪 Growth Serum (Instant applied)';
-      else if (crop.fertilizer === 'yield') fertText = '🟢 Yield Booster (Double yield applied)';
+      if (crop.fertilizer === 'basic') fertText = ' Basic Fertilizer (50% speedup applied)';
+      else if (crop.fertilizer === 'growth') fertText = ' Growth Serum (Instant applied)';
+      else if (crop.fertilizer === 'yield') fertText = ' Yield Booster (Double yield applied)';
 
       cropsText += `### Plot #${i}: ${config.emoji} ${crop.crop_name} ${statusEmoji}\n` +
        `• Status: ${timeText}\n` +
@@ -183,7 +183,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🏡 Garden Plots: ${user.username}\n` +
+         `##  Garden Plots: ${user.username}\n` +
          `**Farming Skill:** Level **${fProfile.level}** · XP: \`[${progressBar}]\` **${fProfile.xp}** / **${xpNeeded}** (${xpPercentage}%)\n` +
          `**Garden Capacity:** **${crops.length}** / **${maxPlots}** active plots\n\n` +
          cropsText
@@ -251,7 +251,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🌾 Seed Sown on Plot #${plotIndex}!\n` +
+         `##  Seed Sown on Plot #${plotIndex}!\n` +
           `You tilled the soil and sowed a **${seedInput}**.\n\n` +
           `• **Crop:** ${config.emoji} ${config.name}\n` +
           `• **Growth Duration:** **${formatRemainingTime(config.time * 1000)}**\n` +
@@ -292,11 +292,11 @@ module.exports = {
 
     let pestNotice = '';
     if (result.crop.pests) {
-     pestNotice = `\n\n🐛 **WARNING:** Oh no! Damp soil has attracted **Pests**! The crop is now infested and cannot be harvested until treated with Pesticide using \`/farm treat\`.`;
+     pestNotice = `\n\n **WARNING:** Oh no! Damp soil has attracted **Pests**! The crop is now infested and cannot be harvested until treated with Pesticide using \`/farm treat\`.`;
     }
 
     const remainingMs = new Date(result.crop.harvest_ready).getTime() - Date.now();
-    const timeText = remainingMs <= 0 ? '✅ **Ready to Harvest!**' : `⏳ Ready in: **${formatRemainingTime(remainingMs)}**`;
+    const timeText = remainingMs <= 0 ? ' **Ready to Harvest!**' : ` Ready in: **${formatRemainingTime(remainingMs)}**`;
 
     const container = new ContainerBuilder()
      .setAccentColor(0x3498DB)
@@ -304,9 +304,9 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 💧 Plot #${plotIndex} Irrigated!\n` +
+         `##  Plot #${plotIndex} Irrigated!\n` +
           `You watered your ${crop.crop_name}.\n\n` +
-          `• **Watering Progress:** [${'💧'.repeat(result.crop.water_count) + '❌'.repeat(3 - result.crop.water_count)}] (${result.crop.water_count}/3)\n` +
+          `• **Watering Progress:** [${''.repeat(result.crop.water_count) + ''.repeat(3 - result.crop.water_count)}] (${result.crop.water_count}/3)\n` +
           `• **New Growth status:** ${timeText}${pestNotice}`
         )
        )
@@ -370,7 +370,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🧪 Soil Fertilized on Plot #${plotIndex}!\n` +
+         `##  Soil Fertilized on Plot #${plotIndex}!\n` +
           `You applied **${itemNeeded}** to your crop.\n\n` +
           `• **Effect:** ${effectDesc}`
         )
@@ -424,7 +424,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 💨 Pests Treated on Plot #${plotIndex}!\n` +
+         `##  Pests Treated on Plot #${plotIndex}!\n` +
           `You sprayed **Pesticide** over your crop. All pests have been cleared!\n\n` +
           `• **Status:** Crop is clean and ready for healthy harvesting.`
         )
@@ -477,11 +477,11 @@ module.exports = {
 
     if (roll < goldChance) {
      qualityPrefix = 'gold ';
-     qualityName = '⭐ Gold Star (2.5× value)';
+     qualityName = ' Gold Star (2.5× value)';
      qualityColor = 0xF1C40F;
     } else if (roll < goldChance + silverChance) {
      qualityPrefix = 'silver ';
-     qualityName = '🔸 Silver Star (1.5× value)';
+     qualityName = ' Silver Star (1.5× value)';
      qualityColor = 0xBDC3C7;
     }
 
@@ -506,7 +506,7 @@ module.exports = {
 
     let xpMsg = `\n**Farming XP:** **+${finalXp} XP** (Level **${xpResult.newLevel}** · ${xpResult.newXp}/${xpResult.newLevel * 1000})`;
     if (xpResult.levelUp) {
-     xpMsg += `\n🎉 **LEVEL UP!** Your agricultural proficiency increased! You are now **Farming Level ${xpResult.newLevel}**!`;
+     xpMsg += `\n **LEVEL UP!** Your agricultural proficiency increased! You are now **Farming Level ${xpResult.newLevel}**!`;
     }
 
     const container = new ContainerBuilder()
@@ -515,7 +515,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🌾 Harvest Successful on Plot #${plotIndex}!\n` +
+         `##  Harvest Successful on Plot #${plotIndex}!\n` +
           `You harvested the fully grown ${crop.crop_name}.\n\n` +
           `• **Yield:** **${count}x** **${rewardName.replace(/\b\w/g, c => c.toUpperCase())}**\n` +
           `• **Quality:** **${qualityName}**` +
@@ -546,7 +546,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## 🏡 Garden Plots Expanded!\n` +
+         `##  Garden Plots Expanded!\n` +
           `You paid ${EMOJIS.coin} **${cost.toLocaleString()}** coins and tilled new fertile soil.\n\n` +
           `• **New Garden capacity:** **${result.newMaxPlots} plots** available!`
         )

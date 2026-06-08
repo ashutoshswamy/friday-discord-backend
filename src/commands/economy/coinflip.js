@@ -40,7 +40,7 @@ module.exports = {
  }
  }
 
- const headsBtn = new ButtonBuilder().setCustomId('cf_heads').setLabel('Heads').setEmoji(EMOJI_IDS.coin).setStyle(ButtonStyle.Primary);
+ const headsBtn = new ButtonBuilder().setCustomId('cf_heads').setLabel('Heads').setStyle(ButtonStyle.Primary);
  const tailsBtn = new ButtonBuilder().setCustomId('cf_tails').setLabel('Tails').setStyle(ButtonStyle.Secondary);
  const skipBtn = new ButtonBuilder().setCustomId('cf_skip').setLabel('Just Flip').setStyle(ButtonStyle.Secondary);
 
@@ -104,7 +104,7 @@ module.exports = {
  }
  } else if (bet > 0 && guild) {
  await db.updateCoins(guild.id, user.id, bet);
- outcomeText += `\n\n↩ No guess — bet refunded.`;
+ outcomeText += `\n\n No guess — bet refunded.`;
  }
 
  let balanceLine = '';

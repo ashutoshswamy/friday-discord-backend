@@ -57,8 +57,8 @@ module.exports = {
       .setDescription('Sort by treasury or level (default: treasury)')
       .setRequired(false)
       .addChoices(
-       { name: '💰 Treasury Coins', value: 'treasury' },
-       { name: '⭐ Clan Level', value: 'level' }
+       { name: ' Treasury Coins', value: 'treasury' },
+       { name: ' Clan Level', value: 'level' }
       ))),
 
  async execute(interaction) {
@@ -206,7 +206,7 @@ module.exports = {
     if (!clan) return reply(nameInput ? `Clan **${nameInput}** not found.` : 'You are not in a clan.');
 
     const memberList = clan.members.slice(0, 10)
-     .map(m => m.userId === clan.ownerId ? `👑 [Owner] <@${m.userId}>` : `• <@${m.userId}>`)
+     .map(m => m.userId === clan.ownerId ? ` [Owner] <@${m.userId}>` : `• <@${m.userId}>`)
      .join('\n') || 'No members.';
 
     const maxMembers = 5 + (clan.level - 1) * 3;
@@ -220,7 +220,7 @@ module.exports = {
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        `## 🛡️ Clan: ${clan.name}\n` +
+        `## ️ Clan: ${clan.name}\n` +
         `**Level:** **${clan.level}** · **Grind Bonus:** **+${clan.level * 2}%** coins on \`/sell\`\n\n` +
         `**XP:** \`[${progressBar}]\` **${clan.xpTotal}** / **${xpNeeded}** XP (${xpPercentage}%)\n` +
         `**Owner:** <@${clan.ownerId}>\n` +
@@ -281,7 +281,7 @@ module.exports = {
     return replyContainer(new ContainerBuilder()
      .setAccentColor(0xFF3333)
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-      `## 🚨 Clan Disbanded\n**${myClan.name}** has been permanently disbanded. All members have been released.`
+      `##  Clan Disbanded\n**${myClan.name}** has been permanently disbanded. All members have been released.`
      )));
    }
 

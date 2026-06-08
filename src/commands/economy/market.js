@@ -189,11 +189,11 @@ module.exports = {
   const marketPrices = await db.getMarketPrices(guild.id, SELL_CATALOG);
 
   const categories = {
-   '🌲 Forestry': ['pine log', 'oak log', 'birch log', 'mahogany log', 'yew log', 'elderwood log', 'golden sap'],
-   '🐟 Fishing': ['junk seaweed', 'old boot', 'clam', 'common bass', 'salmon', 'pufferfish', 'goldfish', 'lobster', 'tropical coral fish', 'shark tooth', 'ancient pearl', 'mythical whale'],
-   '⛏️ Mining': ['coal', 'iron ore', 'gold ore', 'quartz crystal', 'emerald', 'ruby shard', 'diamond ore', 'crystal shard', 'mythril core'],
-   '🚜 Agriculture': ['harvested wheat', 'harvested tomato', 'harvested carrot', 'harvested golden apple'],
-   '💻 Hacking': ['decrypted hard drive', 'mainframe core', 'stolen crypto key']
+   ' Forestry': ['pine log', 'oak log', 'birch log', 'mahogany log', 'yew log', 'elderwood log', 'golden sap'],
+   ' Fishing': ['junk seaweed', 'old boot', 'clam', 'common bass', 'salmon', 'pufferfish', 'goldfish', 'lobster', 'tropical coral fish', 'shark tooth', 'ancient pearl', 'mythical whale'],
+   '️ Mining': ['coal', 'iron ore', 'gold ore', 'quartz crystal', 'emerald', 'ruby shard', 'diamond ore', 'crystal shard', 'mythril core'],
+   ' Agriculture': ['harvested wheat', 'harvested tomato', 'harvested carrot', 'harvested golden apple'],
+   ' Hacking': ['decrypted hard drive', 'mainframe core', 'stolen crypto key']
   };
 
   let indexText = '';
@@ -206,7 +206,7 @@ module.exports = {
     const price = current ? current.price : basePrice;
 
     const change = price - basePrice;
-    const trendSign = change > 0 ? '📈 +' : change < 0 ? '📉 -' : '▫️ ';
+    const trendSign = change > 0 ? ' +' : change < 0 ? ' -' : '️ ';
     const diffText = change !== 0 ? ` (${trendSign}${Math.abs(change)} coins)` : '';
     const eventSuffix = current && current.eventText ? ` · *Event active!*` : '';
 
@@ -224,7 +224,7 @@ module.exports = {
     new SectionBuilder()
      .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-       `## 📈 Dynamic Commodity Market Index\n` +
+       `##  Dynamic Commodity Market Index\n` +
        `Prices fluctuate based on global player sell supply. Every sale decays price instantly. Prices recover slowly every hour towards base values.\n\n` +
        indexText
       )

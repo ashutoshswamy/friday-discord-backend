@@ -16,9 +16,9 @@ module.exports = {
         .setDescription('Select the allowance interval to claim')
         .setRequired(true)
         .addChoices(
-          { name: '📅 Daily Allowance (200 coins)', value: 'daily' },
-          { name: '📅 Weekly Allowance (1,000–3,500 coins)', value: 'weekly' },
-          { name: '📅 Monthly Allowance (5,000–15,000 coins)', value: 'monthly' }
+          { name: ' Daily Allowance (200 coins)', value: 'daily' },
+          { name: ' Weekly Allowance (1,000–3,500 coins)', value: 'weekly' },
+          { name: ' Monthly Allowance (5,000–15,000 coins)', value: 'monthly' }
         )
     ),
 

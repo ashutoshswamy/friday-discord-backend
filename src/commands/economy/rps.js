@@ -94,7 +94,7 @@ module.exports = {
         color = 0x94a3b8;
         if (bet > 0 && guild) {
           await db.updateCoins(guild.id, user.id, bet);
-          resultText += '\n↩ Bet refunded.';
+          resultText += '\n Bet refunded.';
         }
       } else if (playerData.beats === botChoice) {
         resultText = `You **Win**!`;
@@ -149,7 +149,7 @@ module.exports = {
           .setAccentColor(0x6b7280)
           .addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-              `You took too long to make your move!` + (bet > 0 ? '\n↩ Bet refunded.' : '')
+              `You took too long to make your move!` + (bet > 0 ? '\n Bet refunded.' : '')
             )
           )
           .addActionRowComponents(

@@ -54,15 +54,16 @@ const pages = {
  { name: '`/gift coins [user] [amount]`', value: 'Securely transfers active wallet coin balances.' },
  { name: '`/gift item [user] [item_name]`', value: 'Atomically shifts item ownership record entries in the inventory database.' },
  { name: '`/economy [action] [user] [amount]`', value: 'Spawns or deducts server coins from a member wallet (Admin).' },
- { name: '`/daily`', value: 'Collects daily coin reward payouts (200 coins, 24h cooldown).' },
- { name: '`/weekly`', value: 'Collects weekly random coin reward (1,000–3,500 coins, 7-day cooldown).' },
- { name: '`/monthly`', value: 'Collects monthly random coin reward (5,000–15,000 coins, 30-day cooldown).' },
+ { name: '`/claim [reward]`', value: 'Claim your periodic server allowance (daily, weekly, or monthly coins).' },
  { name: '`/work`', value: 'Performs hourly shift duties. Pay scales with your current job tier (50–660 coins/shift).' },
  { name: '`/job list`', value: 'Browses all 12 available careers across 4 tiers with pay ranges and XP bonuses.' },
  { name: '`/beg`', value: 'Beg strangers for spare change. Grants coins (20 to 120) or rare scavenged junk items.' },
  { name: '`/search`', value: 'Selects active buttons to scavenge random locations. (Includes catch/bite penalties).' },
  { name: '`/scramble`', value: 'Starts a channel word scramble — first to unscramble wins coins + XP. Reward scales by word length (base: length × 35 coins). Speed bonuses: answer in ≤15s for +75%, ≤30s for +40%, ≤45s for +15%.' },
  { name: '`/crime [type]`', value: 'Attempt pickpocket (62%), carjack (42%), or fraud (28%). Success earns coins; failure deducts a fine. Separate cooldowns per crime type.' },
+ { name: '`/hack`', value: 'Bypass digital mainframes to steal coins or valuable files. Requires a Hacker Laptop.' },
+ { name: '`/lottery view/buy`', value: 'Participate in the global server daily lottery jackpot (100 coins per ticket).' },
+ { name: '`/quest view` / `/quest claim [index]`', value: 'Manage your daily challenges and claim coin + XP rewards.' },
  { name: '`/cooldowns`', value: 'Shows a full dashboard of all your active command cooldowns — DB-based (daily/work) and in-memory (slots/dice/trivia etc.).' }
  ]
  },
@@ -86,6 +87,8 @@ const pages = {
  { name: '`/blackjack [bet]`', value: 'Play high-stakes Blackjack using interactive Hit & Stand components against the dealer.' },
  { name: '`/highlow [bet]`', value: 'Draw a card and guess if the next is higher or lower. Chain correct guesses to climb multipliers up to 4.5×. Cash out anytime.' },
  { name: '`/dice [bet]`', value: 'Roll two dice against Friday. Higher total wins 2×. Tie refunds your bet.' },
+ { name: '`/coinflip [bet]`', value: 'Flip a coin — pick Heads or Tails and optionally bet coins on it.' },
+ { name: '`/rps [bet]`', value: 'Play Rock, Paper, Scissors against Friday. Optionally bet coins.' },
  { name: '`/horse [horse] [bet]`', value: 'Bet on one of 5 horses in a live-narrated race. Odds range from 1.8× (favourite) to 6× (dark horse).' },
  { name: '`/slots [bet]`', value: 'Spins cyber slot rollers for high winning coin multipliers.' },
  { name: '`/roulette [bet] [space]`', value: 'Color (red/black/green) and number roulette game following casino house odds.' },
@@ -103,16 +106,22 @@ const pages = {
  { name: '`/fish`', value: 'Casts fishing lines (requires Fishing Pole). Awards 12 drops: Clam → Common Bass → Pufferfish → Salmon → Lobster → Goldfish → Coral Fish → Shark Tooth → Ancient Pearl → Mythical Whale.' },
  { name: '`/dig`', value: 'Excavates the ground (requires Shovel). Awards 9 drops: Common Worm → Old Coin → Cracked Geode → Dirt Fossil → Ancient Vase → Sapphire → Ruby → Diamond → Buried Gold Chest.' },
  { name: '`/mine`', value: 'Excavates the mine shaft (requires Pickaxe). Awards 9 ore tiers: Coal → Iron Ore → Gold Ore → Quartz Crystal → Emerald → Ruby Shard → Diamond Ore → Crystal Shard → Mythril Core.' },
+ { name: '`/chop`', value: 'Chop wood in the forest for logs. Requires an Axe (Pine → Oak → Birch → Mahogany → Yew → Elderwood → Golden Sap).' },
+ { name: '`/craft list` / `/craft item [name]`', value: 'Combine materials in your inventory to craft new items and tools (Axe, Shovel, Pole, Laptop, Lootbox, etc.).' },
+ { name: '`/farm view` / `/farm plant` / `/farm harvest`', value: 'Manage your garden grid, plant seeds, water, fertilize, treat pests, and harvest crops.' },
+ { name: '`/farm expand`', value: 'Buy another garden plot to plant more crops concurrently.' },
  { name: '`/inventory [user]`', value: 'Exposes user items portfolio, details, and purchase timestamps.' },
  { name: '`/shop view`', value: 'Displays server shop with interactive buy menu.' },
+ { name: '`/shop buy [item]`', value: 'Purchase an item from the server shop by name.' },
  { name: '`/shop catalog`', value: 'Shows all built-in items (tools, consumables, collectibles) with suggested prices for admins.' },
- { name: '`/buy [item]`', value: 'Buys an item from the server shop by name.' },
+ { name: '`/shop add` / `/shop remove`', value: 'Add or remove custom items in the server shop (Admin).' },
  { name: '`/sell [item] [amount]`', value: 'Sells collected loot items back to the merchant. 30+ sellable items including gems, pelts, fish, and fossils.' },
  { name: '`/use [item]`', value: 'Consumes items for perks: Pizza (150 XP), XP Potion (300 XP), Energy Drink (300 coins), Work Gloves (500 coins), Coin Bomb (800–4,000 coins), Lootbox, Mystery Crate.' },
  { name: '`/market view`', value: 'Browses player-posted auction listings (Listing ID, Seller, Price, Timestamp).' },
  { name: '`/market list [item] [price]`', value: 'Lists an item from your inventory up for sale for a custom coin price.' },
  { name: '`/market buy [listing_id]`', value: 'Buys listed item from market, transfers coins to seller, and moves item to buyer.' },
  { name: '`/market cancel [listing_id]`', value: 'Cancels your active market listing and reclaims your item.' },
+ { name: '`/market index`', value: 'View the dynamic supply/demand commodity price indices.' },
  { name: '`/trade [@user]`', value: 'Opens an interactive bilateral trade session. Both parties offer coins and up to 5 items each. Trade executes only when both confirm.' }
  ]
  },
@@ -174,7 +183,8 @@ const pages = {
  { name: '`/urban [word]`', value: 'Fetches definitions from Urban Dictionary API.' },
  { name: '`/weather [location]`', value: 'Fetches wttr.in real-time atmospheric updates.' },
  { name: '`/poll [question] [opts]`', value: 'Constructs custom multi-option reaction voting panels.' },
- { name: '`/embed`', value: 'Configures visual rich embeds through standard JSON builders (Admin).' }
+ { name: '`/embed`', value: 'Configures visual rich embeds through standard JSON builders (Admin).' },
+ { name: '`/meme [subreddit]`', value: 'Fetches a random funny meme image from Reddit.' }
  ]
  },
  help_stocks: {
@@ -216,6 +226,8 @@ const pages = {
  { name: '`/clan kick [@user]`', value: 'Remove a member from your clan (owner only).' },
  { name: '`/clan info [name?]`', value: 'View clan stats, treasury, level, and roster. Leave name blank to view your own clan.' },
  { name: '`/clan deposit [amount]`', value: 'Contribute coins from your wallet to the clan treasury.' },
+ { name: '`/clan rename [name]`', value: 'Rename your clan (costs 2,500 coins from clan treasury, owner only).' },
+ { name: '`/clan disband`', value: 'Disband your clan permanently (owner only).' },
  { name: '`/clan leaderboard`', value: 'View the top 10 clans ranked by treasury wealth on this server.' }
  ]
  },
@@ -290,35 +302,35 @@ function buildHelpContainer(pageKey, user) {
 }
 
 function buildMenu(disabled = false) {
- const menu = new StringSelectMenuBuilder()
- .setCustomId('help_select')
- .setPlaceholder('Select a Protocol category...')
- .setDisabled(disabled)
- .addOptions(
- new StringSelectMenuOptionBuilder().setLabel('Galaxy System Overview').setDescription('Bot introduction, core systems specs & categories.').setValue('overview'),
- new StringSelectMenuOptionBuilder().setLabel('Core & AI Systems').setDescription('/friday ask, rewrite, summarize, customcmd add/remove.').setValue('help_core'),
- new StringSelectMenuOptionBuilder().setLabel('Economy & Banking').setDescription('/balance, deposit, wages, daily, weekly, monthly, scramble.').setValue('help_economy'),
- new StringSelectMenuOptionBuilder().setLabel('Job Ecosystem').setDescription('/job list, apply, quit, profile. Tiered careers that scale /work pay.').setValue('help_jobs'),
- new StringSelectMenuOptionBuilder().setLabel('Casino & Heists').setDescription('/blackjack, slots, roulette, cockfights, heists.').setValue('help_casino'),
- new StringSelectMenuOptionBuilder().setLabel('Scavenging & Shop').setDescription('/hunt, fish, dig, sell 30+ items, consumables, market bazaar.').setValue('help_grinding'),
- new StringSelectMenuOptionBuilder().setLabel('Stocks & Trading').setDescription('/stock list, quote, buy, sell, portfolio open/close/view.').setValue('help_stocks'),
- new StringSelectMenuOptionBuilder().setLabel('Pets & Leveling').setDescription('/pet adopt, feed, train, rename, release, battle, ranks.').setValue('help_pets_leveling'),
- new StringSelectMenuOptionBuilder().setLabel('Social & Trivia').setDescription('/profile, bio, rep, marry, trivia quiz rewards.').setValue('help_social'),
- new StringSelectMenuOptionBuilder().setLabel('Clans').setDescription('/clan create, invite, join, leave, deposit, leaderboard.').setValue('help_clan'),
- new StringSelectMenuOptionBuilder().setLabel('Fun & Text').setDescription('/mock, reverse, ascii block art.').setValue('help_fun'),
- new StringSelectMenuOptionBuilder().setLabel('Moderation & AutoMod').setDescription('/automod, warns, slowmodes, purges, locks, kicks, bans.').setValue('help_moderation'),
- new StringSelectMenuOptionBuilder().setLabel('Onboarding & Utility').setDescription('Welcome visual cards, auto-roles, tickets portal, widgets.').setValue('help_utility'),
- new StringSelectMenuOptionBuilder().setLabel('Giveaways & Event Logs').setDescription('/giveaway, events, voice locks, audit logs list, streamers alerts.').setValue('help_giveaways'),
- new StringSelectMenuOptionBuilder().setLabel('Analytics (Admin)').setDescription('/analytics overview, topspenders, activity — admin only.').setValue('help_analytics')
- );
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId('help_select')
+    .setPlaceholder('Select a Protocol category...')
+    .setDisabled(disabled)
+    .addOptions(
+      new StringSelectMenuOptionBuilder().setLabel('Galaxy System Overview').setDescription('Bot introduction, core systems specs & categories.').setValue('overview'),
+      new StringSelectMenuOptionBuilder().setLabel('Core & AI Systems').setDescription('/friday ask, rewrite, summarize, customcmd add/remove.').setValue('help_core'),
+      new StringSelectMenuOptionBuilder().setLabel('Economy & Banking').setDescription('/balance, deposit, wages, claim, scramble, hack, lottery, quests.').setValue('help_economy'),
+      new StringSelectMenuOptionBuilder().setLabel('Job Ecosystem').setDescription('/job list, apply, quit, profile. Tiered careers that scale /work pay.').setValue('help_jobs'),
+      new StringSelectMenuOptionBuilder().setLabel('Casino & Heists').setDescription('/blackjack, slots, roulette, cockfights, coinflip, rps, heists.').setValue('help_casino'),
+      new StringSelectMenuOptionBuilder().setLabel('Scavenging & Shop').setDescription('/hunt, fish, dig, chop, craft, farm, market, shop, trade.').setValue('help_grinding'),
+      new StringSelectMenuOptionBuilder().setLabel('Stocks & Trading').setDescription('/stock list, quote, buy, sell, portfolio open/close/view.').setValue('help_stocks'),
+      new StringSelectMenuOptionBuilder().setLabel('Pets & Leveling').setDescription('/pet adopt, feed, train, rename, release, battle, ranks.').setValue('help_pets_leveling'),
+      new StringSelectMenuOptionBuilder().setLabel('Social & Trivia').setDescription('/profile, bio, rep, marry, trivia quiz rewards.').setValue('help_social'),
+      new StringSelectMenuOptionBuilder().setLabel('Clans').setDescription('/clan create, invite, join, leave, deposit, rename, disband, leaderboard.').setValue('help_clan'),
+      new StringSelectMenuOptionBuilder().setLabel('Fun & Text').setDescription('/mock, reverse, ascii block art.').setValue('help_fun'),
+      new StringSelectMenuOptionBuilder().setLabel('Moderation & AutoMod').setDescription('/automod, warns, slowmodes, purges, locks, kicks, bans.').setValue('help_moderation'),
+      new StringSelectMenuOptionBuilder().setLabel('Onboarding & Utility').setDescription('Welcome visual cards, auto-roles, tickets portal, meme, weather, ping.').setValue('help_utility'),
+      new StringSelectMenuOptionBuilder().setLabel('Giveaways & Event Logs').setDescription('/giveaway, events, voice locks, audit logs list, streamers alerts.').setValue('help_giveaways'),
+      new StringSelectMenuOptionBuilder().setLabel('Analytics (Admin)').setDescription('/analytics overview, topspenders, activity — admin only.').setValue('help_analytics')
+    );
 
- return new ActionRowBuilder().addComponents(menu);
+  return new ActionRowBuilder().addComponents(menu);
 }
 
 module.exports = {
- data: new SlashCommandBuilder()
- .setName('help')
- .setDescription('Displays a premium interactive help manual containing all 79 Friday bot protocols.'),
+  data: new SlashCommandBuilder()
+    .setName('help')
+    .setDescription('Displays a premium interactive help manual containing all 99 Friday bot protocols.'),
 
  async execute(interaction) {
  const { guild, user } = interaction;

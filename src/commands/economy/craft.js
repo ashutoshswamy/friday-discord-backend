@@ -12,77 +12,77 @@ const RECIPES = {
   description: 'Lumberjack axe required to chop wood.',
   ingredients: { 'iron ore': 5, 'oak log': 3 },
   result: 'Axe',
-  emoji: '🪓'
+  emoji: ''
  },
  laptop: {
   name: 'Hacker Laptop',
   description: 'Black-market hacker deck required for mainframe intrusions.',
   ingredients: { 'coal': 10, 'gold ore': 5, 'birch log': 5 },
   result: 'Hacker Laptop',
-  emoji: '💻'
+  emoji: ''
  },
  pole: {
   name: 'Fishing Pole',
   description: 'Robust casting rod required to go fishing.',
   ingredients: { 'pine log': 5, 'common worm': 3 },
   result: 'Fishing Pole',
-  emoji: '🎣'
+  emoji: ''
  },
  shovel: {
   name: 'Shovel',
   description: 'Excavation shovel required to dig up treasures.',
   ingredients: { 'iron ore': 3, 'pine log': 2 },
   result: 'Shovel',
-  emoji: '🧹'
+  emoji: ''
  },
  lootbox: {
   name: 'Lootbox',
   description: 'Interactive spinner chest containing random items.',
   ingredients: { 'silver ring': 1, 'common gem': 1 },
   result: 'Lootbox',
-  emoji: '📦'
+  emoji: ''
  },
  drink: {
   name: 'Energy Drink',
   description: 'Restores stamina and awards 300 coins instantly.',
   ingredients: { 'junk seaweed': 3, 'pufferfish': 1 },
   result: 'Energy Drink',
-  emoji: '🥤'
+  emoji: ''
  },
  sap: {
   name: 'Golden Sap',
   description: 'Highly valuable resin extracted from elder trees.',
   ingredients: { 'pine log': 10, 'oak log': 5, 'gold ore': 1 },
   result: 'Golden Sap',
-  emoji: '🍯'
+  emoji: ''
  },
  fertilizer: {
   name: 'Basic Fertilizer',
   description: 'Red-brown compost. Speeds up crop growth by 50% instantly.',
   ingredients: { 'coal': 3, 'junk seaweed': 2 },
   result: 'Basic Fertilizer',
-  emoji: '🟫'
+  emoji: ''
  },
  serum: {
   name: 'Growth Serum',
   description: 'Glowing golden fluid. Near-instant crop growth (1 second remaining).',
   ingredients: { 'golden sap': 1, 'quartz crystal': 2 },
   result: 'Growth Serum',
-  emoji: '🧪'
+  emoji: ''
  },
  booster: {
   name: 'Yield Booster',
   description: 'Enriched soil mix. Doubles the amount of crops harvested.',
   ingredients: { 'gold ore': 3, 'ancient pearl': 1 },
   result: 'Yield Booster',
-  emoji: '🟢'
+  emoji: ''
  },
  pesticide: {
   name: 'Pesticide',
   description: 'Chemical treatment to cure pest infestations on growing crops.',
   ingredients: { 'coal': 2, 'pufferfish': 2 },
   result: 'Pesticide',
-  emoji: '💨'
+  emoji: ''
  }
 };
 
@@ -102,17 +102,17 @@ module.exports = {
       .setDescription('Select the item to craft')
       .setRequired(true)
       .addChoices(
-       { name: '🪓 Axe', value: 'axe' },
-       { name: '💻 Hacker Laptop', value: 'laptop' },
-       { name: '🎣 Fishing Pole', value: 'pole' },
-       { name: '🧹 Shovel', value: 'shovel' },
-       { name: '📦 Lootbox', value: 'lootbox' },
-       { name: '🥤 Energy Drink', value: 'drink' },
-       { name: '🍯 Golden Sap', value: 'sap' },
-       { name: '🟫 Basic Fertilizer', value: 'fertilizer' },
-       { name: '🧪 Growth Serum', value: 'serum' },
-       { name: '🟢 Yield Booster', value: 'booster' },
-       { name: '💨 Pesticide', value: 'pesticide' }
+       { name: ' Axe', value: 'axe' },
+       { name: ' Hacker Laptop', value: 'laptop' },
+       { name: ' Fishing Pole', value: 'pole' },
+       { name: ' Shovel', value: 'shovel' },
+       { name: ' Lootbox', value: 'lootbox' },
+       { name: ' Energy Drink', value: 'drink' },
+       { name: ' Golden Sap', value: 'sap' },
+       { name: ' Basic Fertilizer', value: 'fertilizer' },
+       { name: ' Growth Serum', value: 'serum' },
+       { name: ' Yield Booster', value: 'booster' },
+       { name: ' Pesticide', value: 'pesticide' }
       )
     )
   ),
@@ -143,7 +143,7 @@ module.exports = {
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(`## ⚒️ Crafting Blueprint Catalog\nCombine gathered logs, ores, and scraps to craft advanced items.\n\n${recipesText}`)
+        new TextDisplayBuilder().setContent(`## ️ Crafting Blueprint Catalog\nCombine gathered logs, ores, and scraps to craft advanced items.\n\n${recipesText}`)
        )
        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      )
@@ -202,7 +202,7 @@ module.exports = {
       new SectionBuilder()
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-         `## ⚒️ Crafting Success!\n` +
+         `## ️ Crafting Success!\n` +
           `You stilled your hands and forged a brand new item!\n\n` +
           `**Item Crafted:** ${recipe.emoji} **${recipe.result}**\n` +
           `**Result:** Placed in your inventory.`
