@@ -5,7 +5,7 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { EMOJIS, EMOJI_IDS } = require('../../utils/emojis');
+const { EMOJIS, EMOJI_IDS, getEmoji, getEmojiId } = require('../../utils/emojis');
 
 // Align sellable prices with sell.js catalog
 const SELLABLE_ITEMS = {
@@ -42,7 +42,7 @@ const SELLABLE_ITEMS = {
 
 function buildInventoryContainer(targetUser, itemCounts, items, extraText, sellBtn, useBtn, sellableOwned) {
     const listText = Object.keys(itemCounts).length > 0
-        ? Object.entries(itemCounts).map(([name, count]) => `• **${name}**${count > 1 ? ` ×${count}` : ''}`).join('\n')
+        ? Object.entries(itemCounts).map(([name, count]) => `• ${getEmoji(name)} **${name}**${count > 1 ? ` ×${count}` : ''}`).join('\n')
         : '*Inventory is now empty*';
 
     const container = new ContainerBuilder()
@@ -135,7 +135,7 @@ module.exports = {
                     label: `${name} (×${itemCounts[name]})`,
                     description: `Sells for ${SELLABLE_ITEMS[name.toLowerCase()]} coins each`,
                     value: `sell_${name}`,
-                    emoji: EMOJI_IDS.coin
+                    emoji: getEmojiId(name) || EMOJI_IDS.coin
                 }));
 
                 const sellSelect = new StringSelectMenuBuilder()
@@ -209,7 +209,7 @@ module.exports = {
                             label: `${name} (×${refreshedCounts[name]})`,
                             description: `Sells for ${SELLABLE_ITEMS[name.toLowerCase()]} coins each`,
                             value: `sell_${name}`,
-                            emoji: EMOJI_IDS.coin
+                            emoji: getEmojiId(name) || EMOJI_IDS.coin
                         }));
                         const newSellSelect = new StringSelectMenuBuilder()
                             .setCustomId('inv_sell_select')
@@ -318,7 +318,7 @@ module.exports = {
                                 label: `${name} (×${currentCounts[name]})`,
                                 description: `Sells for ${SELLABLE_ITEMS[name.toLowerCase()]} coins each`,
                                 value: `sell_${name}`,
-                                emoji: EMOJI_IDS.coin
+                                emoji: getEmojiId(name) || EMOJI_IDS.coin
                             }));
                             const sellSelect = new StringSelectMenuBuilder()
                                 .setCustomId('inv_sell_select')
@@ -384,7 +384,7 @@ module.exports = {
                             label: `${name} (×${refreshedCounts[name]})`,
                             description: `Sells for ${SELLABLE_ITEMS[name.toLowerCase()]} coins each`,
                             value: `sell_${name}`,
-                            emoji: EMOJI_IDS.coin
+                            emoji: getEmojiId(name) || EMOJI_IDS.coin
                         }));
                         const sellSelect = new StringSelectMenuBuilder()
                             .setCustomId('inv_sell_select')

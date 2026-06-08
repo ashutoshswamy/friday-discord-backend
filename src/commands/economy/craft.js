@@ -4,7 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { EMOJIS } = require('../../utils/emojis');
+const { EMOJIS, getEmoji } = require('../../utils/emojis');
 
 const RECIPES = {
  axe: {
@@ -130,10 +130,10 @@ module.exports = {
      const r = RECIPES[key];
      const ingredientLines = [];
      for (const ing in r.ingredients) {
-      ingredientLines.push(`• **${r.ingredients[ing]}x** ${ing.replace(/\b\w/g, c => c.toUpperCase())}`);
+      ingredientLines.push(`• **${r.ingredients[ing]}x** ${getEmoji(ing)} ${ing.replace(/\b\w/g, c => c.toUpperCase())}`);
      }
 
-     recipesText += `### ${r.emoji} ${r.name}\n` +
+     recipesText += `### ${getEmoji(r.name)} ${r.name}\n` +
       `*${r.description}*\n` +
       `**Requires:**\n${ingredientLines.join('\n')}\n\n`;
     }

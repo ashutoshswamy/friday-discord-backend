@@ -4,6 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
+const { getEmoji } = require('../../utils/emojis');
 
 const cooldowns = new Map();
 
@@ -64,7 +65,7 @@ module.exports = {
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(
-      `**Ore Extracted:** Added **${reward.name}** to your inventory\n` +
+      `**Ore Extracted:** Added ${getEmoji(reward.name)} **${reward.name}** to your inventory\n` +
       `-# Use \`/sell\` to cash it in at the merchant!`
      )
     );

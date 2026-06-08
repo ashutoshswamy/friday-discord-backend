@@ -3,7 +3,7 @@ const {
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
  SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
-const { EMOJIS } = require('../../utils/emojis');
+const { EMOJIS, getEmoji } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 const SELL_CATALOG = {
@@ -166,7 +166,7 @@ module.exports = {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Merchant Trade Confirmed\nYou traded **${removedCount}x ${originalItemName}** to the local merchant!`
+  `## Merchant Trade Confirmed\nYou traded **${removedCount}x ${getEmoji(originalItemName)} ${originalItemName}** to the local merchant!`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))

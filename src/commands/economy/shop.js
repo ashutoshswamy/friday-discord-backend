@@ -5,7 +5,7 @@ const {
  ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { EMOJIS, EMOJI_IDS } = require('../../utils/emojis');
+const { EMOJIS, EMOJI_IDS, getEmoji, getEmojiId } = require('../../utils/emojis');
 
 module.exports = {
  data: new SlashCommandBuilder()
@@ -134,17 +134,17 @@ module.exports = {
  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [emptyContainer] });
  }
 
- const itemsText = items.map(item => {
- const roleText = item.roleRewardId ? `\n Grants: <@&${item.roleRewardId}>` : '';
- return `** ${item.name}** — ${EMOJIS.coin} **${item.cost.toLocaleString()}** coins\n *${item.description}*${roleText}`;
- }).join('\n\n');
+  const itemsText = items.map(item => {
+  const roleText = item.roleRewardId ? `\n Grants: <@&${item.roleRewardId}>` : '';
+  return `**${getEmoji(item.name)} ${item.name}** — ${EMOJIS.coin} **${item.cost.toLocaleString()}** coins\n *${item.description}*${roleText}`;
+  }).join('\n\n');
 
- const buyOptions = items.slice(0, 25).map(item => ({
- label: item.name,
- description: `${item.cost.toLocaleString()} coins${item.roleRewardId ? ' · Grants a role' : ''}`,
- value: `buy_${item.name}`,
- emoji: EMOJI_IDS.coin
- }));
+  const buyOptions = items.slice(0, 25).map(item => ({
+  label: item.name,
+  description: `${item.cost.toLocaleString()} coins${item.roleRewardId ? ' · Grants a role' : ''}`,
+  value: `buy_${item.name}`,
+  emoji: getEmojiId(item.name) || EMOJI_IDS.coin
+  }));
 
  const buySelect = new StringSelectMenuBuilder()
  .setCustomId('shop_buy_select')
@@ -250,28 +250,28 @@ module.exports = {
  }
 
  if (subcommand === 'catalog') {
- const toolsText =
-  `**Tools** *(required for grind commands)*\n` +
-  `• **Hunting Rifle** — required for \`/hunt\` · Suggested price: ${EMOJIS.coin} 500\n` +
-  `• **Fishing Pole** — required for \`/fish\` · Suggested price: ${EMOJIS.coin} 400\n` +
-  `• **Shovel** — required for \`/dig\` · Suggested price: ${EMOJIS.coin} 300`;
+  const toolsText =
+   `**Tools** *(required for grind commands)*\n` +
+   `• ${getEmoji('hunting rifle')} **Hunting Rifle** — required for \`/hunt\` · Suggested price: ${EMOJIS.coin} 500\n` +
+   `• ${getEmoji('fishing pole')} **Fishing Pole** — required for \`/fish\` · Suggested price: ${EMOJIS.coin} 400\n` +
+   `• ${getEmoji('shovel')} **Shovel** — required for \`/dig\` · Suggested price: ${EMOJIS.coin} 300`;
 
- const consumablesText =
-  `**Consumables** *(used via \`/use\`)*\n` +
-  `• **Pizza** — grants 150 XP instantly · Suggested: ${EMOJIS.coin} 800\n` +
-  `• **XP Potion** — grants 300 XP instantly · Suggested: ${EMOJIS.coin} 1,500\n` +
-  `• **Energy Drink** — grants 300 coins to wallet · Suggested: ${EMOJIS.coin} 500\n` +
-  `• **Work Gloves** — grants 500 coins to wallet · Suggested: ${EMOJIS.coin} 800\n` +
-  `• **Coin Bomb** — explodes for 800–4,000 random coins · Suggested: ${EMOJIS.coin} 2,000\n` +
-  `• **Lootbox** — random prize (coins, XP, Silver Ring) · Suggested: ${EMOJIS.coin} 1,200\n` +
-  `• **Mystery Crate** — upgraded lootbox with gem drops · Suggested: ${EMOJIS.coin} 3,500`;
+  const consumablesText =
+   `**Consumables** *(used via \`/use\`)*\n` +
+   `• ${getEmoji('pizza')} **Pizza** — grants 150 XP instantly · Suggested: ${EMOJIS.coin} 800\n` +
+   `• ${getEmoji('xp potion')} **XP Potion** — grants 300 XP instantly · Suggested: ${EMOJIS.coin} 1,500\n` +
+   `• ${getEmoji('energy drink')} **Energy Drink** — grants 300 coins to wallet · Suggested: ${EMOJIS.coin} 500\n` +
+   `• ${getEmoji('work gloves')} **Work Gloves** — grants 500 coins to wallet · Suggested: ${EMOJIS.coin} 800\n` +
+   `• ${getEmoji('coin bomb')} **Coin Bomb** — explodes for 800–4,000 random coins · Suggested: ${EMOJIS.coin} 2,000\n` +
+   `• ${getEmoji('lootbox')} **Lootbox** — random prize (coins, XP, Silver Ring) · Suggested: ${EMOJIS.coin} 1,200\n` +
+   `• ${getEmoji('mystery crate')} **Mystery Crate** — upgraded lootbox with gem drops · Suggested: ${EMOJIS.coin} 3,500`;
 
- const collectiblesText =
-  `**Collectibles** *(sell via \`/sell\` or trade on \`/market\`)*\n` +
-  `• **Common Gem** — sell value ${EMOJIS.coin} 750\n` +
-  `• **Rare Gem** — sell value ${EMOJIS.coin} 3,500 · drops from Mystery Crate\n` +
-  `• **Legendary Gem** — sell value ${EMOJIS.coin} 12,000 · rare Mystery Crate drop\n` +
-  `• **Silver Ring** — sell value ${EMOJIS.coin} 1,000 · Lootbox rare drop`;
+  const collectiblesText =
+   `**Collectibles** *(sell via \`/sell\` or trade on \`/market\`)*\n` +
+   `• ${getEmoji('common gem')} **Common Gem** — sell value ${EMOJIS.coin} 750\n` +
+   `• ${getEmoji('rare gem')} **Rare Gem** — sell value ${EMOJIS.coin} 3,500 · drops from Mystery Crate\n` +
+   `• ${getEmoji('legendary gem')} **Legendary Gem** — sell value ${EMOJIS.coin} 12,000 · rare Mystery Crate drop\n` +
+   `• ${getEmoji('silver ring')} **Silver Ring** — sell value ${EMOJIS.coin} 1,000 · Lootbox rare drop`;
 
  const grindDropsText =
   `**Grind Drops** *(auto-dropped, sell via \`/sell\` or trade via \`/market\`)*\n` +

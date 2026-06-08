@@ -4,7 +4,7 @@ const {
  SeparatorBuilder, SeparatorSpacingSize,
  ActionRowBuilder, StringSelectMenuBuilder, MessageFlags
 } = require('discord.js');
-const { EMOJIS } = require('../../utils/emojis');
+const { EMOJIS, getEmoji, getEmojiId } = require('../../utils/emojis');
 const db = require('../../utils/db');
 
 const BUILT_IN_CONSUMABLES = new Set([
@@ -24,7 +24,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Delicious Pizza!\nYou ate the **Pizza**! It was absolutely delicious!\nYou gained ** 150 XP** instantly towards your rank.`
+ `## Delicious Pizza!\nYou ate the ${getEmoji('pizza')} **Pizza**! It was absolutely delicious!\nYou gained ** 150 XP** instantly towards your rank.`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -41,7 +41,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
  new SectionBuilder()
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
- `## Energy Boost!\nYou gulped down the **${matchedItem}** and felt a surge of productivity!\nYou earned **${EMOJIS.coin} 300 coins** directly in your wallet.`
+ `## Energy Boost!\nYou gulped down the ${getEmoji(matchedItem)} **${matchedItem}** and felt a surge of productivity!\nYou earned **${EMOJIS.coin} 300 coins** directly in your wallet.`
  )
  )
  .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -60,7 +60,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
  } else if (roll < 0.30) {
  await db.addItemToInventory(guild.id, user.id, 'Silver Ring');
  prizeTitle = ' Rare Item!';
- prizeDesc = `You extracted a rare collectible:\n **Silver Ring** added to your \`/inventory\`!`;
+ prizeDesc = `You extracted a rare collectible:\n ${getEmoji('Silver Ring')} **Silver Ring** added to your \`/inventory\`!`;
  } else if (roll < 0.60) {
  const xpGain = Math.floor(Math.random() * 201) + 100;
  await db.addXp(guild.id, user.id, xpGain);
@@ -95,7 +95,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## XP Surge!\nYou drank the **XP Potion** in one gulp!\nYou gained ** 300 XP** instantly towards your rank.`
+        `## XP Surge!\nYou drank the ${getEmoji('xp potion')} **XP Potion** in one gulp!\nYou gained ** 300 XP** instantly towards your rank.`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -113,7 +113,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## ${EMOJIS.coin} BOOM! Coin Bomb!\nThe **Coin Bomb** detonated and showered you in cash!\nYou collected **${EMOJIS.coin} ${coinGain.toLocaleString()} coins** in your wallet.`
+        `## ${EMOJIS.coin} BOOM! Coin Bomb!\nThe ${getEmoji('coin bomb')} **Coin Bomb** detonated and showered you in cash!\nYou collected **${EMOJIS.coin} ${coinGain.toLocaleString()} coins** in your wallet.`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -131,7 +131,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
      new SectionBuilder()
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
-        `## Work Gloves Equipped!\nYou slipped on the **Work Gloves** and got straight to work!\nYou earned **${EMOJIS.coin} 500 coins** as a bonus payout.`
+        `## Work Gloves Equipped!\nYou slipped on the ${getEmoji('work gloves')} **Work Gloves** and got straight to work!\nYou earned **${EMOJIS.coin} 500 coins** as a bonus payout.`
        )
       )
       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
@@ -146,7 +146,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
   if (roll < 0.05) {
    await db.addItemToInventory(guild.id, user.id, 'Legendary Gem');
    prizeTitle = ' LEGENDARY DROP!';
-   prizeDesc = `The crate burst open with radiant light!\n**Legendary Gem** added to your \`/inventory\` — worth a fortune on the \`/market\`!`;
+   prizeDesc = `The crate burst open with radiant light!\n${getEmoji('Legendary Gem')} **Legendary Gem** added to your \`/inventory\` — worth a fortune on the \`/market\`!`;
   } else if (roll < 0.15) {
    await db.updateCoins(guild.id, user.id, 5000);
    prizeTitle = ' MEGA JACKPOT!';
@@ -154,7 +154,7 @@ async function processItem(guild, user, matchedItem, shopItems) {
   } else if (roll < 0.35) {
    await db.addItemToInventory(guild.id, user.id, 'Rare Gem');
    prizeTitle = ' Rare Gem!';
-   prizeDesc = `A precious gem tumbled out of the crate!\n**Rare Gem** added to your \`/inventory\`!`;
+   prizeDesc = `A precious gem tumbled out of the crate!\n${getEmoji('Rare Gem')} **Rare Gem** added to your \`/inventory\`!`;
   } else if (roll < 0.60) {
    const xpGain = Math.floor(Math.random() * 401) + 200;
    await db.addXp(guild.id, user.id, xpGain);
@@ -288,7 +288,8 @@ module.exports = {
  description: BUILT_IN_CONSUMABLES.has(name.toLowerCase())
  ? 'Built-in consumable'
  : (shopItems.find(i => i.name.toLowerCase() === name.toLowerCase())?.description || 'Custom consumable'),
- value: name
+ value: name,
+ emoji: getEmojiId(name)
  }));
 
  const select = new StringSelectMenuBuilder()

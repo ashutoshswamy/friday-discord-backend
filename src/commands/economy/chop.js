@@ -5,6 +5,7 @@ const {
 } = require('discord.js');
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
+const { getEmoji } = require('../../utils/emojis');
 
 const WOOD_CHANCES = [
  { name: 'Pine Log',       chance: 0.35, msg: 'You chopped down a slender pine and gathered a **Pine Log**.' },
@@ -55,7 +56,7 @@ module.exports = {
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(
-      `**Harvest Stored:** Added **${reward.name}** to your inventory\n` +
+      `**Harvest Stored:** Added ${getEmoji(reward.name)} **${reward.name}** to your inventory\n` +
       `-# Use \`/sell\` to cash it in!`
      )
     );

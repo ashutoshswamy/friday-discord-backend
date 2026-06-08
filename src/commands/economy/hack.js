@@ -5,7 +5,7 @@ const {
 } = require('discord.js');
 const db = require('../../utils/db');
 const { checkCooldown } = require('../../utils/cooldowns');
-const { EMOJIS } = require('../../utils/emojis');
+const { EMOJIS, getEmoji } = require('../../utils/emojis');
 
 module.exports = {
  data: new SlashCommandBuilder()
@@ -114,7 +114,7 @@ module.exports = {
           `+ DOWNLOAD COMPLETE: Cryptographic vaults decrypted.\n` +
           `\`\`\`\n` +
           `**Credits Exfiltrated:** ${EMOJIS.coin} **${coinsWon.toLocaleString()}** coins added to wallet!\n` +
-          `**Data Packet Recovered:** Added **${itemReward}** to your inventory (sell via \`/sell\`).`
+          `**Data Packet Recovered:** Added ${getEmoji(itemReward)} **${itemReward}** to your inventory (sell via \`/sell\`).`
          )
         )
         .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
