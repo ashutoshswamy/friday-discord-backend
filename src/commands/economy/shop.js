@@ -302,6 +302,8 @@ module.exports = {
   `${getEmoji('mainframe core')} Hack: Decrypted Hard Drive · Mainframe Core · Stolen Crypto Key\n` +
   `${getEmoji('harvested wheat')} Farm: Wheat · Tomato · Carrot · Golden Apple harvests (Silver & Gold tiers sell higher)`;
 
+ // Split across two messages: Discord Components V2 caps total text at 4000 chars,
+ // and this catalog renders ~4700 after emoji expansion.
  const container = new ContainerBuilder()
   .setAccentColor(0xFF8C00)
   .addSectionComponents(
@@ -320,8 +322,10 @@ module.exports = {
   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(consumablesText))
   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
-  .addTextDisplayComponents(new TextDisplayBuilder().setContent(collectiblesText))
-  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+  .addTextDisplayComponents(new TextDisplayBuilder().setContent(collectiblesText));
+
+ const container2 = new ContainerBuilder()
+  .setAccentColor(0xFF8C00)
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(craftablesText))
   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(grindDropsText))
@@ -332,7 +336,8 @@ module.exports = {
    )
   );
 
- return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+ await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+ return interaction.followUp({ flags: MessageFlags.IsComponentsV2, components: [container2] });
  }
 
  if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
