@@ -12,12 +12,10 @@ A feature-rich Discord bot with a React web dashboard.
 | Subcommand               | Description                                                            |
 | ------------------------ | ---------------------------------------------------------------------- |
 | `ask <query>`            | AI query via Gemini                                                    |
-| `imagine <prompt>`       | AI image generation (costs 50 coins)                                   |
 | `rewrite <style> <text>` | Rewrite in Professional / Cyberpunk / Sarcastic / Pirate / Shakespeare |
 | `summarize`              | Summarize last 50 channel messages                                     |
 | `quote`                  | Random Friday system narrative quote                                   |
 | `status`                 | Bot diagnostics — latency, memory, uptime                              |
-| `protocol <name>`        | Execute admin automation protocols                                     |
 
 | Command | Description                       |
 | ------- | --------------------------------- |
@@ -46,9 +44,10 @@ A feature-rich Discord bot with a React web dashboard.
 
 | Subcommand                                 | Description                                       |
 | ------------------------------------------ | ------------------------------------------------- |
-| `toggle <filter>`                          | Enable/disable spam, links, caps, slurs, toxicity |
-| `blocklist add/remove/list <word>`         | Manage blocked word list                          |
-| `whitelist add/remove/list <role/channel>` | Exempt roles/channels                             |
+| `toggle <module>`                          | Enable/disable spam, links, caps, slurs, toxicity |
+| `blocklist add/remove/list <pattern>`      | Manage blocked words and regex patterns           |
+| `whitelist add/remove/list <role/channel>` | Exempt roles/channels from all AutoMod            |
+| `optout <action> <filter> [channel]`       | Opt a channel out of a specific filter only       |
 | `punishments`                              | View/set escalation rules (warn → timeout → ban)  |
 
 ---
@@ -71,47 +70,64 @@ A feature-rich Discord bot with a React web dashboard.
 
 **Wallet & Banking**
 
-| Command                   | Description                         |
-| ------------------------- | ----------------------------------- |
-| `/balance [user]`         | View wallet + bank balance          |
-| `/daily`                  | Claim 200 coins (24h cooldown)      |
-| `/work`                   | Earn random salary (5 min cooldown) |
-| `/pay <user> <amount>`    | Transfer coins                      |
-| `/deposit <amount\|all>`  | Wallet → bank                       |
-| `/withdraw <amount\|all>` | Bank → wallet                       |
+| Command                   | Description                |
+| ------------------------- | -------------------------- |
+| `/balance [user]`         | View wallet + bank balance |
+| `/pay <user> <amount>`    | Transfer coins             |
+| `/deposit <amount\|all>`  | Wallet → bank              |
+| `/withdraw <amount\|all>` | Bank → wallet              |
 
 **Grinding**
 
-| Command   | Description             | Requires      |
-| --------- | ----------------------- | ------------- |
-| `/fish`   | Fish for items + coins  | Fishing Pole  |
-| `/hunt`   | Hunt in virtual woods   | Hunting Rifle |
-| `/dig`    | Dig for buried treasure | Shovel        |
-| `/search` | Choose 1 of 3 locations | None          |
-| `/beg`    | Beg for spare change    | None          |
+| Command           | Description                                | Requires      |
+| ----------------- | ------------------------------------------ | ------------- |
+| `/fish`           | Fish for items + coins                     | Fishing Pole  |
+| `/hunt`           | Hunt in virtual woods                      | Hunting Rifle |
+| `/dig`            | Dig for buried treasure                    | Shovel        |
+| `/mine`           | Excavate ores (coal → mythril)             | Pickaxe       |
+| `/search`         | Choose 1 of 3 locations                    | None          |
+| `/beg`            | Beg for spare change                       | None          |
+| `/crime <type>`   | Pickpocket / Carjack / Bank Fraud          | None          |
+| `/job list/apply/quit/profile` | Career system — tier-based pay | None          |
+
+**Cooldowns**
+
+| Command      | Description                             |
+| ------------ | --------------------------------------- |
+| `/daily`     | Claim 200 coins (24h cooldown)          |
+| `/weekly`    | Claim 1,000–3,500 coins (7d cooldown)   |
+| `/monthly`   | Claim 5,000–15,000 coins (30d cooldown) |
+| `/work`      | Earn random salary (1h cooldown)        |
+| `/cooldowns` | View all active cooldown timers         |
 
 **Gambling**
 
-| Command                          | Description                 |
-| -------------------------------- | --------------------------- |
-| `/slots <bet>`                   | Spin slot machine           |
-| `/blackjack <bet>`               | Blackjack vs Friday dealer  |
-| `/roulette <bet> <color/number>` | Roulette wheel              |
-| `/cockfight <bet>`               | Bet on cockfight arena      |
-| `/rob <user>`                    | Rob another member's wallet |
-| `/bankrob <user>`                | Rob another member's bank   |
+| Command                          | Description                              |
+| -------------------------------- | ---------------------------------------- |
+| `/slots <bet>`                   | Spin slot machine                        |
+| `/blackjack <bet>`               | Blackjack vs Friday dealer               |
+| `/roulette <bet> <color/number>` | Roulette wheel                           |
+| `/cockfight <bet>`               | Bet on cockfight arena                   |
+| `/coinflip [bet]`                | Heads or Tails with optional wager       |
+| `/dice <bet>`                    | Roll two dice — highest total wins       |
+| `/highlow <bet>`                 | Guess higher or lower card (chain bonus) |
+| `/horse <horse> <bet>`           | Horse race (1–5, odds-based payout)      |
+| `/rps [bet]`                     | Rock Paper Scissors vs Friday            |
+| `/rob <user>`                    | Rob another member's wallet              |
+| `/bankrob <user>`                | Rob another member's bank                |
 
 **Shop & Items**
 
-| Command                           | Description               | Permission    |
-| --------------------------------- | ------------------------- | ------------- |
-| `/shop view`                      | Browse shop listings      | Anyone        |
-| `/shop add <item> <price> [role]` | Add item                  | Administrator |
-| `/shop remove <item>`             | Remove item               | Administrator |
-| `/buy <item>`                     | Purchase from shop        | Anyone        |
-| `/sell <item>`                    | Sell loot items for coins | Anyone        |
-| `/use <item>`                     | Use a consumable item     | Anyone        |
-| `/inventory [user]`               | View inventory            | Anyone        |
+| Command                           | Description                   | Permission    |
+| --------------------------------- | ----------------------------- | ------------- |
+| `/shop view`                      | Browse shop listings          | Anyone        |
+| `/shop catalog`                   | Browse all server shop items  | Anyone        |
+| `/shop add <item> <price> [role]` | Add item                      | Administrator |
+| `/shop remove <item>`             | Remove item                   | Administrator |
+| `/buy <item>`                     | Purchase from shop            | Anyone        |
+| `/sell <item>`                    | Sell loot items for coins     | Anyone        |
+| `/use <item>`                     | Use a consumable item         | Anyone        |
+| `/inventory [user]`               | View inventory                | Anyone        |
 
 **Market (Player-to-Player)**
 
@@ -121,6 +137,25 @@ A feature-rich Discord bot with a React web dashboard.
 | `/market list <item> <price>` | List an item for sale  |
 | `/market buy <listing-id>`    | Buy a listing          |
 | `/market cancel <listing-id>` | Cancel your listing    |
+
+**Trading**
+
+| Command                     | Description                                    |
+| --------------------------- | ---------------------------------------------- |
+| `/trade <user>`             | Initiate bilateral trade — exchange items/coins |
+| `/scramble [answer]`        | Start or answer a word scramble for coins/XP   |
+
+**Stocks**
+
+| Command                             | Description                               |
+| ----------------------------------- | ----------------------------------------- |
+| `/stock list [market]`              | Browse stocks (NASDAQ, NSE, LSE, Crypto…) |
+| `/stock quote <symbol>`             | Detailed real-time quote with price chart |
+| `/stock buy <symbol> <shares>`      | Buy long-term investment shares           |
+| `/stock sell <symbol> <shares>`     | Sell investment shares                    |
+| `/portfolio view [user]`                   | View holdings and intraday positions      |
+| `/portfolio open <type> <symbol> <margin>` | Open 5x leveraged LONG/SHORT position     |
+| `/portfolio close <symbol>`                | Close an intraday position and settle PnL |
 
 **Gifting**
 
@@ -133,10 +168,13 @@ A feature-rich Discord bot with a React web dashboard.
 
 | Command             | Description                                          |
 | ------------------- | ---------------------------------------------------- |
-| `/pet adopt <type>` | Adopt a pet (Dog, Cat, Dragon, Fox, Rabbit)          |
-| `/pet view`         | View pet stats (hunger, affection, energy, ATK, DEF) |
-| `/pet feed`         | Feed your pet                                        |
-| `/pet train`        | Train your pet                                       |
+| `/pet adopt <type> [name]` | Adopt a pet (Dog, Cat, Dragon, Fox, Rabbit)          |
+| `/pet view`               | View pet stats (hunger, affection, energy, ATK, DEF) |
+| `/pet feed`               | Feed your pet (coins or Worm item)                   |
+| `/pet train <attribute>`  | Train ATK or DEF (costs 25 energy)                   |
+| `/pet rename <name>`      | Give your pet a new name                             |
+| `/pet release`            | Release your pet permanently                         |
+| `/pet battle <user>`      | Challenge another member's pet                       |
 
 **Admin Economy**
 
@@ -187,8 +225,11 @@ A feature-rich Discord bot with a React web dashboard.
 | ----------------------- | --------------------------- | -------------- |
 | `/logs message [user]`  | Deleted/edited message logs | View Audit Log |
 | `/logs voice [user]`    | Voice join/leave activity   | View Audit Log |
-| `/modstats [moderator]` | Moderation action counts    | View Audit Log |
-| `/serveractivity`       | Link to dashboard analytics | Manage Guild   |
+| `/modstats [moderator]`            | Moderation action counts             | View Audit Log |
+| `/serveractivity`                  | Link to dashboard analytics          | Manage Guild   |
+| `/analytics overview`              | High-level economy and XP stats      | Administrator  |
+| `/analytics topspenders`           | Top 10 wealthiest members            | Administrator  |
+| `/analytics activity <user>`       | Individual member economy summary    | Administrator  |
 
 ---
 
@@ -202,11 +243,13 @@ A feature-rich Discord bot with a React web dashboard.
 | `/channelinfo [channel]`     | Channel metadata                           |
 | `/roleinfo <role>`           | Role metadata (color, permissions, count)  |
 | `/servericon`                | Full-res server icon                       |
-| `/poll <question> <options>` | Button-based poll                          |
+| `/poll create <question> <options> [duration]` | Create a native Discord poll  |
+| `/poll close <message-id>`                     | End a running poll early      |
 | `/remind <time> <message>`   | Schedule a DM reminder                     |
 | `/embed create`              | Interactive embed builder modal            |
 | `/urban <term>`              | Urban Dictionary lookup                    |
 | `/weather <city>`            | Real-time weather                          |
+| `/meme [subreddit]`          | Random meme from Reddit                    |
 
 ---
 
@@ -218,6 +261,50 @@ A feature-rich Discord bot with a React web dashboard.
 | `/customcmd embed <trigger>`          | Create trigger that sends embed | Administrator |
 | `/customcmd remove <trigger>`         | Delete a custom command         | Administrator |
 | `/customcmd list`                     | List all custom commands        | Administrator |
+
+---
+
+### Fun
+
+| Command           | Description                               |
+| ----------------- | ----------------------------------------- |
+| `/ascii <text>`   | Render text as large ASCII block letters  |
+| `/mock <text>`    | SpongeBob alternating-case mocking format |
+| `/reverse <text>` | Reverse input text backwards              |
+
+---
+
+### Games
+
+| Command              | Description                                        |
+| -------------------- | -------------------------------------------------- |
+| `/trivia [category]` | Answer a timed trivia question for coins and XP    |
+
+---
+
+### Social
+
+| Command              | Description                                           |
+| -------------------- | ----------------------------------------------------- |
+| `/profile [user]`    | View full social and economy profile card             |
+| `/bio [text]`        | Set or view your custom profile bio tagline           |
+| `/rep <user>`        | Give a reputation point (once every 24 hours)         |
+| `/marry propose/divorce` | Propose marriage or divorce a current partner     |
+
+---
+
+### Clans
+
+| Command                           | Description                                  |
+| --------------------------------- | -------------------------------------------- |
+| `/clan create <name>`             | Found a new clan (costs 5,000 coins)         |
+| `/clan invite <user>`             | Invite a member (owner only)                 |
+| `/clan join <name>`               | Join a clan you were invited to              |
+| `/clan leave`                     | Leave your current clan                      |
+| `/clan kick <user>`               | Kick a member (owner only)                   |
+| `/clan info [name]`               | View clan roster and stats                   |
+| `/clan deposit <amount>`          | Contribute coins to the clan treasury        |
+| `/clan leaderboard`               | Top clans by treasury wealth                 |
 
 ---
 
