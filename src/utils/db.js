@@ -5,6 +5,17 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 let supabase = null;
+const memoryCrops = new Map(); // guildId_userId -> Array of crop objects
+const memoryClans = new Map(); // guildId_clanId -> clan object
+const memoryClanMembers = new Map(); // guildId_userId -> clanId
+const memoryCrimeStats = new Map(); // guildId_userId -> { xp, level }
+const memoryQuests = new Map(); // guildId_userId -> Array of quest objects
+const memoryCommodities = new Map(); // guildId_itemName -> { price, eventText, lastUpdated }
+const memoryMarketTicks = new Map(); // guildId -> Date
+const memoryLotteryConfig = new Map(); // guildId -> { ticketCost, jackpot, lastDraw }
+const memoryLotteryTickets = new Map(); // guildId_userId -> count
+const memoryLotteryHistory = new Map(); // guildId -> Array of winner logs
+const memoryFarmingStats = new Map(); // guildId_userId -> { xp, level, max_plots }
 
 if (
     supabaseUrl && 
@@ -76,6 +87,54 @@ const DEFAULT_SHOP_ITEMS = [
         name: 'Pickaxe',
         cost: 600,
         description: 'Heavy steel pickaxe required to excavate ores and minerals using /mine.',
+        roleRewardId: null,
+        actionType: null,
+        actionValue: null
+    },
+    {
+        name: 'Axe',
+        cost: 400,
+        description: 'Lumberjack axe required to chop wood using /chop.',
+        roleRewardId: null,
+        actionType: null,
+        actionValue: null
+    },
+    {
+        name: 'Hacker Laptop',
+        cost: 1500,
+        description: 'A black-market hacker deck required to execute server intrusions using /hack.',
+        roleRewardId: null,
+        actionType: null,
+        actionValue: null
+    },
+    {
+        name: 'Wheat Seed',
+        cost: 20,
+        description: 'Seed to plant Wheat. Grows in 2 minutes.',
+        roleRewardId: null,
+        actionType: null,
+        actionValue: null
+    },
+    {
+        name: 'Tomato Seed',
+        cost: 40,
+        description: 'Seed to plant Tomatoes. Grows in 5 minutes.',
+        roleRewardId: null,
+        actionType: null,
+        actionValue: null
+    },
+    {
+        name: 'Carrot Seed',
+        cost: 70,
+        description: 'Seed to plant Carrots. Grows in 10 minutes.',
+        roleRewardId: null,
+        actionType: null,
+        actionValue: null
+    },
+    {
+        name: 'Golden Apple Seed',
+        cost: 400,
+        description: 'Seed to plant a mythical Golden Apple tree. Grows in 30 minutes.',
         roleRewardId: null,
         actionType: null,
         actionValue: null
@@ -2080,7 +2139,41 @@ module.exports = {
     // ==========================================
 
     async createClan(guildId, ownerId, name) {
-        if (!supabase) return { success: true, clan: { id: 'mock', name } };
+        if (!supabase) {
+            // Memory check
+            for (const [key, clan] of memoryClans) {
+                if (key.startsWith(guildId) && clan.name.toLowerCase() === name.toLowerCase()) {
+                    return { success: false, reason: 'A clan with that name already exists.' };
+                }
+            }
+
+            const memberKey = `${guildId}_${ownerId}`;
+            if (memoryClanMembers.has(memberKey)) {
+                return { success: false, reason: 'You are already a member of a clan.' };
+            }
+
+            const profile = await this.getProfile(guildId, ownerId);
+            if (profile.coins < 5000) return { success: false, reason: 'Creating a clan costs 5,000 coins.' };
+
+            await this.updateCoins(guildId, ownerId, -5000);
+
+            const clanId = `clan_${Math.random().toString(36).substring(2, 9)}`;
+            const newClan = {
+                id: clanId,
+                guild_id: guildId,
+                name: name,
+                owner_id: ownerId,
+                treasury: 0,
+                xp_total: 0,
+                level: 1,
+                created_at: new Date()
+            };
+
+            memoryClans.set(`${guildId}_${clanId}`, newClan);
+            memoryClanMembers.set(memberKey, clanId);
+
+            return { success: true, clan: { id: clanId, name } };
+        }
 
         const { data: existing } = await supabase.from('clans').select('id')
             .eq('guild_id', guildId).ilike('name', name).maybeSingle();
@@ -2105,7 +2198,32 @@ module.exports = {
     },
 
     async getClan(guildId, clanName) {
-        if (!supabase) return null;
+        if (!supabase) {
+            let targetClan = null;
+            for (const [key, clan] of memoryClans) {
+                if (key.startsWith(guildId) && clan.name.toLowerCase() === clanName.toLowerCase()) {
+                    targetClan = clan;
+                    break;
+                }
+            }
+            if (!targetClan) return null;
+
+            const members = [];
+            for (const [userKey, clanId] of memoryClanMembers) {
+                if (clanId === targetClan.id && userKey.startsWith(guildId)) {
+                    const userId = userKey.replace(`${guildId}_`, '');
+                    members.push({ userId, joinedAt: new Date() });
+                }
+            }
+
+            return {
+                id: targetClan.id, name: targetClan.name, ownerId: targetClan.owner_id,
+                treasury: targetClan.treasury, xpTotal: targetClan.xp_total,
+                level: targetClan.level, createdAt: targetClan.created_at,
+                members
+            };
+        }
+
         const { data, error } = await supabase.from('clans').select('*')
             .eq('guild_id', guildId).ilike('name', clanName).maybeSingle();
         if (error || !data) return null;
@@ -2122,7 +2240,30 @@ module.exports = {
     },
 
     async getClanByMember(guildId, userId) {
-        if (!supabase) return null;
+        if (!supabase) {
+            const memberKey = `${guildId}_${userId}`;
+            const clanId = memoryClanMembers.get(memberKey);
+            if (!clanId) return null;
+
+            const targetClan = memoryClans.get(`${guildId}_${clanId}`);
+            if (!targetClan) return null;
+
+            const members = [];
+            for (const [userKey, cid] of memoryClanMembers) {
+                if (cid === clanId && userKey.startsWith(guildId)) {
+                    const uid = userKey.replace(`${guildId}_`, '');
+                    members.push({ userId: uid, joinedAt: new Date() });
+                }
+            }
+
+            return {
+                id: targetClan.id, name: targetClan.name, ownerId: targetClan.owner_id,
+                treasury: targetClan.treasury, xpTotal: targetClan.xp_total,
+                level: targetClan.level, createdAt: targetClan.created_at,
+                members
+            };
+        }
+
         const { data: membership } = await supabase.from('clan_members').select('clan_id')
             .eq('guild_id', guildId).eq('user_id', userId).maybeSingle();
         if (!membership) return null;
@@ -2142,7 +2283,10 @@ module.exports = {
     },
 
     async joinClan(guildId, userId, clanId) {
-        if (!supabase) return { success: true };
+        if (!supabase) {
+            memoryClanMembers.set(`${guildId}_${userId}`, clanId);
+            return { success: true };
+        }
         const { error } = await supabase.from('clan_members')
             .insert([{ clan_id: clanId, guild_id: guildId, user_id: userId }]);
         if (error) return { success: false, reason: 'Database error.' };
@@ -2150,23 +2294,38 @@ module.exports = {
     },
 
     async leaveClan(guildId, userId) {
-        if (!supabase) return true;
+        if (!supabase) {
+            memoryClanMembers.delete(`${guildId}_${userId}`);
+            return true;
+        }
         const { error } = await supabase.from('clan_members')
             .delete().eq('guild_id', guildId).eq('user_id', userId);
         return !error;
     },
 
     async kickFromClan(guildId, clanId, userId) {
-        if (!supabase) return true;
+        if (!supabase) {
+            memoryClanMembers.delete(`${guildId}_${userId}`);
+            return true;
+        }
         const { error } = await supabase.from('clan_members')
             .delete().eq('clan_id', clanId).eq('guild_id', guildId).eq('user_id', userId);
         return !error;
     },
 
     async depositToClan(guildId, clanId, userId, amount) {
-        if (!supabase) return { success: true, newTreasury: amount };
         const profile = await this.getProfile(guildId, userId);
         if (profile.coins < amount) return { success: false, reason: 'Insufficient wallet balance.' };
+
+        if (!supabase) {
+            const key = `${guildId}_${clanId}`;
+            const clan = memoryClans.get(key);
+            if (!clan) return { success: false, reason: 'Clan not found.' };
+
+            await this.updateCoins(guildId, userId, -amount);
+            clan.treasury += amount;
+            return { success: true, newTreasury: clan.treasury };
+        }
 
         const { data: clan, error: fetchError } = await supabase.from('clans')
             .select('treasury').eq('id', clanId).single();
@@ -2179,15 +2338,144 @@ module.exports = {
         return { success: true, newTreasury };
     },
 
-    async getClanLeaderboard(guildId) {
-        if (!supabase) return [];
-        const { data, error } = await supabase.from('clans').select('name, owner_id, treasury, level, xp_total')
-            .eq('guild_id', guildId).order('treasury', { ascending: false }).limit(10);
+    async getClanLeaderboard(guildId, sortBy = 'treasury') {
+        if (!supabase) {
+            const list = [];
+            for (const [key, clan] of memoryClans) {
+                if (key.startsWith(guildId)) {
+                    list.push(clan);
+                }
+            }
+
+            if (sortBy === 'level') {
+                list.sort((a, b) => b.level - a.level || b.xp_total - a.xp_total);
+            } else {
+                list.sort((a, b) => b.treasury - a.treasury);
+            }
+
+            return list.slice(0, 10).map((c, i) => ({
+                rank: i + 1, name: c.name, ownerId: c.owner_id,
+                treasury: c.treasury, level: c.level, xpTotal: c.xp_total
+            }));
+        }
+
+        const orderCol = sortBy === 'level' ? 'level' : 'treasury';
+        const { data, error } = await supabase.from('clans')
+            .select('name, owner_id, treasury, level, xp_total')
+            .eq('guild_id', guildId)
+            .order(orderCol, { ascending: false })
+            .order('xp_total', { ascending: false })
+            .limit(10);
+
         if (error) return [];
         return data.map((c, i) => ({
             rank: i + 1, name: c.name, ownerId: c.owner_id,
             treasury: Number(c.treasury), level: c.level, xpTotal: Number(c.xp_total)
         }));
+    },
+
+    async renameClan(guildId, clanId, newName) {
+        if (!supabase) {
+            // Check if name exists
+            for (const [key, c] of memoryClans) {
+                if (key.startsWith(guildId) && c.name.toLowerCase() === newName.toLowerCase() && c.id !== clanId) {
+                    return { success: false, reason: 'A clan with that name already exists.' };
+                }
+            }
+
+            const key = `${guildId}_${clanId}`;
+            const clan = memoryClans.get(key);
+            if (!clan) return { success: false, reason: 'Clan not found.' };
+            if (clan.treasury < 2500) return { success: false, reason: 'Renaming costs 2,500 coins from the clan treasury.' };
+
+            clan.treasury -= 2500;
+            clan.name = newName;
+            return { success: true };
+        }
+
+        // Check unique
+        const { data: existing } = await supabase.from('clans').select('id')
+            .eq('guild_id', guildId).ilike('name', newName).maybeSingle();
+        if (existing && existing.id !== clanId) {
+            return { success: false, reason: 'A clan with that name already exists.' };
+        }
+
+        const { data: clan, error: fetchError } = await supabase.from('clans')
+            .select('treasury').eq('id', clanId).single();
+        if (fetchError || !clan) return { success: false, reason: 'Clan not found.' };
+
+        if (Number(clan.treasury) < 2500) {
+            return { success: false, reason: 'Renaming costs 2,500 coins from the clan treasury.' };
+        }
+
+        const newTreasury = Number(clan.treasury) - 2500;
+        const { error } = await supabase.from('clans')
+            .update({ name: newName, treasury: newTreasury })
+            .eq('id', clanId);
+
+        if (error) return { success: false, reason: 'Database error.' };
+        return { success: true };
+    },
+
+    async disbandClan(guildId, clanId) {
+        if (!supabase) {
+            memoryClans.delete(`${guildId}_${clanId}`);
+            for (const [userKey, cid] of memoryClanMembers) {
+                if (cid === clanId && userKey.startsWith(guildId)) {
+                    memoryClanMembers.delete(userKey);
+                }
+            }
+            return true;
+        }
+
+        const { error } = await supabase.from('clans').delete().eq('id', clanId).eq('guild_id', guildId);
+        return !error;
+    },
+
+    async addClanXp(guildId, clanId, amount) {
+        if (!supabase) {
+            const key = `${guildId}_${clanId}`;
+            const clan = memoryClans.get(key);
+            if (!clan) return { success: false };
+
+            clan.xp_total += amount;
+            let currentLevel = clan.level;
+            let xpNeeded = currentLevel * 1000;
+            let leveledUp = false;
+
+            while (clan.xp_total >= xpNeeded) {
+                clan.xp_total -= xpNeeded;
+                clan.level += 1;
+                currentLevel = clan.level;
+                xpNeeded = currentLevel * 1000;
+                leveledUp = true;
+            }
+
+            return { success: true, levelUp: leveledUp, newLevel: clan.level, newXp: clan.xp_total };
+        }
+
+        const { data: clan, error: fetchError } = await supabase.from('clans')
+            .select('level, xp_total').eq('id', clanId).single();
+        if (fetchError || !clan) return { success: false };
+
+        let currentLevel = clan.level;
+        let newXpTotal = Number(clan.xp_total) + amount;
+        let xpNeeded = currentLevel * 1000;
+        let leveledUp = false;
+
+        while (newXpTotal >= xpNeeded) {
+            newXpTotal -= xpNeeded;
+            currentLevel += 1;
+            xpNeeded = currentLevel * 1000;
+            leveledUp = true;
+        }
+
+        const { error } = await supabase.from('clans')
+            .update({ level: currentLevel, xp_total: newXpTotal })
+            .eq('id', clanId);
+
+        if (error) return { success: false };
+        return { success: true, levelUp: leveledUp, newLevel: currentLevel, newXp: newXpTotal };
     },
 
     // ==========================================
@@ -3011,5 +3299,1172 @@ module.exports = {
             totalProfitLoss: totalValue - totalMargin,
             positions
         };
+    },
+
+    // ==========================================
+    // 25. Farming System
+    // ==========================================
+
+    async getUserCrops(guildId, userId) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const crops = memoryCrops.get(key) || [];
+            return crops.map(crop => ({
+                id: crop.id,
+                guild_id: crop.guild_id,
+                user_id: crop.user_id,
+                crop_name: crop.crop_name,
+                planted_at: new Date(crop.planted_at),
+                growth_time: crop.growth_time,
+                last_watered: new Date(crop.last_watered),
+                water_count: crop.water_count,
+                harvest_ready: new Date(crop.harvest_ready),
+                plot_index: crop.plot_index || 1,
+                fertilizer: crop.fertilizer || null,
+                pests: crop.pests || false
+            }));
+        }
+
+        const { data, error } = await supabase
+            .from('user_crops')
+            .select('*')
+            .eq('guild_id', guildId)
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('[DB] getUserCrops error:', error.message);
+            return [];
+        }
+
+        return data.map(crop => ({
+            id: crop.id,
+            guild_id: crop.guild_id,
+            user_id: crop.user_id,
+            crop_name: crop.crop_name,
+            planted_at: new Date(crop.planted_at),
+            growth_time: crop.growth_time,
+            last_watered: new Date(crop.last_watered),
+            water_count: crop.water_count,
+            harvest_ready: new Date(crop.harvest_ready),
+            plot_index: crop.plot_index,
+            fertilizer: crop.fertilizer,
+            pests: crop.pests
+        }));
+    },
+
+    async plantCrop(guildId, userId, cropName, growthTimeSec, plotIndex) {
+        const harvestReady = new Date(Date.now() + growthTimeSec * 1000);
+
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            if (!memoryCrops.has(key)) memoryCrops.set(key, []);
+            const crops = memoryCrops.get(key);
+            const newCrop = {
+                id: Math.floor(Math.random() * 100000),
+                guild_id: guildId,
+                user_id: userId,
+                crop_name: cropName,
+                planted_at: new Date(),
+                growth_time: growthTimeSec,
+                last_watered: new Date(),
+                water_count: 1,
+                harvest_ready: harvestReady,
+                plot_index: plotIndex,
+                fertilizer: null,
+                pests: false
+            };
+            crops.push(newCrop);
+            return { success: true, crop: newCrop };
+        }
+
+        const { data, error } = await supabase
+            .from('user_crops')
+            .insert([{
+                guild_id: guildId,
+                user_id: userId,
+                crop_name: cropName,
+                growth_time: growthTimeSec,
+                planted_at: new Date().toISOString(),
+                last_watered: new Date().toISOString(),
+                water_count: 1,
+                harvest_ready: harvestReady.toISOString(),
+                plot_index: plotIndex,
+                fertilizer: null,
+                pests: false
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[DB] plantCrop error:', error.message);
+            return { success: false, reason: error.message };
+        }
+
+        return { success: true, crop: data };
+    },
+
+    async waterCrop(guildId, userId, cropId) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const crops = memoryCrops.get(key) || [];
+            const crop = crops.find(c => c.id == cropId);
+            if (!crop) return { success: false, reason: 'Crop not found' };
+            if (crop.water_count >= 3) return { success: false, reason: 'Already watered 3 times!' };
+
+            crop.water_count += 1;
+            crop.last_watered = new Date();
+            // Reduce remaining time by 25% of total growth time
+            const reductionMs = crop.growth_time * 0.25 * 1000;
+            crop.harvest_ready = new Date(crop.harvest_ready.getTime() - reductionMs);
+
+            // 15% chance to attract pests on watering if not already infested
+            if (!crop.pests && Math.random() < 0.15) {
+                crop.pests = true;
+            }
+
+            return { success: true, crop };
+        }
+
+        // Fetch crop first to check water count
+        const { data: crop, error: getError } = await supabase
+            .from('user_crops')
+            .select('*')
+            .eq('id', cropId)
+            .single();
+
+        if (getError || !crop) {
+            return { success: false, reason: 'Crop not found' };
+        }
+
+        if (crop.water_count >= 3) {
+            return { success: false, reason: 'Already watered 3 times!' };
+        }
+
+        const newWaterCount = crop.water_count + 1;
+        const currentHarvestReady = new Date(crop.harvest_ready);
+        const reductionMs = crop.growth_time * 0.25 * 1000;
+        const newHarvestReady = new Date(currentHarvestReady.getTime() - reductionMs);
+
+        // 15% chance to attract pests on watering if not already infested
+        let newPests = crop.pests;
+        if (!crop.pests && Math.random() < 0.15) {
+            newPests = true;
+        }
+
+        const { data, error } = await supabase
+            .from('user_crops')
+            .update({
+                water_count: newWaterCount,
+                last_watered: new Date().toISOString(),
+                harvest_ready: newHarvestReady.toISOString(),
+                pests: newPests
+            })
+            .eq('id', cropId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[DB] waterCrop error:', error.message);
+            return { success: false, reason: error.message };
+        }
+
+        return { success: true, crop: data };
+    },
+
+    async fertilizeCrop(guildId, userId, cropId, fertilizerType) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const crops = memoryCrops.get(key) || [];
+            const crop = crops.find(c => c.id == cropId);
+            if (!crop) return { success: false, reason: 'Crop not found' };
+            if (crop.fertilizer) return { success: false, reason: 'This crop is already fertilized!' };
+
+            crop.fertilizer = fertilizerType;
+            if (fertilizerType === 'basic') {
+                const now = Date.now();
+                const remaining = Math.max(0, crop.harvest_ready.getTime() - now);
+                crop.harvest_ready = new Date(now + remaining * 0.5);
+            } else if (fertilizerType === 'growth') {
+                crop.harvest_ready = new Date(Date.now() + 1000);
+            }
+            return { success: true, crop };
+        }
+
+        const { data: crop, error: getError } = await supabase
+            .from('user_crops')
+            .select('*')
+            .eq('id', cropId)
+            .single();
+
+        if (getError || !crop) {
+            return { success: false, reason: 'Crop not found' };
+        }
+
+        if (crop.fertilizer) {
+            return { success: false, reason: 'This crop is already fertilized!' };
+        }
+
+        let newHarvestReady = new Date(crop.harvest_ready);
+        if (fertilizerType === 'basic') {
+            const now = Date.now();
+            const remaining = Math.max(0, newHarvestReady.getTime() - now);
+            newHarvestReady = new Date(now + remaining * 0.5);
+        } else if (fertilizerType === 'growth') {
+            newHarvestReady = new Date(Date.now() + 1000);
+        }
+
+        const { data, error } = await supabase
+            .from('user_crops')
+            .update({
+                fertilizer: fertilizerType,
+                harvest_ready: newHarvestReady.toISOString()
+            })
+            .eq('id', cropId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[DB] fertilizeCrop error:', error.message);
+            return { success: false, reason: error.message };
+        }
+
+        return { success: true, crop: data };
+    },
+
+    async treatCropPests(guildId, userId, cropId) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const crops = memoryCrops.get(key) || [];
+            const crop = crops.find(c => c.id == cropId);
+            if (!crop) return { success: false, reason: 'Crop not found' };
+            if (!crop.pests) return { success: false, reason: 'This crop does not have a pest infection.' };
+
+            crop.pests = false;
+            return { success: true, crop };
+        }
+
+        const { data, error } = await supabase
+            .from('user_crops')
+            .update({ pests: false })
+            .eq('id', cropId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[DB] treatCropPests error:', error.message);
+            return { success: false, reason: error.message };
+        }
+
+        return { success: true, crop: data };
+    },
+
+    async harvestCrop(guildId, userId, cropId) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const crops = memoryCrops.get(key) || [];
+            const index = crops.findIndex(c => c.id == cropId);
+            if (index === -1) return false;
+            crops.splice(index, 1);
+            return true;
+        }
+
+        const { error } = await supabase
+            .from('user_crops')
+            .delete()
+            .eq('id', cropId)
+            .eq('guild_id', guildId)
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('[DB] harvestCrop error:', error.message);
+            return false;
+        }
+
+        return true;
+    },
+
+    async getFarmingProfile(guildId, userId) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            if (!memoryFarmingStats.has(key)) {
+                memoryFarmingStats.set(key, { level: 1, xp: 0, max_plots: 3 });
+            }
+            return memoryFarmingStats.get(key);
+        }
+
+        const { data, error } = await supabase
+            .from('user_farming_stats')
+            .select('*')
+            .eq('guild_id', guildId)
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (!error && data) {
+            return {
+                level: data.level,
+                xp: data.xp,
+                max_plots: data.max_plots
+            };
+        }
+
+        const defaultProfile = {
+            guild_id: guildId,
+            user_id: userId,
+            level: 1,
+            xp: 0,
+            max_plots: 3
+        };
+
+        const { data: inserted } = await supabase
+            .from('user_farming_stats')
+            .insert([defaultProfile])
+            .select()
+            .single();
+
+        return inserted ? {
+            level: inserted.level,
+            xp: inserted.xp,
+            max_plots: inserted.max_plots
+        } : defaultProfile;
+    },
+
+    async addFarmingXp(guildId, userId, amount) {
+        const profile = await this.getFarmingProfile(guildId, userId);
+        let newXp = profile.xp + amount;
+        let newLevel = profile.level;
+        let levelUp = false;
+
+        const xpNeeded = newLevel * 1000;
+        if (newXp >= xpNeeded) {
+            newXp -= xpNeeded;
+            newLevel += 1;
+            levelUp = true;
+        }
+
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const stats = memoryFarmingStats.get(key) || { max_plots: 3 };
+            stats.level = newLevel;
+            stats.xp = newXp;
+            memoryFarmingStats.set(key, stats);
+            return { levelUp, newLevel, newXp };
+        }
+
+        await supabase
+            .from('user_farming_stats')
+            .update({ xp: newXp, level: newLevel })
+            .eq('guild_id', guildId)
+            .eq('user_id', userId);
+
+        return { levelUp, newLevel, newXp };
+    },
+
+    async expandFarmPlots(guildId, userId, cost) {
+        const profile = await this.getFarmingProfile(guildId, userId);
+        if (profile.max_plots >= 8) {
+            return { success: false, reason: 'You have reached the maximum limit of **8 plots**!' };
+        }
+
+        const userProfile = await this.getProfile(guildId, userId);
+        if (Number(userProfile.coins) < cost) {
+            return { success: false, reason: `Insufficient coins. Upgrading costs ${EMOJIS.coin} **${cost.toLocaleString()}** coins.` };
+        }
+
+        await this.updateCoins(guildId, userId, -cost);
+        const newMaxPlots = profile.max_plots + 1;
+
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const stats = memoryFarmingStats.get(key) || { level: 1, xp: 0, max_plots: 3 };
+            stats.max_plots = newMaxPlots;
+            memoryFarmingStats.set(key, stats);
+            return { success: true, newMaxPlots };
+        }
+
+        await supabase
+            .from('user_farming_stats')
+            .update({ max_plots: newMaxPlots })
+            .eq('guild_id', guildId)
+            .eq('user_id', userId);
+
+        return { success: true, newMaxPlots };
+    },
+
+    // ==========================================
+    // 26. Crime Skill Stats
+    // ==========================================
+
+    async getCrimeProfile(guildId, userId) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            return memoryCrimeStats.get(key) || { level: 1, xp: 0 };
+        }
+
+        const { data, error } = await supabase
+            .from('user_crime_stats')
+            .select('*')
+            .eq('guild_id', guildId)
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error || !data) {
+            return { level: 1, xp: 0 };
+        }
+
+        return { level: data.level, xp: data.xp };
+    },
+
+    async addCrimeXp(guildId, userId, amount) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            if (!memoryCrimeStats.has(key)) {
+                memoryCrimeStats.set(key, { level: 1, xp: 0 });
+            }
+            const stats = memoryCrimeStats.get(key);
+            stats.xp += amount;
+            let currentLevel = stats.level;
+            let xpNeeded = currentLevel * 500;
+            let leveledUp = false;
+
+            while (stats.xp >= xpNeeded) {
+                stats.xp -= xpNeeded;
+                stats.level += 1;
+                currentLevel = stats.level;
+                xpNeeded = currentLevel * 500;
+                leveledUp = true;
+            }
+
+            return { success: true, levelUp: leveledUp, newLevel: stats.level, newXp: stats.xp };
+        }
+
+        const currentProfile = await this.getCrimeProfile(guildId, userId);
+        let currentLevel = currentProfile.level;
+        let newXp = currentProfile.xp + amount;
+        let xpNeeded = currentLevel * 500;
+        let leveledUp = false;
+
+        while (newXp >= xpNeeded) {
+            newXp -= xpNeeded;
+            currentLevel += 1;
+            xpNeeded = currentLevel * 500;
+            leveledUp = true;
+        }
+
+        const { error } = await supabase
+            .from('user_crime_stats')
+            .upsert({
+                guild_id: guildId,
+                user_id: userId,
+                xp: newXp,
+                level: currentLevel
+            }, { onConflict: 'guild_id,user_id' });
+
+        if (error) {
+            console.error('[DB] addCrimeXp error:', error.message);
+            return { success: false };
+        }
+
+        return { success: true, levelUp: leveledUp, newLevel: currentLevel, newXp };
+    },
+
+    // ==========================================
+    // 27. Daily Quest System
+    // ==========================================
+
+    async getUserQuests(guildId, userId) {
+        const questPool = [
+            { type: 'chop', target_item: 'Pine Log', amount: 3, rewardCoins: 300, rewardXp: 150 },
+            { type: 'chop', target_item: 'Oak Log', amount: 2, rewardCoins: 400, rewardXp: 200 },
+            { type: 'fish', target_item: 'Common Bass', amount: 2, rewardCoins: 300, rewardXp: 150 },
+            { type: 'fish', target_item: 'Salmon', amount: 2, rewardCoins: 450, rewardXp: 220 },
+            { type: 'mine', target_item: 'Coal', amount: 3, rewardCoins: 250, rewardXp: 120 },
+            { type: 'mine', target_item: 'Iron Ore', amount: 2, rewardCoins: 400, rewardXp: 200 },
+            { type: 'sell', target_item: null, amount: 5, rewardCoins: 300, rewardXp: 150 },
+            { type: 'water', target_item: null, amount: 3, rewardCoins: 200, rewardXp: 100 },
+            { type: 'crime', target_item: null, amount: 2, rewardCoins: 400, rewardXp: 200 },
+            { type: 'hack', target_item: null, amount: 1, rewardCoins: 500, rewardXp: 250 }
+        ];
+
+        const generateDailyQuests = () => {
+            const shuffled = [...questPool].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, 3).map((q, idx) => ({
+                quest_index: idx,
+                quest_type: q.type,
+                target_item: q.target_item,
+                target_amount: q.amount,
+                current_amount: 0,
+                reward_coins: q.rewardCoins,
+                reward_xp: q.rewardXp,
+                claimed: false,
+                created_at: new Date()
+            }));
+        };
+
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            let active = memoryQuests.get(key) || [];
+            const isToday = active.length > 0 && new Date(active[0].created_at).toDateString() === new Date().toDateString();
+
+            if (!isToday) {
+                active = generateDailyQuests();
+                memoryQuests.set(key, active);
+            }
+            return active;
+        }
+
+        const { data, error } = await supabase
+            .from('user_quests')
+            .select('*')
+            .eq('guild_id', guildId)
+            .eq('user_id', userId)
+            .order('quest_index', { ascending: true });
+
+        if (error) {
+            console.error('[DB] getUserQuests error:', error.message);
+            return [];
+        }
+
+        const isToday = data.length > 0 && new Date(data[0].created_at).toDateString() === new Date().toDateString();
+
+        if (!isToday) {
+            // Delete old ones
+            await supabase
+                .from('user_quests')
+                .delete()
+                .eq('guild_id', guildId)
+                .eq('user_id', userId);
+
+            const newQuests = generateDailyQuests();
+            const { data: inserted, error: insertError } = await supabase
+                .from('user_quests')
+                .insert(newQuests.map(q => ({
+                    guild_id: guildId,
+                    user_id: userId,
+                    quest_index: q.quest_index,
+                    quest_type: q.quest_type,
+                    target_item: q.target_item,
+                    target_amount: q.target_amount,
+                    current_amount: 0,
+                    reward_coins: q.reward_coins,
+                    reward_xp: q.reward_xp,
+                    claimed: false,
+                    created_at: q.created_at.toISOString()
+                })))
+                .select()
+                .order('quest_index', { ascending: true });
+
+            if (insertError) {
+                console.error('[DB] insert quests error:', insertError.message);
+                return newQuests;
+            }
+
+            return inserted.map(q => ({
+                quest_index: q.quest_index,
+                quest_type: q.quest_type,
+                target_item: q.target_item,
+                target_amount: q.target_amount,
+                current_amount: q.current_amount,
+                reward_coins: q.reward_coins,
+                reward_xp: q.reward_xp,
+                claimed: q.claimed,
+                created_at: new Date(q.created_at)
+            }));
+        }
+
+        return data.map(q => ({
+            quest_index: q.quest_index,
+            quest_type: q.quest_type,
+            target_item: q.target_item,
+            target_amount: q.target_amount,
+            current_amount: q.current_amount,
+            reward_coins: q.reward_coins,
+            reward_xp: q.reward_xp,
+            claimed: q.claimed,
+            created_at: new Date(q.created_at)
+        }));
+    },
+
+    async incrementQuestProgress(guildId, userId, questType, item = null, amount = 1) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const quests = memoryQuests.get(key) || [];
+            quests.forEach(q => {
+                const typeMatch = q.quest_type === questType;
+                const itemMatch = !q.target_item || (item && q.target_item.toLowerCase() === item.toLowerCase());
+                if (typeMatch && itemMatch && !q.claimed) {
+                    q.current_amount = Math.min(q.target_amount, q.current_amount + amount);
+                }
+            });
+            return true;
+        }
+
+        // Fetch active quests
+        const activeQuests = await this.getUserQuests(guildId, userId);
+        for (const q of activeQuests) {
+            const typeMatch = q.quest_type === questType;
+            const itemMatch = !q.target_item || (item && q.target_item.toLowerCase() === item.toLowerCase());
+
+            if (typeMatch && itemMatch && !q.claimed && q.current_amount < q.target_amount) {
+                const newAmount = Math.min(q.target_amount, q.current_amount + amount);
+                await supabase
+                    .from('user_quests')
+                    .update({ current_amount: newAmount })
+                    .eq('guild_id', guildId)
+                    .eq('user_id', userId)
+                    .eq('quest_index', q.quest_index);
+            }
+        }
+        return true;
+    },
+
+    async claimQuestReward(guildId, userId, questIndex) {
+        if (!supabase) {
+            const key = `${guildId}_${userId}`;
+            const quests = memoryQuests.get(key) || [];
+            const quest = quests.find(q => q.quest_index === questIndex);
+
+            if (!quest) return { success: false, reason: 'Quest not found.' };
+            if (quest.claimed) return { success: false, reason: 'Quest already claimed.' };
+            if (quest.current_amount < quest.target_amount) return { success: false, reason: 'Quest is not completed yet.' };
+
+            quest.claimed = true;
+            await this.updateCoins(guildId, userId, quest.reward_coins);
+            await this.addXp(guildId, userId, quest.reward_xp);
+
+            return { success: true, reward_coins: quest.reward_coins, reward_xp: quest.reward_xp };
+        }
+
+        const quests = await this.getUserQuests(guildId, userId);
+        const quest = quests.find(q => q.quest_index === questIndex);
+
+        if (!quest) return { success: false, reason: 'Quest not found.' };
+        if (quest.claimed) return { success: false, reason: 'Quest already claimed.' };
+        if (quest.current_amount < quest.target_amount) return { success: false, reason: 'Quest is not completed yet.' };
+
+        const { error } = await supabase
+            .from('user_quests')
+            .update({ claimed: true })
+            .eq('guild_id', guildId)
+            .eq('user_id', userId)
+            .eq('quest_index', questIndex);
+
+        if (error) {
+            console.error('[DB] claimQuestReward error:', error.message);
+            return { success: false, reason: 'Database error.' };
+        }
+
+        await this.updateCoins(guildId, userId, quest.reward_coins);
+        await this.addXp(guildId, userId, quest.reward_xp);
+
+        return { success: true, reward_coins: quest.reward_coins, reward_xp: quest.reward_xp };
+    },
+
+    // ==========================================
+    // 28. Player-Driven Supply & Demand Market
+    // ==========================================
+
+    async getMarketPrices(guildId, sellCatalog) {
+        let shouldTick = false;
+        const now = Date.now();
+
+        if (!supabase) {
+            const lastTick = memoryMarketTicks.get(guildId) || now;
+            if (lastTick === now || (now - lastTick > 3600000)) {
+                shouldTick = true;
+                memoryMarketTicks.set(guildId, now);
+            }
+        } else {
+            const { data: tickData, error: tickError } = await supabase
+                .from('market_ticks')
+                .select('*')
+                .eq('guild_id', guildId)
+                .maybeSingle();
+
+            if (tickError) {
+                console.error('[DB] get market ticks error:', tickError.message);
+            }
+
+            if (!tickData) {
+                await supabase.from('market_ticks').insert([{ guild_id: guildId, last_tick: new Date().toISOString() }]);
+                shouldTick = true;
+            } else {
+                const elapsed = now - new Date(tickData.last_tick).getTime();
+                if (elapsed > 3600000) {
+                    shouldTick = true;
+                    await supabase
+                        .from('market_ticks')
+                        .update({ last_tick: new Date().toISOString() })
+                        .eq('guild_id', guildId);
+                }
+            }
+        }
+
+        if (shouldTick) {
+            await this.tickMarket(guildId, sellCatalog);
+        }
+
+        // Return commodities map
+        const pricesMap = {};
+        if (!supabase) {
+            for (const itemName in sellCatalog) {
+                const basePrice = sellCatalog[itemName];
+                const key = `${guildId}_${itemName}`;
+                let comm = memoryCommodities.get(key);
+                if (!comm) {
+                    comm = { price: basePrice, eventText: null, lastUpdated: new Date() };
+                    memoryCommodities.set(key, comm);
+                }
+                pricesMap[itemName] = comm;
+            }
+            return pricesMap;
+        }
+
+        const { data, error } = await supabase
+            .from('market_commodities')
+            .select('*')
+            .eq('guild_id', guildId);
+
+        if (error) {
+            console.error('[DB] getMarketPrices error:', error.message);
+            for (const itemName in sellCatalog) {
+                pricesMap[itemName] = { price: sellCatalog[itemName], eventText: null };
+            }
+            return pricesMap;
+        }
+
+        // Merge defaults
+        const dbMap = {};
+        data.forEach(row => {
+            dbMap[row.item_name.toLowerCase()] = { price: row.price, eventText: row.event_text };
+        });
+
+        const toInsert = [];
+        for (const itemName in sellCatalog) {
+            const lowerName = itemName.toLowerCase();
+            if (dbMap[lowerName] !== undefined) {
+                pricesMap[lowerName] = dbMap[lowerName];
+            } else {
+                const basePrice = sellCatalog[itemName];
+                pricesMap[lowerName] = { price: basePrice, eventText: null };
+                toInsert.push({ guild_id: guildId, item_name: lowerName, price: basePrice, event_text: null });
+            }
+        }
+
+        if (toInsert.length > 0) {
+            await supabase.from('market_commodities').insert(toInsert).catch(() => null);
+        }
+
+        return pricesMap;
+    },
+
+    async updateMarketPrice(guildId, itemName, basePrice, unitsSold) {
+        const lowerName = itemName.toLowerCase();
+        const decayPerUnit = Math.round(basePrice * 0.005); // 0.5% per unit sold
+        const minPrice = Math.round(basePrice * 0.3); // Minimum 30% of base price
+
+        if (!supabase) {
+            const key = `${guildId}_${lowerName}`;
+            let comm = memoryCommodities.get(key);
+            if (!comm) {
+                comm = { price: basePrice, eventText: null, lastUpdated: new Date() };
+            }
+            comm.price = Math.max(minPrice, comm.price - (decayPerUnit * unitsSold));
+            comm.lastUpdated = new Date();
+            memoryCommodities.set(key, comm);
+            return true;
+        }
+
+        // Fetch current price
+        const { data, error: fetchError } = await supabase
+            .from('market_commodities')
+            .select('price')
+            .eq('guild_id', guildId)
+            .eq('item_name', lowerName)
+            .maybeSingle();
+
+        if (fetchError || !data) return false;
+
+        const newPrice = Math.max(minPrice, Number(data.price) - (decayPerUnit * unitsSold));
+
+        await supabase
+            .from('market_commodities')
+            .update({ price: newPrice, last_updated: new Date().toISOString() })
+            .eq('guild_id', guildId)
+            .eq('item_name', lowerName);
+
+        return true;
+    },
+
+    async tickMarket(guildId, sellCatalog) {
+        // Adjust prices hourly
+        const marketEvents = [
+            { text: '📈 Shortage: High local demand spikes prices by 50%!', multiplier: 1.5, type: 'up' },
+            { text: '📉 Glut: Overflowing warehouses crash prices by 50%!', multiplier: 0.5, type: 'down' }
+        ];
+
+        // Random roll for a global event (10% chance)
+        const triggerEvent = Math.random() < 0.10;
+        let eventItem = null;
+        let chosenEvent = null;
+        if (triggerEvent) {
+            const items = Object.keys(sellCatalog);
+            eventItem = items[Math.floor(Math.random() * items.length)].toLowerCase();
+            chosenEvent = marketEvents[Math.floor(Math.random() * marketEvents.length)];
+        }
+
+        if (!supabase) {
+            for (const itemName in sellCatalog) {
+                const lowerName = itemName.toLowerCase();
+                const basePrice = sellCatalog[itemName];
+                const key = `${guildId}_${lowerName}`;
+                let comm = memoryCommodities.get(key);
+                if (!comm) {
+                    comm = { price: basePrice, eventText: null, lastUpdated: new Date() };
+                }
+
+                if (lowerName === eventItem) {
+                    comm.price = Math.round(basePrice * chosenEvent.multiplier);
+                    comm.eventText = chosenEvent.text;
+                } else {
+                    comm.eventText = null;
+                    if (comm.price < basePrice) {
+                        // Recover price by 10% base price
+                        comm.price = Math.min(basePrice, comm.price + Math.round(basePrice * 0.10));
+                    } else if (comm.price > basePrice) {
+                        // Cool down prices above base price
+                        comm.price = Math.max(basePrice, comm.price - Math.round(basePrice * 0.10));
+                    } else {
+                        // Fluctuate randomly by +/- 5%
+                        const fluctuate = Math.random() < 0.5 ? 1 : -1;
+                        const amt = Math.round(basePrice * 0.05 * Math.random());
+                        comm.price = Math.max(Math.round(basePrice * 0.3), basePrice + (fluctuate * amt));
+                    }
+                }
+                comm.lastUpdated = new Date();
+                memoryCommodities.set(key, comm);
+            }
+            return true;
+        }
+
+        // Supabase tick execution
+        for (const itemName in sellCatalog) {
+            const lowerName = itemName.toLowerCase();
+            const basePrice = sellCatalog[itemName];
+
+            const { data, error } = await supabase
+                .from('market_commodities')
+                .select('*')
+                .eq('guild_id', guildId)
+                .eq('item_name', lowerName)
+                .maybeSingle();
+
+            let price = basePrice;
+            let eventText = null;
+
+            if (data) {
+                price = Number(data.price);
+            }
+
+            if (lowerName === eventItem) {
+                price = Math.round(basePrice * chosenEvent.multiplier);
+                eventText = chosenEvent.text;
+            } else {
+                if (price < basePrice) {
+                    price = Math.min(basePrice, price + Math.round(basePrice * 0.10));
+                } else if (price > basePrice) {
+                    price = Math.max(basePrice, price - Math.round(basePrice * 0.10));
+                } else {
+                    const fluctuate = Math.random() < 0.5 ? 1 : -1;
+                    const amt = Math.round(basePrice * 0.05 * Math.random());
+                    price = Math.max(Math.round(basePrice * 0.3), basePrice + (fluctuate * amt));
+                }
+            }
+
+            await supabase
+                .from('market_commodities')
+                .upsert({
+                    guild_id: guildId,
+                    item_name: lowerName,
+                    price: price,
+                    event_text: eventText,
+                    last_updated: new Date().toISOString()
+                }, { onConflict: 'guild_id,item_name' });
+        }
+        return true;
+    },
+
+    // ==========================================
+    // 29. Advanced Lottery System
+    // ==========================================
+
+    async getLotteryState(guildId, userId) {
+        let config = null;
+        let drawResult = null;
+        const now = Date.now();
+
+        if (!supabase) {
+            config = memoryLotteryConfig.get(guildId);
+            if (!config) {
+                config = { ticketCost: 100, jackpot: 1000, lastDraw: new Date() };
+                memoryLotteryConfig.set(guildId, config);
+            }
+
+            const elapsed = now - new Date(config.lastDraw).getTime();
+            if (elapsed > 86400000) {
+                drawResult = await this.drawLottery(guildId);
+                // Refresh config
+                config = memoryLotteryConfig.get(guildId);
+            }
+        } else {
+            const { data, error } = await supabase
+                .from('lottery_config')
+                .select('*')
+                .eq('guild_id', guildId)
+                .maybeSingle();
+
+            if (error) console.error('[DB] getLotteryState error:', error.message);
+
+            if (!data) {
+                const newConfig = { guild_id: guildId, ticket_cost: 100, jackpot: 1000, last_draw: new Date().toISOString() };
+                await supabase.from('lottery_config').insert([newConfig]);
+                config = { ticketCost: 100, jackpot: 1000, lastDraw: new Date() };
+            } else {
+                config = {
+                    ticketCost: data.ticket_cost,
+                    jackpot: Number(data.jackpot),
+                    lastDraw: new Date(data.last_draw)
+                };
+
+                const elapsed = now - config.lastDraw.getTime();
+                if (elapsed > 86400000) {
+                    drawResult = await this.drawLottery(guildId);
+                    // Refresh config
+                    const { data: refData } = await supabase
+                        .from('lottery_config')
+                        .select('*')
+                        .eq('guild_id', guildId)
+                        .single();
+                    config = {
+                        ticketCost: refData.ticket_cost,
+                        jackpot: Number(refData.jackpot),
+                        lastDraw: new Date(refData.last_draw)
+                    };
+                }
+            }
+        }
+
+        // Fetch User and Server Tickets counts
+        let userTickets = 0;
+        let totalTickets = 0;
+
+        if (!supabase) {
+            const prefix = `${guildId}_`;
+            for (const [key, count] of memoryLotteryTickets) {
+                if (key.startsWith(prefix)) {
+                    totalTickets += count;
+                    if (key === `${guildId}_${userId}`) {
+                        userTickets = count;
+                    }
+                }
+            }
+        } else {
+            const { data: tickets, error: ticketError } = await supabase
+                .from('lottery_tickets')
+                .select('*')
+                .eq('guild_id', guildId);
+
+            if (!ticketError && tickets) {
+                tickets.forEach(t => {
+                    totalTickets += t.ticket_count;
+                    if (t.user_id === userId) {
+                        userTickets = t.ticket_count;
+                    }
+                });
+            }
+        }
+
+        // Fetch Last Winner
+        let lastWinner = null;
+        if (!supabase) {
+            const history = memoryLotteryHistory.get(guildId) || [];
+            if (history.length > 0) {
+                lastWinner = history[history.length - 1];
+            }
+        } else {
+            const { data: winHistory, error: winError } = await supabase
+                .from('lottery_history')
+                .select('*')
+                .eq('guild_id', guildId)
+                .order('draw_date', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!winError && winHistory) {
+                lastWinner = {
+                    winnerId: winHistory.winner_id,
+                    jackpotWon: Number(winHistory.jackpot_won),
+                    drawDate: new Date(winHistory.draw_date)
+                };
+            }
+        }
+
+        return {
+            config,
+            userTickets,
+            totalTickets,
+            lastWinner,
+            drawResult
+        };
+    },
+
+    async buyLotteryTickets(guildId, userId, amount) {
+        const state = await this.getLotteryState(guildId, userId);
+        const cost = amount * state.config.ticketCost;
+
+        const profile = await this.getProfile(guildId, userId);
+        if (Number(profile.coins) < cost) {
+            return { success: false, reason: 'Insufficient coins in wallet.' };
+        }
+
+        // Deduct coins
+        await this.updateCoins(guildId, userId, -cost);
+        const newJackpot = state.config.jackpot + cost;
+
+        if (!supabase) {
+            // Update jackpot in config
+            const config = memoryLotteryConfig.get(guildId);
+            config.jackpot = newJackpot;
+            memoryLotteryConfig.set(guildId, config);
+
+            // Increment user tickets
+            const ticketKey = `${guildId}_${userId}`;
+            const currentTickets = memoryLotteryTickets.get(ticketKey) || 0;
+            memoryLotteryTickets.set(ticketKey, currentTickets + amount);
+
+            return { success: true, ticketsBought: amount, costPaid: cost, newJackpot };
+        }
+
+        // Supabase database update
+        // Update jackpot pool
+        await supabase
+            .from('lottery_config')
+            .update({ jackpot: newJackpot })
+            .eq('guild_id', guildId);
+
+        // Fetch or create ticket record
+        const { data: ticketRecord } = await supabase
+            .from('lottery_tickets')
+            .select('*')
+            .eq('guild_id', guildId)
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (ticketRecord) {
+            await supabase
+                .from('lottery_tickets')
+                .update({ ticket_count: ticketRecord.ticket_count + amount })
+                .eq('id', ticketRecord.id);
+        } else {
+            await supabase
+                .from('lottery_tickets')
+                .insert([{ guild_id: guildId, user_id: userId, ticket_count: amount }]);
+        }
+
+        return { success: true, ticketsBought: amount, costPaid: cost, newJackpot };
+    },
+
+    async drawLottery(guildId) {
+        let tickets = [];
+        let currentJackpot = 1000;
+
+        if (!supabase) {
+            const config = memoryLotteryConfig.get(guildId) || { ticketCost: 100, jackpot: 1000 };
+            currentJackpot = config.jackpot;
+
+            const prefix = `${guildId}_`;
+            for (const [key, count] of memoryLotteryTickets) {
+                if (key.startsWith(prefix)) {
+                    const userId = key.replace(prefix, '');
+                    tickets.push({ user_id: userId, ticket_count: count });
+                }
+            }
+        } else {
+            const [configRes, ticketsRes] = await Promise.all([
+                supabase.from('lottery_config').select('jackpot').eq('guild_id', guildId).single(),
+                supabase.from('lottery_tickets').select('*').eq('guild_id', guildId)
+            ]);
+
+            if (configRes.data) currentJackpot = Number(configRes.data.jackpot);
+            tickets = ticketsRes.data || [];
+        }
+
+        if (tickets.length === 0) {
+            // Rollover jackpot
+            if (!supabase) {
+                const config = memoryLotteryConfig.get(guildId);
+                config.lastDraw = new Date();
+                memoryLotteryConfig.set(guildId, config);
+            } else {
+                await supabase
+                    .from('lottery_config')
+                    .update({ last_draw: new Date().toISOString() })
+                    .eq('guild_id', guildId);
+            }
+            return { winnerId: null, jackpotWon: currentJackpot, rolledOver: true };
+        }
+
+        // Weighted draw pool
+        const drawPool = [];
+        tickets.forEach(t => {
+            for (let i = 0; i < t.ticket_count; i++) {
+                drawPool.push(t.user_id);
+            }
+        });
+
+        const winnerId = drawPool[Math.floor(Math.random() * drawPool.length)];
+
+        // Pay winner
+        await this.updateCoins(guildId, winnerId, currentJackpot);
+
+        if (!supabase) {
+            // Reset config
+            memoryLotteryConfig.set(guildId, {
+                ticketCost: 100,
+                jackpot: 1000,
+                lastDraw: new Date()
+            });
+
+            // Clear tickets
+            const prefix = `${guildId}_`;
+            for (const key of memoryLotteryTickets.keys()) {
+                if (key.startsWith(prefix)) {
+                    memoryLotteryTickets.delete(key);
+                }
+            }
+
+            // Log history
+            const history = memoryLotteryHistory.get(guildId) || [];
+            history.push({ winnerId, jackpotWon: currentJackpot, drawDate: new Date() });
+            memoryLotteryHistory.set(guildId, history);
+        } else {
+            // Reset config & update date
+            await supabase
+                .from('lottery_config')
+                .update({ jackpot: 1000, last_draw: new Date().toISOString() })
+                .eq('guild_id', guildId);
+
+            // Log history
+            await supabase
+                .from('lottery_history')
+                .insert([{ guild_id: guildId, winner_id: winnerId, jackpot_won: currentJackpot }]);
+
+            // Delete active tickets
+            await supabase
+                .from('lottery_tickets')
+                .delete()
+                .eq('guild_id', guildId);
+        }
+
+        return { winnerId, jackpotWon: currentJackpot, rolledOver: false };
     }
 };

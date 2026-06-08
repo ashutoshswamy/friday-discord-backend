@@ -10,10 +10,17 @@ const { EMOJIS, EMOJI_IDS } = require('../../utils/emojis');
 module.exports = {
  data: new SlashCommandBuilder()
  .setName('shop')
- .setDescription('Manage or view the server virtual coin shop.')
+ .setDescription('Manage, view, or purchase items from the server virtual shop.')
  .addSubcommand(sub =>
  sub.setName('view')
  .setDescription('View the catalog of items available for purchase.'))
+ .addSubcommand(sub =>
+ sub.setName('buy')
+ .setDescription('Purchase an item from the server shop.')
+ .addStringOption(opt =>
+ opt.setName('item')
+ .setDescription('The exact name of the item to purchase')
+ .setRequired(true)))
  .addSubcommand(sub =>
  sub.setName('add')
  .setDescription('Add a new item to the server shop (Administrator only).')
@@ -65,7 +72,51 @@ module.exports = {
  const subcommand = options.getSubcommand();
 
  try {
- if (subcommand === 'view') {
+  if (subcommand === 'buy') {
+   const itemName = options.getString('item');
+   const result = await db.purchaseItem(guild.id, user.id, itemName);
+
+   if (!result.success) {
+    return interaction.editReply({ content: `Purchase declined: ${result.reason || 'Transaction declined.'}`, ephemeral: true });
+   }
+
+   let roleGranted = false;
+   let roleText = '';
+
+   if (result.roleRewardId) {
+    const rewardRole = guild.roles.cache.get(result.roleRewardId);
+    if (rewardRole) {
+     roleText = rewardRole.name;
+     await member.roles.add(rewardRole, `Purchased shop item: ${itemName}`)
+      .then(() => { roleGranted = true; })
+      .catch(err => console.error(`[ERROR] Failed to grant role reward:`, err));
+    }
+   }
+
+   let detailText = `**Cost Paid:** ${EMOJIS.coin} **${result.cost.toLocaleString()}** coins\n**Item Added:** **${itemName}** → your inventory`;
+
+   if (result.roleRewardId) {
+    detailText += `\n**Role Reward:** ${roleGranted ? `**${roleText}** granted!` : `Failed to award **${roleText}** (bot role too low)`}`;
+   }
+
+   const container = new ContainerBuilder()
+    .setAccentColor(0x00FF66)
+    .addSectionComponents(
+     new SectionBuilder()
+      .addTextDisplayComponents(
+       new TextDisplayBuilder().setContent(
+        `## Purchase Confirmed\nSuccessfully purchased **${itemName}**!`
+       )
+      )
+      .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(detailText));
+
+   return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+  }
+
+  if (subcommand === 'view') {
  const items = await db.getShopItems(guild.id);
 
  if (items.length === 0) {

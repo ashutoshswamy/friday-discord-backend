@@ -38,7 +38,10 @@ module.exports = {
  .addIntegerOption(opt =>
  opt.setName('id')
  .setDescription('The ID of your market listing to cancel')
- .setRequired(true))),
+ .setRequired(true)))
+ .addSubcommand(sub =>
+ sub.setName('index')
+ .setDescription('View the dynamic supply/demand commodity price indices.')),
 
  async execute(interaction) {
  const { guild, user, options } = interaction;
@@ -179,6 +182,57 @@ module.exports = {
  );
 
  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+ }
+
+ if (subcommand === 'index') {
+  const { SELL_CATALOG } = require('./sell');
+  const marketPrices = await db.getMarketPrices(guild.id, SELL_CATALOG);
+
+  const categories = {
+   '🌲 Forestry': ['pine log', 'oak log', 'birch log', 'mahogany log', 'yew log', 'elderwood log', 'golden sap'],
+   '🐟 Fishing': ['junk seaweed', 'old boot', 'clam', 'common bass', 'salmon', 'pufferfish', 'goldfish', 'lobster', 'tropical coral fish', 'shark tooth', 'ancient pearl', 'mythical whale'],
+   '⛏️ Mining': ['coal', 'iron ore', 'gold ore', 'quartz crystal', 'emerald', 'ruby shard', 'diamond ore', 'crystal shard', 'mythril core'],
+   '🚜 Agriculture': ['harvested wheat', 'harvested tomato', 'harvested carrot', 'harvested golden apple'],
+   '💻 Hacking': ['decrypted hard drive', 'mainframe core', 'stolen crypto key']
+  };
+
+  let indexText = '';
+  for (const catName in categories) {
+   let catText = '';
+   categories[catName].forEach(rawName => {
+    const basePrice = SELL_CATALOG[rawName];
+    if (basePrice === undefined) return;
+    const current = marketPrices[rawName];
+    const price = current ? current.price : basePrice;
+
+    const change = price - basePrice;
+    const trendSign = change > 0 ? '📈 +' : change < 0 ? '📉 -' : '▫️ ';
+    const diffText = change !== 0 ? ` (${trendSign}${Math.abs(change)} coins)` : '';
+    const eventSuffix = current && current.eventText ? ` · *Event active!*` : '';
+
+    catText += `• **${rawName.replace(/\b\w/g, c => c.toUpperCase())}**: ${EMOJIS.coin} **${price.toLocaleString()}** coins${diffText}${eventSuffix}\n`;
+   });
+
+   if (catText.length > 0) {
+    indexText += `### ${catName}\n${catText}\n`;
+   }
+  }
+
+  const container = new ContainerBuilder()
+   .setAccentColor(0x3498DB)
+   .addSectionComponents(
+    new SectionBuilder()
+     .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+       `## 📈 Dynamic Commodity Market Index\n` +
+       `Prices fluctuate based on global player sell supply. Every sale decays price instantly. Prices recover slowly every hour towards base values.\n\n` +
+       indexText
+      )
+     )
+   )
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# Sell items at their current index price using `/sell`.'));
+
+  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
  }
 
  } catch (err) {

@@ -53,6 +53,7 @@ module.exports = {
  const roll = Math.random();
  const reward = FISH_CHANCES.find(loot => roll <= loot.chance);
  await db.addItemToInventory(guild.id, user.id, reward.name);
+ await db.incrementQuestProgress(guild.id, user.id, 'fish', reward.name, 1);
 
  const container = new ContainerBuilder()
  .setAccentColor(0x00E5FF)

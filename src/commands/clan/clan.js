@@ -43,8 +43,23 @@ module.exports = {
     .setDescription('Contribute coins from your wallet to the clan treasury.')
     .addIntegerOption(opt => opt.setName('amount').setDescription('Amount to deposit').setMinValue(1).setRequired(true)))
   .addSubcommand(sub =>
+   sub.setName('rename')
+    .setDescription('Rename your clan (costs 2,500 coins from clan treasury, owner only).')
+    .addStringOption(opt => opt.setName('name').setDescription('New clan name (2–20 chars)').setRequired(true)))
+  .addSubcommand(sub =>
+   sub.setName('disband')
+    .setDescription('Disband your clan permanently (owner only).'))
+  .addSubcommand(sub =>
    sub.setName('leaderboard')
-    .setDescription('View the top clans by treasury wealth on this server.')),
+    .setDescription('View the top clans on this server.')
+    .addStringOption(opt =>
+     opt.setName('sort')
+      .setDescription('Sort by treasury or level (default: treasury)')
+      .setRequired(false)
+      .addChoices(
+       { name: '💰 Treasury Coins', value: 'treasury' },
+       { name: '⭐ Clan Level', value: 'level' }
+      ))),
 
  async execute(interaction) {
   const { guild, user, options } = interaction;
@@ -81,6 +96,11 @@ module.exports = {
     if (!myClan) return reply('You are not in a clan.');
     if (myClan.ownerId !== user.id) return reply('Only the clan owner can send invites.');
 
+    const maxMembers = 5 + (myClan.level - 1) * 3;
+    if (myClan.members.length >= maxMembers) {
+     return reply(`Your clan has reached its maximum member cap of **${maxMembers}** members! Grinding and selling items helps level up your clan to expand capacity.`);
+    }
+
     const targetClan = await db.getClanByMember(guild.id, target.id);
     if (targetClan) return reply(`<@${target.id}> is already in a clan.`);
 
@@ -101,7 +121,7 @@ module.exports = {
        )
        .setThumbnailAccessory(new ThumbnailBuilder().setURL(target.displayAvatarURL({ forceStatic: true })))
      )
-     .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# Invite expires in 2 minutes'));
+     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# Invite expires in 2 minutes · Roster cap: ${myClan.members.length}/${maxMembers}`));
 
     return replyContainer(inviteContainer);
    }
@@ -118,6 +138,15 @@ module.exports = {
     if (!invite || invite.clanName.toLowerCase() !== name.toLowerCase() || Date.now() > invite.expiresAt) {
      pendingInvites.delete(inviteKey);
      return reply(`No valid invite found for **${name}**. Ask the clan owner to invite you first.`);
+    }
+
+    const targetClan = await db.getClan(guild.id, invite.clanName);
+    if (targetClan) {
+     const maxMembers = 5 + (targetClan.level - 1) * 3;
+     if (targetClan.members.length >= maxMembers) {
+      pendingInvites.delete(inviteKey);
+      return reply(`The clan **${targetClan.name}** has already reached its maximum capacity of **${maxMembers}** members!`);
+     }
     }
 
     pendingInvites.delete(inviteKey);
@@ -177,24 +206,31 @@ module.exports = {
     if (!clan) return reply(nameInput ? `Clan **${nameInput}** not found.` : 'You are not in a clan.');
 
     const memberList = clan.members.slice(0, 10)
-     .map(m => m.userId === clan.ownerId ? `[Owner] <@${m.userId}>` : `• <@${m.userId}>`)
+     .map(m => m.userId === clan.ownerId ? `👑 [Owner] <@${m.userId}>` : `• <@${m.userId}>`)
      .join('\n') || 'No members.';
+
+    const maxMembers = 5 + (clan.level - 1) * 3;
+    const xpNeeded = clan.level * 1000;
+    const xpPercentage = Math.min(100, Math.floor((clan.xpTotal / xpNeeded) * 100));
+    const filledBlocks = Math.round(xpPercentage / 10);
+    const progressBar = '█'.repeat(filledBlocks) + '░'.repeat(10 - filledBlocks);
 
     return replyContainer(new ContainerBuilder()
      .setAccentColor(0x8B5CF6)
-     .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-      `## ${clan.name}`
-     ))
+     .addSectionComponents(
+      new SectionBuilder()
+       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+        `## 🛡️ Clan: ${clan.name}\n` +
+        `**Level:** **${clan.level}** · **Grind Bonus:** **+${clan.level * 2}%** coins on \`/sell\`\n\n` +
+        `**XP:** \`[${progressBar}]\` **${clan.xpTotal}** / **${xpNeeded}** XP (${xpPercentage}%)\n` +
+        `**Owner:** <@${clan.ownerId}>\n` +
+        `**Members:** **${clan.members.length}** / **${maxMembers}**\n` +
+        `**Treasury:** ${EMOJIS.coin} **${clan.treasury.toLocaleString()}** coins`
+       ))
+     )
      .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-      `**Owner:** <@${clan.ownerId}>\n` +
-      `**Members:** ${clan.members.length}\n` +
-      `**Treasury:** ${EMOJIS.coin} ${clan.treasury.toLocaleString()}\n` +
-      `**Level:** ${clan.level}`
-     ))
-     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
-     .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-      `**Roster:**\n${memberList}${clan.members.length > 10 ? `\n*+${clan.members.length - 10} more*` : ''}`
+      `**Roster:**\n${memberList}${clan.members.length > 10 ? `\n*+${clan.members.length - 10} more members*` : ''}`
      )));
    }
 
@@ -214,21 +250,61 @@ module.exports = {
      )));
    }
 
+   // ── RENAME ──
+   if (sub === 'rename') {
+    const newName = options.getString('name').trim();
+    if (newName.length < 2 || newName.length > 20) return reply('Clan name must be 2–20 characters.');
+
+    const myClan = await db.getClanByMember(guild.id, user.id);
+    if (!myClan) return reply('You are not in a clan.');
+    if (myClan.ownerId !== user.id) return reply('Only the clan owner can rename the clan.');
+
+    const result = await db.renameClan(guild.id, myClan.id, newName);
+    if (!result.success) return reply(result.reason);
+
+    return replyContainer(new ContainerBuilder()
+     .setAccentColor(0x00E5FF)
+     .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+      `## Clan Renamed!\nYour clan has been successfully renamed to **${newName}**!\n\n${EMOJIS.coin} 2,500 coins deducted from the clan treasury.`
+     )));
+   }
+
+   // ── DISBAND ──
+   if (sub === 'disband') {
+    const myClan = await db.getClanByMember(guild.id, user.id);
+    if (!myClan) return reply('You are not in a clan.');
+    if (myClan.ownerId !== user.id) return reply('Only the clan owner can disband the clan.');
+
+    const deleted = await db.disbandClan(guild.id, myClan.id);
+    if (!deleted) return reply('Failed to disband clan. Try again.');
+
+    return replyContainer(new ContainerBuilder()
+     .setAccentColor(0xFF3333)
+     .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+      `## 🚨 Clan Disbanded\n**${myClan.name}** has been permanently disbanded. All members have been released.`
+     )));
+   }
+
    // ── LEADERBOARD ──
    if (sub === 'leaderboard') {
-    const top = await db.getClanLeaderboard(guild.id);
+    const sortBy = options.getString('sort') || 'treasury';
+    const top = await db.getClanLeaderboard(guild.id, sortBy);
     if (!top.length) return reply('No clans have been founded on this server yet.');
 
     const lines = top.map(c =>
-     `**#${c.rank}** **${c.name}** — ${EMOJIS.coin} ${c.treasury.toLocaleString()} treasury · Lv.${c.level}`
+     sortBy === 'level'
+      ? `**#${c.rank}** **${c.name}** — Lv.**${c.level}** (${c.xpTotal.toLocaleString()} XP) · ${EMOJIS.coin} ${c.treasury.toLocaleString()} treasury`
+      : `**#${c.rank}** **${c.name}** — ${EMOJIS.coin} ${c.treasury.toLocaleString()} treasury · Lv.**${c.level}**`
     ).join('\n');
+
+    const rankByText = sortBy === 'level' ? 'Ranked by clan level and XP' : 'Ranked by treasury wealth';
 
     return replyContainer(new ContainerBuilder()
      .setAccentColor(0xFFD700)
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
       `## Clan Leaderboard\n${lines}`
      ))
-     .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# Ranked by treasury wealth')));
+     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${rankByText}`)));
    }
 
   } catch (err) {

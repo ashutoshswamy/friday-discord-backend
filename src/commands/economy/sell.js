@@ -42,6 +42,28 @@ const SELL_CATALOG = {
  'common gem': 750,
  'rare gem': 3500,
  'legendary gem': 12000,
+ // ── Chop Wood ──
+ 'pine log': 120, 'oak log': 220,
+ 'birch log': 350, 'mahogany log': 600,
+ 'yew log': 1200, 'elderwood log': 3000,
+ 'golden sap': 8000,
+ // ── Hack Intrusion ──
+ 'decrypted hard drive': 500,
+ 'mainframe core': 1500,
+ 'stolen crypto key': 3500,
+ // ── Farm Harvests ──
+ 'harvested wheat': 80,
+ 'silver harvested wheat': 120,
+ 'gold harvested wheat': 200,
+ 'harvested tomato': 150,
+ 'silver harvested tomato': 225,
+ 'gold harvested tomato': 375,
+ 'harvested carrot': 250,
+ 'silver harvested carrot': 375,
+ 'gold harvested carrot': 625,
+ 'harvested golden apple': 1200,
+ 'silver harvested golden apple': 1800,
+ 'gold harvested golden apple': 3000,
 };
 
 module.exports = {
@@ -78,20 +100,65 @@ module.exports = {
  });
  }
 
- let removedCount = 0;
- const originalItemName = matchedItems[0];
+  const marketPrices = await db.getMarketPrices(guild.id, SELL_CATALOG);
+  const itemData = marketPrices[normalizedName];
+  const activePrice = itemData ? itemData.price : baseValue;
 
- for (let i = 0; i < sellAmount; i++) {
- const removed = await db.removeItemFromInventory(guild.id, user.id, originalItemName);
- if (removed) removedCount++;
- }
+  let removedCount = 0;
+  const originalItemName = matchedItems[0];
 
- if (removedCount === 0) {
- return interaction.editReply({ content: 'Failed to execute transaction. Try again.', ephemeral: true });
- }
+  for (let i = 0; i < sellAmount; i++) {
+   const removed = await db.removeItemFromInventory(guild.id, user.id, originalItemName);
+   if (removed) removedCount++;
+  }
 
- const totalPayout = removedCount * baseValue;
- const newWallet = await db.updateCoins(guild.id, user.id, totalPayout);
+  if (removedCount === 0) {
+   return interaction.editReply({ content: 'Failed to execute transaction. Try again.', ephemeral: true });
+  }
+
+  // Decay the item price based on supply increase
+  await db.updateMarketPrice(guild.id, originalItemName, baseValue, removedCount);
+
+  const basePayout = removedCount * activePrice;
+  let clanBonus = 0;
+  let clanBonusPercent = 0;
+  let clanXpGained = 0;
+  let clanXpMsg = '';
+
+  const clan = await db.getClanByMember(guild.id, user.id);
+  if (clan) {
+    clanBonusPercent = clan.level * 2; // +2% per clan level
+    clanBonus = Math.round(basePayout * (clanBonusPercent / 100));
+    clanXpGained = removedCount * 15; // 15 XP per item sold
+    const xpResult = await db.addClanXp(guild.id, clan.id, clanXpGained);
+
+    clanXpMsg = `\n**Clan XP Contributed:** **+${clanXpGained} XP** to **${clan.name}**`;
+    if (xpResult.levelUp) {
+      clanXpMsg += `\n🎉 **CLAN LEVELED UP!** **${clan.name}** is now **Level ${xpResult.newLevel}**!`;
+    }
+  }
+
+  const finalPayout = basePayout + clanBonus;
+  await db.incrementQuestProgress(guild.id, user.id, 'sell', null, removedCount);
+  const newWallet = await db.updateCoins(guild.id, user.id, finalPayout);
+
+  let detailsText = '';
+  if (itemData && itemData.eventText) {
+    detailsText += `⚠️ **Market Event Active:** *${itemData.eventText}*\n\n`;
+  }
+
+  detailsText += `**Unit Price (Dynamic Market):** ${EMOJIS.coin} **${activePrice.toLocaleString()}** coins\n` +
+   `**Base Value:** ${EMOJIS.coin} **${baseValue.toLocaleString()}** coins\n` +
+   `**Total Sold:** **${removedCount}×**\n` +
+   `**Base Payout:** ${EMOJIS.coin} **${basePayout.toLocaleString()}** coins\n`;
+
+  if (clanBonus > 0) {
+    detailsText += `**Clan Multiplier Bonus (+${clanBonusPercent}%):** ${EMOJIS.coin} **+${clanBonus.toLocaleString()}** coins\n`;
+  }
+
+  detailsText += `**Total Earned:** ${EMOJIS.coin} **+${finalPayout.toLocaleString()}** coins\n` +
+   `**New Wallet:** ${EMOJIS.coin} **${newWallet.toLocaleString()}** coins` +
+   clanXpMsg;
 
  const container = new ContainerBuilder()
  .setAccentColor(0x00FFCC)
@@ -106,12 +173,7 @@ module.exports = {
  )
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(
- `**Unit Price:** ${EMOJIS.coin} **${baseValue.toLocaleString()}** coins\n` +
- `**Total Sold:** **${removedCount}×**\n` +
- `**Earned:** ${EMOJIS.coin} **+${totalPayout.toLocaleString()}** coins\n` +
- `**New Wallet:** ${EMOJIS.coin} **${newWallet.toLocaleString()}** coins`
- )
+ new TextDisplayBuilder().setContent(detailsText)
  );
 
  await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -122,5 +184,6 @@ module.exports = {
  if (interaction.replied || interaction.deferred) await interaction.followUp(errMsg).catch(() => null);
  else await interaction.editReply(errMsg).catch(() => null);
  }
- }
+ },
+ SELL_CATALOG
 };
