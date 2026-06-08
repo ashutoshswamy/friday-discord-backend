@@ -227,6 +227,7 @@ module.exports = {
         `**Members:** **${clan.members.length}** / **${maxMembers}**\n` +
         `**Treasury:** ${EMOJIS.coin} **${clan.treasury.toLocaleString()}** coins`
        ))
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
      )
      .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(

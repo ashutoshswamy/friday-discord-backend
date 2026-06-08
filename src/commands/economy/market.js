@@ -229,6 +229,7 @@ module.exports = {
        indexText
       )
      )
+     .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
    )
    .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# Sell items at their current index price using `/sell`.'));
 

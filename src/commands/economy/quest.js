@@ -127,6 +127,7 @@ module.exports = {
            `**Experience Earned:** **+${result.reward_xp}** XP gained.`
          )
         )
+        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
       );
 
      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [successContainer] });
@@ -154,6 +155,7 @@ module.exports = {
           `**Experience Earned:** **+${result.reward_xp}** XP gained.`
         )
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      );
 
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });

@@ -258,6 +258,7 @@ module.exports = {
           `• **Status:** Watering or applying fertilizers accelerates growth.`
         )
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      );
 
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -310,6 +311,7 @@ module.exports = {
           `• **New Growth status:** ${timeText}${pestNotice}`
         )
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      );
 
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -375,6 +377,7 @@ module.exports = {
           `• **Effect:** ${effectDesc}`
         )
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      );
 
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -429,6 +432,7 @@ module.exports = {
           `• **Status:** Crop is clean and ready for healthy harvesting.`
         )
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      );
 
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -522,6 +526,7 @@ module.exports = {
           xpMsg
         )
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      );
 
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -551,6 +556,7 @@ module.exports = {
           `• **New Garden capacity:** **${result.newMaxPlots} plots** available!`
         )
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      );
 
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });

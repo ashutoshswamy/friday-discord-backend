@@ -158,6 +158,7 @@ module.exports = {
           `• **Jackpot Won:** ${EMOJIS.coin} **${drawResult.jackpotWon.toLocaleString()}** coins`
         )
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
      );
 
     return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });

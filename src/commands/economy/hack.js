@@ -117,6 +117,7 @@ module.exports = {
           `**Data Packet Recovered:** Added **${itemReward}** to your inventory (sell via \`/sell\`).`
          )
         )
+        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
       );
 
      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [successContainer] });
@@ -141,6 +142,7 @@ module.exports = {
           `The cyber-security system traced your connection! You were forced to pay a decryption/bribe fine of ${EMOJIS.coin} **${actualFine.toLocaleString()}** coins.`
          )
         )
+        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
       );
 
      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [failContainer] });
@@ -159,6 +161,7 @@ module.exports = {
           `Intrusion session timed out. Mainframe security cycled its encryption keys.`
          )
         )
+        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
       );
      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => null);
     }

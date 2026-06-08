@@ -1,29 +1,13 @@
 /**
- * Friday Brand Custom Emojis (Disabled/Cleared)
+ * Friday Brand Custom Emojis
  */
 
 const EMOJIS = {
-  coin: '',
-  fridayhype: '',
-  fridaythink: '',
-  fridaysleep: '',
-  fridaypanic: '',
-  fridaylove: '',
-  fridayhello: '',
-  fridaycool: '',
-  fridayhappy: ''
+  coin: '<:coin:1512926963239489606>'
 };
 
 const EMOJI_IDS = {
-  coin: '',
-  fridayhype: '',
-  fridaythink: '',
-  fridaysleep: '',
-  fridaypanic: '',
-  fridaylove: '',
-  fridayhello: '',
-  fridaycool: '',
-  fridayhappy: ''
+  coin: '1512926963239489606'
 };
 
 module.exports = {

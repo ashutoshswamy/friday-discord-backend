@@ -40,7 +40,7 @@ module.exports = {
  }
  }
 
- const headsBtn = new ButtonBuilder().setCustomId('cf_heads').setLabel('Heads').setStyle(ButtonStyle.Primary);
+ const headsBtn = new ButtonBuilder().setCustomId('cf_heads').setLabel('Heads').setEmoji(EMOJI_IDS.coin).setStyle(ButtonStyle.Primary);
  const tailsBtn = new ButtonBuilder().setCustomId('cf_tails').setLabel('Tails').setStyle(ButtonStyle.Secondary);
  const skipBtn = new ButtonBuilder().setCustomId('cf_skip').setLabel('Just Flip').setStyle(ButtonStyle.Secondary);
 

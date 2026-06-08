@@ -265,6 +265,7 @@ module.exports = {
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(`##  Crime Result: ${scenario.label}\n${resultText}`)
        )
+       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
      )
      .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
      .addTextDisplayComponents(
@@ -288,6 +289,7 @@ module.exports = {
           `##  Crime Aborted\nYou hesitated for too long! The opportunity passed, and the target slipped away.`
          )
         )
+        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
       );
      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => null);
     }
