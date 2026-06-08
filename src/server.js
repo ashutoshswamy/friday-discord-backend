@@ -2064,6 +2064,69 @@ module.exports = function(client) {
         }
     });
 
+    // ----------------------------------------------------------------
+    // Public Leaderboard Routes (auth required, no admin check)
+    // ----------------------------------------------------------------
+
+    // List all guilds user is in AND bot is present
+    app.get('/api/leaderboard/servers', authenticateToken, (req, res) => {
+        const userGuilds = req.user.guilds || [];
+        const result = userGuilds
+            .filter(g => client.guilds.cache.has(g.id))
+            .map(g => {
+                const discordGuild = client.guilds.cache.get(g.id);
+                return {
+                    id: g.id,
+                    name: g.name,
+                    icon: g.icon,
+                    memberCount: discordGuild.memberCount,
+                };
+            });
+        res.json(result);
+    });
+
+    // Get leaderboard for a guild (any member, no admin required)
+    app.get('/api/leaderboard/:guildId', authenticateToken, async (req, res) => {
+        const { guildId } = req.params;
+
+        const userGuild = (req.user.guilds || []).find(g => g.id === guildId);
+        if (!userGuild) return res.status(403).json({ error: 'You are not a member of this guild.' });
+
+        const discordGuild = client.guilds.cache.get(guildId);
+        if (!discordGuild) return res.status(404).json({ error: 'Bot is not in this guild.' });
+
+        try {
+            const [xpData, econData] = await Promise.all([
+                db.getLeaderboard(guildId),
+                db.getEconomyLeaderboard(guildId)
+            ]);
+
+            const enrichEntry = (entry) => {
+                const member = discordGuild.members.cache.get(entry.userId);
+                return {
+                    ...entry,
+                    username: member?.user?.username || member?.displayName || `User#${entry.userId.slice(-4)}`,
+                    avatar: member?.user?.displayAvatarURL({ forceStatic: true, size: 64 }) || null,
+                    nickname: member?.nickname || null,
+                };
+            };
+
+            res.json({
+                guild: {
+                    id: discordGuild.id,
+                    name: discordGuild.name,
+                    icon: discordGuild.icon,
+                    memberCount: discordGuild.memberCount,
+                },
+                xp: xpData.map(enrichEntry),
+                economy: econData.map(enrichEntry),
+            });
+        } catch (err) {
+            console.error('[LEADERBOARD API]', err);
+            res.status(500).json({ error: 'Failed to fetch leaderboard data' });
+        }
+    });
+
     // Health check
     app.get('/', (req, res) => {
         res.json({ status: 'ok', bot: client.user?.tag || 'starting', uptime: Math.floor(process.uptime()) });
