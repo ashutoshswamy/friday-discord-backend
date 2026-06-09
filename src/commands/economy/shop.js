@@ -285,7 +285,9 @@ module.exports = {
    `**Consumables** *(used via \`/use\`)*\n` +
    `• ${getEmoji('pizza')} **Pizza** — ${EMOJIS.coin} 250 · grants 150 XP *(in shop)*\n` +
    `• ${getEmoji('energy drink')} **Energy Drink** — ${EMOJIS.coin} 180 · grants 300 coins *(in shop)*\n` +
+   `• ${getEmoji('gamer energy drink')} **Gamer Energy Drink** — grants 300 coins *(admin shop add)*\n` +
    `• ${getEmoji('lootbox')} **Lootbox** — ${EMOJIS.coin} 800 · random coins, XP, or Silver Ring *(in shop)*\n` +
+   `• ${getEmoji('prize box')} **Prize Box** — random coins, XP, or Silver Ring *(admin shop add)*\n` +
    `• ${getEmoji('xp potion')} **XP Potion** — ${EMOJIS.coin} 1,500 · grants 300 XP *(in shop)*\n` +
    `• ${getEmoji('work gloves')} **Work Gloves** — ${EMOJIS.coin} 800 · grants 500 coins *(in shop)*\n` +
    `• ${getEmoji('coin bomb')} **Coin Bomb** — 800–4,000 random coins *(rare grind drop)*\n` +
