@@ -321,42 +321,63 @@ module.exports = {
   `${getEmoji('mainframe core')} Hack: Decrypted Hard Drive · Mainframe Core · Stolen Crypto Key\n` +
   `${getEmoji('harvested wheat')} Farm: Wheat · Tomato · Carrot · Golden Apple harvests (Silver & Gold tiers sell higher)`;
 
- // Split across two messages: Discord Components V2 caps total text at 4000 chars,
- // and this catalog renders ~4700 after emoji expansion.
- const container = new ContainerBuilder()
-  .setAccentColor(0xFF8C00)
-  .addSectionComponents(
-   new SectionBuilder()
-    .addTextDisplayComponents(
-     new TextDisplayBuilder().setContent(
-      `## Built-in Item Catalog\nEvery built-in item in Friday's economy. Tools, seeds & core consumables are auto-listed in \`/shop view\`; others are crafted, dropped, or admin-added. Items with effects work automatically with \`/use\`.`
-     )
-    )
-    .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
-  )
-  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-  .addTextDisplayComponents(new TextDisplayBuilder().setContent(toolsText))
-  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
-  .addTextDisplayComponents(new TextDisplayBuilder().setContent(seedsText))
-  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
-  .addTextDisplayComponents(new TextDisplayBuilder().setContent(consumablesText))
-  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
-  .addTextDisplayComponents(new TextDisplayBuilder().setContent(collectiblesText));
-
- const container2 = new ContainerBuilder()
-  .setAccentColor(0xFF8C00)
-  .addTextDisplayComponents(new TextDisplayBuilder().setContent(craftablesText))
-  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-  .addTextDisplayComponents(new TextDisplayBuilder().setContent(grindDropsText))
-  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-  .addTextDisplayComponents(
-   new TextDisplayBuilder().setContent(
-    `-# Admins: \`/shop add [name] [cost]\` lists any item above · Players craft on \`/craft\` and trade on \`/market\``
-   )
+ const buildCatalogPage = (page, disabled = false) => {
+  const navRow = new ActionRowBuilder().addComponents(
+   new ButtonBuilder().setCustomId('catalog_prev').setLabel('← Prev').setStyle(ButtonStyle.Secondary).setDisabled(page === 0 || disabled),
+   new ButtonBuilder().setCustomId('catalog_page_ind').setLabel(`${page + 1} / 2`).setStyle(ButtonStyle.Secondary).setDisabled(true),
+   new ButtonBuilder().setCustomId('catalog_next').setLabel('Next →').setStyle(ButtonStyle.Primary).setDisabled(page >= 1 || disabled)
   );
 
- await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
- return interaction.followUp({ flags: MessageFlags.IsComponentsV2, components: [container2] });
+  if (page === 0) {
+   return new ContainerBuilder()
+    .setAccentColor(0xFF8C00)
+    .addSectionComponents(
+     new SectionBuilder()
+      .addTextDisplayComponents(
+       new TextDisplayBuilder().setContent(
+        `## Built-in Item Catalog — Page 1/2\nEvery built-in item in Friday's economy. Tools, seeds & core consumables are auto-listed in \`/shop view\`; others are crafted, dropped, or admin-added. Items with effects work automatically with \`/use\`.`
+       )
+      )
+      .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(toolsText))
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(seedsText))
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(consumablesText))
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(collectiblesText))
+    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+    .addActionRowComponents(navRow);
+  }
+
+  return new ContainerBuilder()
+   .setAccentColor(0xFF8C00)
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Built-in Item Catalog — Page 2/2`))
+   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(craftablesText))
+   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(grindDropsText))
+   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# Admins: \`/shop add [name] [cost]\` lists any item above · Players craft on \`/craft\` and trade on \`/market\``))
+   .addActionRowComponents(navRow);
+ };
+
+ let catalogPage = 0;
+ const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildCatalogPage(0)] });
+
+ const collector = response.createMessageComponentCollector({ filter: i => i.user.id === user.id, time: 120000 });
+ collector.on('collect', async i => {
+  await i.deferUpdate();
+  if (i.customId === 'catalog_prev') catalogPage = Math.max(0, catalogPage - 1);
+  else if (i.customId === 'catalog_next') catalogPage = Math.min(1, catalogPage + 1);
+  await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildCatalogPage(catalogPage)] });
+ });
+ collector.on('end', async () => {
+  await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildCatalogPage(catalogPage, true)] }).catch(() => null);
+ });
+ return;
  }
 
  if (!member.permissions.has(PermissionFlagsBits.Administrator)) {

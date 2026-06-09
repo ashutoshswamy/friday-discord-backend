@@ -292,20 +292,49 @@ module.exports = {
     const top = await db.getClanLeaderboard(guild.id, sortBy);
     if (!top.length) return reply('No clans have been founded on this server yet.');
 
-    const lines = top.map(c =>
-     sortBy === 'level'
-      ? `**#${c.rank}** **${c.name}** — Lv.**${c.level}** (${c.xpTotal.toLocaleString()} XP) · ${EMOJIS.coin} ${c.treasury.toLocaleString()} treasury`
-      : `**#${c.rank}** **${c.name}** — ${EMOJIS.coin} ${c.treasury.toLocaleString()} treasury · Lv.**${c.level}**`
-    ).join('\n');
-
+    const PAGE_SIZE = 10;
+    const totalPages = Math.ceil(top.length / PAGE_SIZE);
+    let currentPage = 0;
     const rankByText = sortBy === 'level' ? 'Ranked by clan level and XP' : 'Ranked by treasury wealth';
 
-    return replyContainer(new ContainerBuilder()
-     .setAccentColor(0xFFD700)
-     .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-      `## Clan Leaderboard\n${lines}`
-     ))
-     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${rankByText}`)));
+    const buildPage = (page, disabled = false) => {
+     const slice = top.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+     const lines = slice.map(c =>
+      sortBy === 'level'
+       ? `**#${c.rank}** **${c.name}** — Lv.**${c.level}** (${c.xpTotal.toLocaleString()} XP) · ${EMOJIS.coin} ${c.treasury.toLocaleString()} treasury`
+       : `**#${c.rank}** **${c.name}** — ${EMOJIS.coin} ${c.treasury.toLocaleString()} treasury · Lv.**${c.level}**`
+     ).join('\n');
+     const pageLabel = totalPages > 1 ? ` — Page ${page + 1}/${totalPages}` : '';
+
+     const container = new ContainerBuilder()
+      .setAccentColor(0xFFD700)
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Clan Leaderboard${pageLabel}\n${lines}`))
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${rankByText}`));
+
+     if (totalPages > 1) {
+      const prevBtn = new ButtonBuilder().setCustomId('clan_lb_prev').setLabel('← Prev').setStyle(ButtonStyle.Secondary).setDisabled(page === 0 || disabled);
+      const pageInd = new ButtonBuilder().setCustomId('clan_lb_page_ind').setLabel(`${page + 1} / ${totalPages}`).setStyle(ButtonStyle.Secondary).setDisabled(true);
+      const nextBtn = new ButtonBuilder().setCustomId('clan_lb_next').setLabel('Next →').setStyle(ButtonStyle.Primary).setDisabled(page >= totalPages - 1 || disabled);
+      container.addActionRowComponents(new ActionRowBuilder().addComponents(prevBtn, pageInd, nextBtn));
+     }
+     return container;
+    };
+
+    const msg = await interaction.reply({ flags: MessageFlags.IsComponentsV2, components: [buildPage(0)] });
+
+    if (totalPages > 1) {
+     const collector = msg.createMessageComponentCollector({ filter: i => i.user.id === user.id, time: 120000 });
+     collector.on('collect', async i => {
+      await i.deferUpdate();
+      if (i.customId === 'clan_lb_prev') currentPage = Math.max(0, currentPage - 1);
+      else if (i.customId === 'clan_lb_next') currentPage = Math.min(totalPages - 1, currentPage + 1);
+      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildPage(currentPage)] });
+     });
+     collector.on('end', async () => {
+      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildPage(currentPage, true)] }).catch(() => null);
+     });
+    }
+    return;
    }
 
   } catch (err) {

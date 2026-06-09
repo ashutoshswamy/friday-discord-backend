@@ -1,6 +1,7 @@
 const {
  SlashCommandBuilder, PermissionFlagsBits,
- ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+ ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize,
+ ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
 
@@ -74,20 +75,46 @@ module.exports = {
  return interaction.editReply({ content: 'There are currently no level role rewards configured in this server.' });
  }
 
- const list = rewards.map(r => `• **Level ${r.level}** → <@&${r.roleId}>`).join('\n');
+ const PAGE_SIZE = 10;
+ const totalPages = Math.ceil(rewards.length / PAGE_SIZE);
+ let currentPage = 0;
 
- const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## Level Role Rewards`)
- )
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
- .addTextDisplayComponents(new TextDisplayBuilder().setContent(list))
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`-# ${rewards.length} reward${rewards.length !== 1 ? 's' : ''} configured · Use /level-rewards action:add to add more`)
- );
+ const buildPage = (page, disabled = false) => {
+  const slice = rewards.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const list = slice.map(r => `• **Level ${r.level}** → <@&${r.roleId}>`).join('\n');
+  const pageLabel = totalPages > 1 ? ` — Page ${page + 1}/${totalPages}` : '';
 
- return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+  const c = new ContainerBuilder()
+   .setAccentColor(0x00FFCC)
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Level Role Rewards${pageLabel}`))
+   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(list))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${rewards.length} reward${rewards.length !== 1 ? 's' : ''} configured · Use /level-rewards action:add to add more`));
+
+  if (totalPages > 1) {
+   const prevBtn = new ButtonBuilder().setCustomId('lvlrew_prev').setLabel('← Prev').setStyle(ButtonStyle.Secondary).setDisabled(page === 0 || disabled);
+   const pageInd = new ButtonBuilder().setCustomId('lvlrew_page_ind').setLabel(`${page + 1} / ${totalPages}`).setStyle(ButtonStyle.Secondary).setDisabled(true);
+   const nextBtn = new ButtonBuilder().setCustomId('lvlrew_next').setLabel('Next →').setStyle(ButtonStyle.Primary).setDisabled(page >= totalPages - 1 || disabled);
+   c.addActionRowComponents(new ActionRowBuilder().addComponents(prevBtn, pageInd, nextBtn));
+  }
+  return c;
+ };
+
+ const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildPage(0)] });
+
+ if (totalPages > 1) {
+  const collector = response.createMessageComponentCollector({ filter: i => i.user.id === interaction.user.id, time: 120000 });
+  collector.on('collect', async i => {
+   await i.deferUpdate();
+   if (i.customId === 'lvlrew_prev') currentPage = Math.max(0, currentPage - 1);
+   else if (i.customId === 'lvlrew_next') currentPage = Math.min(totalPages - 1, currentPage + 1);
+   await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildPage(currentPage)] });
+  });
+  collector.on('end', async () => {
+   await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildPage(currentPage, true)] }).catch(() => null);
+  });
+ }
+ return;
  }
 
  } catch (err) {

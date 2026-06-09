@@ -1,8 +1,11 @@
 const {
  SlashCommandBuilder, ComponentType,
  ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize,
- ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, MessageFlags
+ ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
+ ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
+
+const FIELDS_PER_PAGE = 8;
 
 const pages = {
  overview: {
@@ -270,24 +273,28 @@ const pages = {
  }
 };
 
-function buildHelpContainer(pageKey, user) {
+function buildHelpContainer(pageKey, user, subPage = 0, disabled = false) {
  const data = pages[pageKey];
+ const totalSubPages = Math.ceil(data.fields.length / FIELDS_PER_PAGE);
+ const slicedFields = data.fields.slice(subPage * FIELDS_PER_PAGE, (subPage + 1) * FIELDS_PER_PAGE);
 
  let bodyLines = '';
  if (pageKey === 'overview') {
- bodyLines = data.fields.map(f => `**${f.name}**\n${f.value}`).join('\n\n');
+ bodyLines = slicedFields.map(f => `**${f.name}**\n${f.value}`).join('\n\n');
  } else {
- bodyLines = data.fields.map(f => `**${f.name}**\n• ${f.value}`).join('\n\n');
+ bodyLines = slicedFields.map(f => `**${f.name}**\n• ${f.value}`).join('\n\n');
  }
+
+ const pageLabel = totalSubPages > 1 ? ` — Page ${subPage + 1}/${totalSubPages}` : '';
 
  const container = new ContainerBuilder()
  .setAccentColor(data.accentColor)
  .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## ${data.title}\n${data.description}`)
+ new TextDisplayBuilder().setContent(`## ${data.title}${pageLabel}\n${data.description}`)
  )
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
 
- if (pageKey === 'overview' && data.bodyText) {
+ if (pageKey === 'overview' && data.bodyText && subPage === 0) {
  container.addTextDisplayComponents(new TextDisplayBuilder().setContent(data.bodyText));
  container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false));
  }
@@ -297,6 +304,13 @@ function buildHelpContainer(pageKey, user) {
  container.addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`-# Friday System v1.0.0 • Requested by ${user.tag} · Select a category below`)
  );
+
+ if (totalSubPages > 1) {
+ const prevBtn = new ButtonBuilder().setCustomId('help_prev').setLabel('← Prev').setStyle(ButtonStyle.Secondary).setDisabled(subPage === 0 || disabled);
+ const pageInd = new ButtonBuilder().setCustomId('help_page_ind').setLabel(`${subPage + 1} / ${totalSubPages}`).setStyle(ButtonStyle.Secondary).setDisabled(true);
+ const nextBtn = new ButtonBuilder().setCustomId('help_next').setLabel('Next →').setStyle(ButtonStyle.Primary).setDisabled(subPage >= totalSubPages - 1 || disabled);
+ container.addActionRowComponents(new ActionRowBuilder().addComponents(prevBtn, pageInd, nextBtn));
+ }
 
  return container;
 }
@@ -337,36 +351,45 @@ module.exports = {
  if (!guild) return;
 
  try {
- const container = buildHelpContainer('overview', user);
- container.addActionRowComponents(buildMenu());
+ let currentCategory = 'overview';
+ let currentSubPage = 0;
+
+ const render = (disabled = false) => {
+  const container = buildHelpContainer(currentCategory, user, currentSubPage, disabled);
+  container.addActionRowComponents(buildMenu(disabled));
+  return container;
+ };
 
  const sent = await interaction.editReply({
  flags: MessageFlags.IsComponentsV2,
- components: [container],
+ components: [render()],
  fetchReply: true
  });
 
- const collector = sent.createMessageComponentCollector({
- componentType: ComponentType.StringSelect,
- time: 60000
- });
+ const collector = sent.createMessageComponentCollector({ time: 60000 });
 
  collector.on('collect', async (i) => {
  if (i.user.id !== user.id) {
  return i.reply({ content: 'You did not invoke this command. Run `/help` to spawn your own manual.', ephemeral: true });
  }
 
- const selection = i.values[0];
- const updatedContainer = buildHelpContainer(selection, user);
- updatedContainer.addActionRowComponents(buildMenu());
+ await i.deferUpdate();
 
- await i.update({ flags: MessageFlags.IsComponentsV2, components: [updatedContainer] });
+ if (i.customId === 'help_select') {
+  currentCategory = i.values[0];
+  currentSubPage = 0;
+ } else if (i.customId === 'help_prev') {
+  currentSubPage = Math.max(0, currentSubPage - 1);
+ } else if (i.customId === 'help_next') {
+  const totalSubPages = Math.ceil(pages[currentCategory].fields.length / FIELDS_PER_PAGE);
+  currentSubPage = Math.min(totalSubPages - 1, currentSubPage + 1);
+ }
+
+ await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [render()] });
  });
 
  collector.on('end', async () => {
- const expiredContainer = buildHelpContainer('overview', user);
- expiredContainer.addActionRowComponents(buildMenu(true));
- await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => {});
+ await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [render(true)] }).catch(() => {});
  });
 
  } catch (err) {

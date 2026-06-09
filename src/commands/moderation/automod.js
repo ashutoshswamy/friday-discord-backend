@@ -1,6 +1,7 @@
 const {
  SlashCommandBuilder, PermissionFlagsBits, ChannelType,
- ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+ ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize,
+ ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
 
@@ -146,17 +147,43 @@ module.exports = {
  const words = await db.getBlockedWords(guild.id);
  if (words.length === 0) return interaction.editReply({ content: 'The custom blocklist is currently empty.' });
 
- const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(`## Custom Blocklist Patterns`)
- )
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(words.map((w, idx) => `${idx + 1}. \`${w}\``).join('\n'))
- );
+ const BL_PAGE_SIZE = 20;
+ const totalPages = Math.ceil(words.length / BL_PAGE_SIZE);
+ let currentPage = 0;
 
- return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+ const buildBlPage = (page, disabled = false) => {
+  const slice = words.slice(page * BL_PAGE_SIZE, (page + 1) * BL_PAGE_SIZE);
+  const pageLabel = totalPages > 1 ? ` — Page ${page + 1}/${totalPages}` : '';
+  const c = new ContainerBuilder()
+   .setAccentColor(0x00FFCC)
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Custom Blocklist Patterns${pageLabel}`))
+   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(slice.map((w, idx) => `${page * BL_PAGE_SIZE + idx + 1}. \`${w}\``).join('\n')))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${words.length} pattern${words.length !== 1 ? 's' : ''} total`));
+  if (totalPages > 1) {
+   const prevBtn = new ButtonBuilder().setCustomId('bl_list_prev').setLabel('← Prev').setStyle(ButtonStyle.Secondary).setDisabled(page === 0 || disabled);
+   const pageInd = new ButtonBuilder().setCustomId('bl_list_page_ind').setLabel(`${page + 1} / ${totalPages}`).setStyle(ButtonStyle.Secondary).setDisabled(true);
+   const nextBtn = new ButtonBuilder().setCustomId('bl_list_next').setLabel('Next →').setStyle(ButtonStyle.Primary).setDisabled(page >= totalPages - 1 || disabled);
+   c.addActionRowComponents(new ActionRowBuilder().addComponents(prevBtn, pageInd, nextBtn));
+  }
+  return c;
+ };
+
+ const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildBlPage(0)] });
+
+ if (totalPages > 1) {
+  const collector = response.createMessageComponentCollector({ filter: i => i.user.id === interaction.user.id, time: 120000 });
+  collector.on('collect', async i => {
+   await i.deferUpdate();
+   if (i.customId === 'bl_list_prev') currentPage = Math.max(0, currentPage - 1);
+   else if (i.customId === 'bl_list_next') currentPage = Math.min(totalPages - 1, currentPage + 1);
+   await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildBlPage(currentPage)] });
+  });
+  collector.on('end', async () => {
+   await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildBlPage(currentPage, true)] }).catch(() => null);
+  });
+ }
+ return;
  }
  }
 
