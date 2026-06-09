@@ -134,40 +134,73 @@ module.exports = {
  return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [emptyContainer] });
  }
 
-  const itemsText = items.map(item => {
-  const roleText = item.roleRewardId ? `\n Grants: <@&${item.roleRewardId}>` : '';
-  return `**${getEmoji(item.name)} ${item.name}** — ${EMOJIS.coin} **${item.cost.toLocaleString()}** coins\n *${item.description}*${roleText}`;
+ const SHOP_PAGE_SIZE = 5;
+ const totalPages = Math.ceil(items.length / SHOP_PAGE_SIZE);
+ let currentPage = 0;
+
+ const buildShopPage = (page, disabled = false) => {
+  const start = page * SHOP_PAGE_SIZE;
+  const pageItems = items.slice(start, start + SHOP_PAGE_SIZE);
+
+  const itemsText = pageItems.map(item => {
+   const roleText = item.roleRewardId ? `\n Grants: <@&${item.roleRewardId}>` : '';
+   return `**${getEmoji(item.name)} ${item.name}** — ${EMOJIS.coin} **${item.cost.toLocaleString()}** coins\n *${item.description}*${roleText}`;
   }).join('\n\n');
 
-  const buyOptions = items.slice(0, 25).map(item => ({
-  label: item.name,
-  description: `${item.cost.toLocaleString()} coins${item.roleRewardId ? ' · Grants a role' : ''}`,
-  value: `buy_${item.name}`,
-  emoji: getEmojiId(item.name) || EMOJI_IDS.coin
+  const buyOptions = pageItems.map(item => ({
+   label: item.name,
+   description: `${item.cost.toLocaleString()} coins${item.roleRewardId ? ' · Grants a role' : ''}`,
+   value: `buy_${item.name}`,
+   emoji: getEmojiId(item.name) || EMOJI_IDS.coin
   }));
 
- const buySelect = new StringSelectMenuBuilder()
- .setCustomId('shop_buy_select')
- .setPlaceholder('Select an item to purchase...')
- .addOptions(buyOptions);
+  const pageLabel = totalPages > 1 ? ` — Page ${page + 1}/${totalPages}` : '';
 
- const container = new ContainerBuilder()
- .setAccentColor(0xFF8C00)
- .addSectionComponents(
- new SectionBuilder()
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(
- `## Server Shop — ${guild.name}\nExchange server coins for exclusive items and role rewards!`
- )
- )
- .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
- )
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
- .addTextDisplayComponents(new TextDisplayBuilder().setContent(itemsText))
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
- .addActionRowComponents(new ActionRowBuilder().addComponents(buySelect));
+  const container = new ContainerBuilder()
+   .setAccentColor(0xFF8C00)
+   .addSectionComponents(
+    new SectionBuilder()
+     .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+       `## Server Shop — ${guild.name}${pageLabel}\nExchange server coins for exclusive items and role rewards!`
+      )
+     )
+     .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
+   )
+   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(itemsText))
+   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true));
 
- const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+  const buySelect = new StringSelectMenuBuilder()
+   .setCustomId('shop_buy_select')
+   .setPlaceholder(disabled ? 'Shop session expired' : 'Select an item to purchase...')
+   .setDisabled(disabled)
+   .addOptions(disabled ? [{ label: 'Expired', value: 'expired' }] : buyOptions);
+  container.addActionRowComponents(new ActionRowBuilder().addComponents(buySelect));
+
+  if (totalPages > 1) {
+   const prevBtn = new ButtonBuilder()
+    .setCustomId('shop_view_prev')
+    .setLabel('← Prev')
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(page === 0 || disabled);
+   const pageIndBtn = new ButtonBuilder()
+    .setCustomId('shop_view_page_ind')
+    .setLabel(`${page + 1} / ${totalPages}`)
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(true);
+   const nextBtn = new ButtonBuilder()
+    .setCustomId('shop_view_next')
+    .setLabel('Next →')
+    .setStyle(ButtonStyle.Primary)
+    .setDisabled(page >= totalPages - 1 || disabled);
+   container.addActionRowComponents(new ActionRowBuilder().addComponents(prevBtn, pageIndBtn, nextBtn));
+  }
+
+  return container;
+ };
+
+ const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildShopPage(0)] });
 
  const collector = response.createMessageComponentCollector({
  filter: i => i.user.id === user.id,
@@ -175,6 +208,14 @@ module.exports = {
  });
 
  collector.on('collect', async i => {
+ if (i.customId === 'shop_view_prev' || i.customId === 'shop_view_next') {
+  await i.deferUpdate();
+  if (i.customId === 'shop_view_prev') currentPage = Math.max(0, currentPage - 1);
+  else currentPage = Math.min(totalPages - 1, currentPage + 1);
+  await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildShopPage(currentPage)] });
+  return;
+ }
+
  const itemName = i.values[0].replace('buy_', '');
  await i.deferUpdate();
 
@@ -221,29 +262,7 @@ module.exports = {
  });
 
  collector.on('end', async () => {
- const disabledSelect = new StringSelectMenuBuilder()
- .setCustomId('shop_buy_select')
- .setPlaceholder('Shop session expired')
- .setDisabled(true)
- .addOptions({ label: 'Expired', value: 'expired' });
-
- const expiredContainer = new ContainerBuilder()
- .setAccentColor(0xFF8C00)
- .addSectionComponents(
- new SectionBuilder()
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(
- `## Server Shop — ${guild.name}\nExchange server coins for exclusive items and role rewards!`
- )
- )
- .setThumbnailAccessory(new ThumbnailBuilder().setURL(guild.iconURL({ forceStatic: true }) || user.displayAvatarURL({ forceStatic: true })))
- )
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
- .addTextDisplayComponents(new TextDisplayBuilder().setContent(itemsText))
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
- .addActionRowComponents(new ActionRowBuilder().addComponents(disabledSelect));
-
- await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [expiredContainer] }).catch(() => null);
+ await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildShopPage(currentPage, true)] }).catch(() => null);
  });
 
  return;

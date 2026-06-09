@@ -1,7 +1,8 @@
 const {
  SlashCommandBuilder,
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
- SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+ SeparatorBuilder, SeparatorSpacingSize,
+ ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
 const { EMOJIS, getEmoji } = require('../../utils/emojis');
@@ -86,6 +87,9 @@ const RECIPES = {
  }
 };
 
+const RECIPE_KEYS = Object.keys(RECIPES);
+const CRAFT_PAGE_SIZE = 4;
+
 module.exports = {
  data: new SlashCommandBuilder()
   .setName('craft')
@@ -125,31 +129,77 @@ module.exports = {
 
   try {
    if (subcommand === 'list') {
-    let recipesText = '';
-    for (const key in RECIPES) {
-     const r = RECIPES[key];
-     const ingredientLines = [];
-     for (const ing in r.ingredients) {
-      ingredientLines.push(`• **${r.ingredients[ing]}x** ${getEmoji(ing)} ${ing.replace(/\b\w/g, c => c.toUpperCase())}`);
+    const totalPages = Math.ceil(RECIPE_KEYS.length / CRAFT_PAGE_SIZE);
+    let currentPage = 0;
+
+    const buildCraftPage = (page, disabled = false) => {
+     const start = page * CRAFT_PAGE_SIZE;
+     const pageKeys = RECIPE_KEYS.slice(start, start + CRAFT_PAGE_SIZE);
+
+     let recipesText = '';
+     for (const key of pageKeys) {
+      const r = RECIPES[key];
+      const ingredientLines = [];
+      for (const ing in r.ingredients) {
+       ingredientLines.push(`• **${r.ingredients[ing]}x** ${getEmoji(ing)} ${ing.replace(/\b\w/g, c => c.toUpperCase())}`);
+      }
+      recipesText += `### ${getEmoji(r.name)} ${r.name}\n*${r.description}*\n**Requires:**\n${ingredientLines.join('\n')}\n\n`;
      }
 
-     recipesText += `### ${getEmoji(r.name)} ${r.name}\n` +
-      `*${r.description}*\n` +
-      `**Requires:**\n${ingredientLines.join('\n')}\n\n`;
+     const container = new ContainerBuilder()
+      .setAccentColor(0x964B00)
+      .addSectionComponents(
+       new SectionBuilder()
+        .addTextDisplayComponents(
+         new TextDisplayBuilder().setContent(`## ️ Crafting Blueprint Catalog\nCombine gathered logs, ores, and scraps to craft advanced items.\n\n${recipesText}`)
+        )
+        .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
+      )
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# Craft items by running `/craft item name:<choice>`'));
+
+     if (totalPages > 1) {
+      const prevBtn = new ButtonBuilder()
+       .setCustomId('craft_list_prev')
+       .setLabel('← Prev')
+       .setStyle(ButtonStyle.Secondary)
+       .setDisabled(page === 0 || disabled);
+      const pageIndBtn = new ButtonBuilder()
+       .setCustomId('craft_list_page_ind')
+       .setLabel(`${page + 1} / ${totalPages}`)
+       .setStyle(ButtonStyle.Secondary)
+       .setDisabled(true);
+      const nextBtn = new ButtonBuilder()
+       .setCustomId('craft_list_next')
+       .setLabel('Next →')
+       .setStyle(ButtonStyle.Primary)
+       .setDisabled(page >= totalPages - 1 || disabled);
+      container.addActionRowComponents(new ActionRowBuilder().addComponents(prevBtn, pageIndBtn, nextBtn));
+     }
+
+     return container;
+    };
+
+    const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildCraftPage(0)] });
+
+    if (totalPages > 1) {
+     const collector = response.createMessageComponentCollector({
+      filter: i => i.user.id === user.id,
+      time: 120000
+     });
+
+     collector.on('collect', async i => {
+      await i.deferUpdate();
+      if (i.customId === 'craft_list_prev') currentPage = Math.max(0, currentPage - 1);
+      else if (i.customId === 'craft_list_next') currentPage = Math.min(totalPages - 1, currentPage + 1);
+      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildCraftPage(currentPage)] });
+     });
+
+     collector.on('end', async () => {
+      await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildCraftPage(currentPage, true)] }).catch(() => null);
+     });
     }
 
-    const container = new ContainerBuilder()
-     .setAccentColor(0x964B00) // Deep bronze/brown
-     .addSectionComponents(
-      new SectionBuilder()
-       .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(`## ️ Crafting Blueprint Catalog\nCombine gathered logs, ores, and scraps to craft advanced items.\n\n${recipesText}`)
-       )
-       .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
-     )
-     .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# Craft items by running `/craft item name:<choice>`'));
-
-    return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+    return;
    }
 
    if (subcommand === 'item') {
@@ -186,7 +236,6 @@ module.exports = {
     // Consume items
     for (const ing in recipe.ingredients) {
      const req = recipe.ingredients[ing];
-     // Find the exact casing matching in inventory
      const matchCaseName = inventory.find(i => i.toLowerCase() === ing);
      for (let i = 0; i < req; i++) {
       await db.removeItemFromInventory(guild.id, user.id, matchCaseName);
@@ -197,7 +246,7 @@ module.exports = {
     await db.addItemToInventory(guild.id, user.id, recipe.result);
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x2ECC71) // Success green
+     .setAccentColor(0x2ECC71)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(

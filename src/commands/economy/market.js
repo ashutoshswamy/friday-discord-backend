@@ -1,7 +1,8 @@
 const {
  SlashCommandBuilder,
  ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
- SeparatorBuilder, SeparatorSpacingSize, MessageFlags
+ SeparatorBuilder, SeparatorSpacingSize,
+ ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
@@ -60,26 +61,74 @@ module.exports = {
  });
  }
 
- const listingsText = listings.map(listing =>
- `**Listing #${listing.id}: ${listing.itemName}**\n` +
- `• Price: ${EMOJIS.coin} \`${listing.price.toLocaleString()}\` coins\n` +
- `• Seller: <@${listing.sellerId}>\n` +
- `• Posted: <t:${Math.floor(new Date(listing.createdAt).getTime() / 1000)}:R>`
- ).join('\n\n');
+ const PAGE_SIZE = 5;
+ const totalPages = Math.ceil(listings.length / PAGE_SIZE);
+ let currentPage = 0;
 
- const container = new ContainerBuilder()
- .setAccentColor(0x00E5FF)
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(
- `## Player-Driven Market\nWelcome to the server bazaar! Buy items from other players or list your own collectibles.\n\nUse \`/market buy [id]\` to purchase · \`/market cancel [id]\` to cancel your listings.`
- )
- )
- .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
- .addTextDisplayComponents(
- new TextDisplayBuilder().setContent(listingsText)
- );
+ const buildMarketPage = (page, disabled = false) => {
+  const start = page * PAGE_SIZE;
+  const pageListings = listings.slice(start, start + PAGE_SIZE);
+  const listingsText = pageListings.map(listing =>
+   `**Listing #${listing.id}: ${listing.itemName}**\n` +
+   `• Price: ${EMOJIS.coin} \`${listing.price.toLocaleString()}\` coins\n` +
+   `• Seller: <@${listing.sellerId}>\n` +
+   `• Posted: <t:${Math.floor(new Date(listing.createdAt).getTime() / 1000)}:R>`
+  ).join('\n\n');
 
- return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+  const container = new ContainerBuilder()
+   .setAccentColor(0x00E5FF)
+   .addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+     `## Player-Driven Market\nWelcome to the server bazaar! Buy items from other players or list your own collectibles.\n\nUse \`/market buy [id]\` to purchase · \`/market cancel [id]\` to cancel your listings.`
+    )
+   )
+   .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+   .addTextDisplayComponents(new TextDisplayBuilder().setContent(listingsText));
+
+  if (totalPages > 1) {
+   const prevBtn = new ButtonBuilder()
+    .setCustomId('market_view_prev')
+    .setLabel('← Prev')
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(page === 0 || disabled);
+   const pageIndBtn = new ButtonBuilder()
+    .setCustomId('market_view_page_ind')
+    .setLabel(`${page + 1} / ${totalPages}`)
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(true);
+   const nextBtn = new ButtonBuilder()
+    .setCustomId('market_view_next')
+    .setLabel('Next →')
+    .setStyle(ButtonStyle.Primary)
+    .setDisabled(page >= totalPages - 1 || disabled);
+   container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false));
+   container.addActionRowComponents(new ActionRowBuilder().addComponents(prevBtn, pageIndBtn, nextBtn));
+  }
+
+  return container;
+ };
+
+ const response = await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildMarketPage(0)] });
+
+ if (totalPages > 1) {
+  const collector = response.createMessageComponentCollector({
+   filter: i => i.user.id === user.id,
+   time: 120000
+  });
+
+  collector.on('collect', async i => {
+   await i.deferUpdate();
+   if (i.customId === 'market_view_prev') currentPage = Math.max(0, currentPage - 1);
+   else if (i.customId === 'market_view_next') currentPage = Math.min(totalPages - 1, currentPage + 1);
+   await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildMarketPage(currentPage)] });
+  });
+
+  collector.on('end', async () => {
+   await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [buildMarketPage(currentPage, true)] }).catch(() => null);
+  });
+ }
+
+ return;
  }
 
  if (subcommand === 'list') {
