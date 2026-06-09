@@ -288,7 +288,6 @@ function buildHelpContainer(pageKey, user, subPage = 0, disabled = false) {
  const pageLabel = totalSubPages > 1 ? ` — Page ${subPage + 1}/${totalSubPages}` : '';
 
  const container = new ContainerBuilder()
- .setAccentColor(data.accentColor)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## ${data.title}${pageLabel}\n${data.description}`)
  )
