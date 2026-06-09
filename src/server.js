@@ -2106,7 +2106,7 @@ module.exports = function(client) {
                 return {
                     ...entry,
                     username: member?.user?.username || member?.displayName || `User#${entry.userId.slice(-4)}`,
-                    avatar: member?.user?.displayAvatarURL({ forceStatic: true, size: 64 }) || null,
+                    avatar: member?.user?.avatar || null,
                     nickname: member?.nickname || null,
                 };
             };
