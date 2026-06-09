@@ -2566,6 +2566,13 @@ module.exports = {
             'guild_tickets',
             'user_pets',
             'user_stocks',
+            'clans',
+            'clan_members',
+            'user_social',
+            'lottery_config',
+            'lottery_tickets',
+            'market_commodities',
+            'market_ticks',
         ];
 
         const errors = [];
