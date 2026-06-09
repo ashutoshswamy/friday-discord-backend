@@ -1299,6 +1299,7 @@ module.exports = function(client) {
     app.post('/api/guilds/:guildId/members/:userId/ban', authenticateToken, requireGuildAdmin, modActionLimiter, async (req, res) => {
         const { guildId, userId } = req.params;
         const { reason, deleteMessageSeconds } = req.body;
+        const clampedDeleteSeconds = Math.min(Math.max(0, Number(deleteMessageSeconds) || 0), 604800);
 
         const discordGuild = client.guilds.cache.get(guildId);
         if (!discordGuild) return res.status(404).json({ error: 'Guild not found' });
@@ -1319,7 +1320,7 @@ module.exports = function(client) {
             const realReason = reason || 'Admin Dashboard Ban';
             await discordGuild.members.ban(userId, {
                 reason: realReason,
-                deleteMessageSeconds: deleteMessageSeconds || 0
+                deleteMessageSeconds: clampedDeleteSeconds
             });
             await db.logInfraction(guildId, userId, req.user.id, 'BAN', realReason);
 
