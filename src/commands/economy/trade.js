@@ -141,6 +141,7 @@ module.exports = {
      return i.update({
       flags: MessageFlags.IsComponentsV2,
       components: [
+        new ContainerBuilder()
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
          `## Trade Failed\n<@${user.id}> no longer has enough coins to fulfil their offer.`
         ))
@@ -151,6 +152,7 @@ module.exports = {
      return i.update({
       flags: MessageFlags.IsComponentsV2,
       components: [
+        new ContainerBuilder()
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
          `## Trade Failed\n<@${targetUser.id}> no longer has enough coins to fulfil their offer.`
         ))
@@ -162,6 +164,7 @@ module.exports = {
       return i.update({
        flags: MessageFlags.IsComponentsV2,
        components: [
+         new ContainerBuilder()
          .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           `## Trade Failed\n<@${user.id}> no longer has **${item}** in their inventory.`
          ))
@@ -174,6 +177,7 @@ module.exports = {
       return i.update({
        flags: MessageFlags.IsComponentsV2,
        components: [
+         new ContainerBuilder()
          .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           `## Trade Failed\n<@${targetUser.id}> no longer has **${item}** in their inventory.`
          ))
