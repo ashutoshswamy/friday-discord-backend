@@ -61,7 +61,6 @@ module.exports = {
     const chainStr = chain > 0 ? ` (Chain **${chain}×**)` : '';
 
     const container = new ContainerBuilder()
-     .setAccentColor(color)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -127,7 +126,6 @@ module.exports = {
     if (!correct) {
      collector.stop('wrong');
      const lostPanel = new ContainerBuilder()
-      .setAccentColor(0xFF3333)
       .addSectionComponents(
        new SectionBuilder()
         .addTextDisplayComponents(
@@ -173,7 +171,6 @@ module.exports = {
      : `Cashed out at chain **${chain}** with **${multiplier}×** multiplier. Won ${EMOJIS.coin} **${payout.toLocaleString()}** coins!`;
 
     const cashoutPanel = new ContainerBuilder()
-     .setAccentColor(0xFFD700)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(

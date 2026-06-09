@@ -61,7 +61,6 @@ module.exports = {
         const timeFormat = rewardType === 'daily' ? 't' : 'F';
 
         const container = new ContainerBuilder()
-          .setAccentColor(0xFF8C00)
           .addSectionComponents(
             new SectionBuilder()
               .addTextDisplayComponents(
@@ -86,7 +85,6 @@ module.exports = {
       const nextClaimUnix = Math.floor((Date.now() + cooldownDurationMs) / 1000);
 
       const container = new ContainerBuilder()
-        .setAccentColor(accentColor)
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(
@@ -126,7 +124,6 @@ module.exports = {
 
       collector.on('end', async () => {
         const disabledContainer = new ContainerBuilder()
-          .setAccentColor(accentColor)
           .addSectionComponents(
             new SectionBuilder()
               .addTextDisplayComponents(

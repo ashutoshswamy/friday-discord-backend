@@ -55,7 +55,6 @@ module.exports = {
  const roleListText = rolesList.map(r => `<@&${r.id}>`).join(' · ');
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## ${title}\n${description}`)
  )

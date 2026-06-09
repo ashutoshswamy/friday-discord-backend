@@ -53,7 +53,6 @@ module.exports = {
     const betLine = bet > 0 ? `\n${EMOJIS.coin} **${bet.toLocaleString()} coins** on the line!` : '';
 
     const promptContainer = new ContainerBuilder()
-      .setAccentColor(0x8b5cf6)
       .addSectionComponents(
         new SectionBuilder()
           .addTextDisplayComponents(
@@ -123,7 +122,6 @@ module.exports = {
       );
 
       const resultContainer = new ContainerBuilder()
-        .setAccentColor(color)
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(
@@ -146,7 +144,6 @@ module.exports = {
         if (bet > 0 && guild) await db.updateCoins(guild.id, user.id, bet);
 
         const timeoutContainer = new ContainerBuilder()
-          .setAccentColor(0x6b7280)
           .addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
               `You took too long to make your move!` + (bet > 0 ? '\n Bet refunded.' : '')

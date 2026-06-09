@@ -179,7 +179,6 @@ module.exports = {
    const row = new ActionRowBuilder().addComponents(buttons);
 
    const initialContainer = new ContainerBuilder()
-    .setAccentColor(0x34495E) // Midnight dark slate
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
@@ -259,7 +258,6 @@ module.exports = {
     const finalProfile = await db.getProfile(guild.id, user.id);
 
     const resultContainer = new ContainerBuilder()
-     .setAccentColor(color)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -281,7 +279,6 @@ module.exports = {
    collector.on('end', async (collected, reason) => {
     if (reason === 'time') {
      const expiredContainer = new ContainerBuilder()
-      .setAccentColor(0x7F8C8D)
       .addSectionComponents(
        new SectionBuilder()
         .addTextDisplayComponents(

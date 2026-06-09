@@ -61,7 +61,6 @@ module.exports = {
       if (itemAwarded) extraText += `\n**Bonus Item:** Added **${itemAwarded}** to your inventory`;
 
       const container = new ContainerBuilder()
-        .setAccentColor(0x00E5FF)
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(

@@ -94,7 +94,6 @@ module.exports = {
       const buildContainer = (isFinal = false, status = '', color = 0x8b5cf6, customTitle = '') => {
         const title = customTitle || `Blackjack Table`;
         return new ContainerBuilder()
-          .setAccentColor(color)
           .addSectionComponents(
             new SectionBuilder()
               .addTextDisplayComponents(

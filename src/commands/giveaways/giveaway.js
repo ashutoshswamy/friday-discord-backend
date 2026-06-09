@@ -19,7 +19,6 @@ function parseDuration(timeStr) {
 
 function buildGiveawayContainer(prize, winnersCount, endUnix, entrantCount = 0, active = true) {
  const container = new ContainerBuilder()
- .setAccentColor(0xFF0099)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## GIVEAWAY${active ? '' : ' ENDED'}\n` +
@@ -107,7 +106,6 @@ module.exports = {
  const msg = await channel.send({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
  const realContainer = new ContainerBuilder()
- .setAccentColor(0xFF0099)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## GIVEAWAY\n**Prize:** **${prize}**\n**Winners:** ${winnersCount}\n**Ends:** <t:${endUnix}:R> (at <t:${endUnix}:f>)\n\n-# Click the button below to enter the draw!`
@@ -166,7 +164,6 @@ module.exports = {
  const winnerPings = winners.map(w => `<@${w}>`).join(', ');
 
  const rerollContainer = new ContainerBuilder()
- .setAccentColor(0xFF0099)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## GIVEAWAY RE-ROLLED!\n**Prize:** **${giveaway.prize}**\n**New Winners:** ${winnerPings}!\n\nCongratulations on your victory!`
@@ -206,7 +203,6 @@ module.exports = {
 
  if (entrantsArray.length === 0) {
  const endedContainer = new ContainerBuilder()
- .setAccentColor(0x71717A)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## GIVEAWAY ENDED\n**Prize:** **${giveaway.prize}**\n\n **Draw Cancelled:**No valid entrants participated in the draw.`
@@ -224,7 +220,6 @@ module.exports = {
  const winnerPings = winners.map(w => `<@${w}>`).join(', ');
 
  const resultsContainer = new ContainerBuilder()
- .setAccentColor(0xFF0099)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## GIVEAWAY RESULTS\n**Prize Won:** **${giveaway.prize}**\n**Winners:** ${winnerPings}!\n\nThank you everyone for participating!`
@@ -233,7 +228,6 @@ module.exports = {
  .addActionRowComponents(disabledRow);
 
  const winnerContainer = new ContainerBuilder()
- .setAccentColor(0xFFD700)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Congratulations!\n${winnerPings} won the **${giveaway.prize}** giveaway!`

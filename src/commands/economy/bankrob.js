@@ -11,7 +11,6 @@ function buildLobbyContainer(hostUser, targetUser, crew, buttons) {
   const crewList = crew.map((member, idx) => `• <@${member.id}>${idx === 0 ? ' (Host)' : ''}`).join('\n');
 
   return new ContainerBuilder()
-    .setAccentColor(0xFF0055)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
         `## Cooperative Bank Heist Lobby\n` +
@@ -168,7 +167,6 @@ module.exports = {
 
         if (heistCancelled || reason === 'cancel') {
           const cancelContainer = new ContainerBuilder()
-            .setAccentColor(0x9CA3AF)
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
                 `## Heist Aborted\n <@${user.id}> decided to call off the bank heist. The crew disbanded safely.`
@@ -181,7 +179,6 @@ module.exports = {
 
         if (!heistStarted && reason === 'time' && !canExecute) {
           const failContainer = new ContainerBuilder()
-            .setAccentColor(0x9CA3AF)
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
                 `## Heist Aborted — No Accomplices\n Not enough accomplices joined the crew in time. The vault raid was called off.`
@@ -215,7 +212,6 @@ module.exports = {
           const crewPings = crew.map(member => `<@${member.id}>`).join(', ');
 
           const successContainer = new ContainerBuilder()
-            .setAccentColor(0x00FF66)
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
                 `## VAULT BREACHED!\n **Heist Success!**\n\n` +
@@ -252,7 +248,6 @@ module.exports = {
           await db.updateCoins(guild.id, targetUser.id, totalCompensation);
 
           const failContainer = new ContainerBuilder()
-            .setAccentColor(0xFF3333)
             .addTextDisplayComponents(
               new TextDisplayBuilder().setContent(
                 `## VAULT ALARMS TRIGGERED!\n **BUSTED!**\n\n` +

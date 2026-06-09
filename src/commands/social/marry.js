@@ -37,7 +37,6 @@ module.exports = {
     await db.dissolveMarriage(guild.id, user.id);
 
     const container = new ContainerBuilder()
-     .setAccentColor(0xFF4444)
      .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
        `## Divorced\n<@${user.id}> has dissolved their marriage with <@${marriage.partnerId}>.`
@@ -66,7 +65,6 @@ module.exports = {
     }
 
     const proposalContainer = new ContainerBuilder()
-     .setAccentColor(0xFF69B4)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -108,7 +106,6 @@ module.exports = {
       await db.setMarriage(guild.id, user.id, target.id);
 
       const acceptContainer = new ContainerBuilder()
-       .setAccentColor(0xFF69B4)
        .addSectionComponents(
         new SectionBuilder()
          .addTextDisplayComponents(
@@ -125,7 +122,6 @@ module.exports = {
       await i.update({ flags: MessageFlags.IsComponentsV2, components: [acceptContainer] });
      } else {
       const declineContainer = new ContainerBuilder()
-       .setAccentColor(0x6B7280)
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
          `## Proposal Declined\n<@${target.id}> declined the proposal from <@${user.id}>.`
@@ -138,7 +134,6 @@ module.exports = {
     collector.on('end', async (_, reason) => {
      if (reason === 'time') {
       const expiredContainer = new ContainerBuilder()
-       .setAccentColor(0x6B7280)
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
          `## Proposal Expired\n<@${target.id}> did not respond in time.`

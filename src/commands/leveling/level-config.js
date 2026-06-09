@@ -26,7 +26,6 @@ module.exports = {
  await db.updateGuildConfig(guild.id, { xpMultiplier: multiplier });
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Leveling Config Updated\nSuccessfully updated server-wide XP generation to **${multiplier}x** speed.`

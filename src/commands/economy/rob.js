@@ -57,7 +57,6 @@ module.exports = {
           await db.updateCoins(guild.id, targetUser.id, fineAmount);
 
           const container = new ContainerBuilder()
-            .setAccentColor(0xFF3333)
             .addSectionComponents(
               new SectionBuilder()
                 .addTextDisplayComponents(
@@ -110,7 +109,6 @@ module.exports = {
       }
 
       const container = new ContainerBuilder()
-        .setAccentColor(accentColor)
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(

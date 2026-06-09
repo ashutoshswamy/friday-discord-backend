@@ -66,7 +66,6 @@ module.exports = {
   entries = await db.getLeaderboard(guild.id);
   if (!entries.length) {
     const emptyContainer = new ContainerBuilder()
-      .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent('No rank profiles yet. Chat to start earning XP!')
       );
@@ -76,7 +75,6 @@ module.exports = {
   entries = await db.getEconomyLeaderboard(guild.id);
   if (!entries.length) {
     const emptyContainer = new ContainerBuilder()
-      .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent('No economy profiles yet. Start working to earn coins!')
       );
@@ -474,7 +472,6 @@ module.exports = {
   const attachment = new AttachmentBuilder(buffer, { name: `leaderboard-${guild.id}.png` });
 
   const container = new ContainerBuilder()
-    .setAccentColor(mode === 'xp' ? 0xFFD700 : 0x00e676)
     .addMediaGalleryComponents(
       new MediaGalleryBuilder().addItems(
         new MediaGalleryItemBuilder()
@@ -492,7 +489,6 @@ module.exports = {
   } catch (err) {
   console.error('[ERROR] Leaderboard command failed:', err);
   const errContainer = new ContainerBuilder()
-    .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent('Failed to render the leaderboard card.')
     );

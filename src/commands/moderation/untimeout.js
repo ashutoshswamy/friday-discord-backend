@@ -41,7 +41,6 @@ module.exports = {
  await db.logInfraction(guild.id, targetUser.id, user.id, 'UNTIMEOUT', reason);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

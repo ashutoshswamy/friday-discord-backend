@@ -42,7 +42,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Helpdesk Support Tickets\nNeed to contact our support agents or open an inquiry?\nClick the button below to open a private **Support Ticket**.\n\nOur support agents will join you shortly to assist.`

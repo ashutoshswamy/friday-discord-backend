@@ -37,7 +37,6 @@ module.exports = {
  const iconUrl = guild.iconURL({ forceStatic: true });
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00E5FF)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

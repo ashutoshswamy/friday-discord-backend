@@ -80,7 +80,6 @@ module.exports = {
     if (!result.success) return reply(result.reason);
 
     return replyContainer(new ContainerBuilder()
-     .setAccentColor(0x00FF99)
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
       `## Clan Founded!\n**${name}** has been created!\n\n${EMOJIS.coin} 5,000 coins deducted as founding fee.\nUse \`/clan invite\` to recruit members.`
      )));
@@ -111,7 +110,6 @@ module.exports = {
     });
 
     const inviteContainer = new ContainerBuilder()
-     .setAccentColor(0x8B5CF6)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -154,7 +152,6 @@ module.exports = {
     if (!result.success) return reply(result.reason);
 
     return replyContainer(new ContainerBuilder()
-     .setAccentColor(0x00FF99)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -174,7 +171,6 @@ module.exports = {
 
     await db.leaveClan(guild.id, user.id);
     return replyContainer(new ContainerBuilder()
-     .setAccentColor(0xFF4444)
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
       `## Left Clan\n<@${user.id}> has left **${myClan.name}**.`
      )));
@@ -193,7 +189,6 @@ module.exports = {
 
     await db.kickFromClan(guild.id, myClan.id, target.id);
     return replyContainer(new ContainerBuilder()
-     .setAccentColor(0xFF4444)
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
       `## Member Kicked\n<@${target.id}> has been removed from **${myClan.name}**.`
      )));
@@ -216,7 +211,6 @@ module.exports = {
     const progressBar = '█'.repeat(filledBlocks) + '░'.repeat(10 - filledBlocks);
 
     return replyContainer(new ContainerBuilder()
-     .setAccentColor(0x8B5CF6)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(new TextDisplayBuilder().setContent(
@@ -245,7 +239,6 @@ module.exports = {
     if (!result.success) return reply(result.reason);
 
     return replyContainer(new ContainerBuilder()
-     .setAccentColor(0x00FF99)
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
       `## Deposited!\n<@${user.id}> contributed ${EMOJIS.coin} **${amount.toLocaleString()}** to **${myClan.name}**!\n\n**New Treasury:** ${EMOJIS.coin} ${result.newTreasury.toLocaleString()}`
      )));
@@ -264,7 +257,6 @@ module.exports = {
     if (!result.success) return reply(result.reason);
 
     return replyContainer(new ContainerBuilder()
-     .setAccentColor(0x00E5FF)
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
       `## Clan Renamed!\nYour clan has been successfully renamed to **${newName}**!\n\n${EMOJIS.coin} 2,500 coins deducted from the clan treasury.`
      )));
@@ -280,7 +272,6 @@ module.exports = {
     if (!deleted) return reply('Failed to disband clan. Try again.');
 
     return replyContainer(new ContainerBuilder()
-     .setAccentColor(0xFF3333)
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
       `##  Clan Disbanded\n**${myClan.name}** has been permanently disbanded. All members have been released.`
      )));
@@ -307,7 +298,6 @@ module.exports = {
      const pageLabel = totalPages > 1 ? ` — Page ${page + 1}/${totalPages}` : '';
 
      const container = new ContainerBuilder()
-      .setAccentColor(0xFFD700)
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Clan Leaderboard${pageLabel}\n${lines}`))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${rankByText}`));
 

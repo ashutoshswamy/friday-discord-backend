@@ -100,7 +100,6 @@ module.exports = {
    }
 
    const container = new ContainerBuilder()
-    .setAccentColor(0x00FF66)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
@@ -121,7 +120,6 @@ module.exports = {
 
  if (items.length === 0) {
  const emptyContainer = new ContainerBuilder()
- .setAccentColor(0xFF8C00)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -157,7 +155,6 @@ module.exports = {
   const pageLabel = totalPages > 1 ? ` — Page ${page + 1}/${totalPages}` : '';
 
   const container = new ContainerBuilder()
-   .setAccentColor(0xFF8C00)
    .addSectionComponents(
     new SectionBuilder()
      .addTextDisplayComponents(
@@ -245,7 +242,6 @@ module.exports = {
  }
 
  const confirmContainer = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -330,7 +326,6 @@ module.exports = {
 
   if (page === 0) {
    return new ContainerBuilder()
-    .setAccentColor(0xFF8C00)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
@@ -353,7 +348,6 @@ module.exports = {
   }
 
   return new ContainerBuilder()
-   .setAccentColor(0xFF8C00)
    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Built-in Item Catalog — Page 2/2`))
    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
    .addTextDisplayComponents(new TextDisplayBuilder().setContent(craftablesText))
@@ -407,7 +401,6 @@ module.exports = {
  if (!result.success) {
  if (result.reason === 'migration_needed') {
  const migrationContainer = new ContainerBuilder()
- .setAccentColor(0xFFCC00)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Database Migration Required\nConsumable effects require the latest schema.\n\n**Run in Supabase SQL Editor:**\n\`\`\`sql\nALTER TABLE shop_items ADD COLUMN IF NOT EXISTS action_type TEXT;\nALTER TABLE shop_items ADD COLUMN IF NOT EXISTS action_value INT;\n\`\`\``
@@ -430,7 +423,6 @@ module.exports = {
  if (role) detailText += `\n**Role Reward:** <@&${role.id}>`;
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Shop Item Added\n**${name}** is now listed in the shop.`)
  )
@@ -456,7 +448,6 @@ module.exports = {
  const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
  const confirmContainer = new ContainerBuilder()
- .setAccentColor(0xFF4500)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Confirm Shop Item Removal\nRemove **${name}** from the shop? This cannot be undone.`
@@ -488,7 +479,6 @@ module.exports = {
  }
 
  const removedContainer = new ContainerBuilder()
- .setAccentColor(0xFF4500)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Item Removed\n**${name}** has been removed from the server shop.`

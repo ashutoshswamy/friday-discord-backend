@@ -59,7 +59,6 @@ function buildInventoryContainer(targetUser, itemCounts, items, extraText, sellB
         : '*Inventory is now empty*';
 
     const container = new ContainerBuilder()
-        .setAccentColor(0xFF8C00)
         .addSectionComponents(
             new SectionBuilder()
                 .addTextDisplayComponents(
@@ -120,7 +119,6 @@ module.exports = {
 
         if (targetUser.bot) {
             const botErrContainer = new ContainerBuilder()
-                .setAccentColor(0xEF4444)
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent('Bots do not maintain item inventories.')
                 );
@@ -132,7 +130,6 @@ module.exports = {
 
             if (items.length === 0) {
                 const emptyContainer = new ContainerBuilder()
-                    .setAccentColor(0xFF8C00)
                     .addTextDisplayComponents(
                         new TextDisplayBuilder().setContent(`**${targetUser.username}** has an empty inventory. Purchase items using \`/buy\` or go \`/hunt\`, \`/fish\`, or \`/dig\`!`)
                     );
@@ -227,7 +224,6 @@ module.exports = {
 
                     if (soldCount === 0) {
                         const noJunkContainer = new ContainerBuilder()
-                            .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
                                 new TextDisplayBuilder().setContent('You have no junk items to sell (Common Worm, Junk Seaweed, Old Boot).')
                             );
@@ -243,7 +239,6 @@ module.exports = {
 
                 } else if (i.customId === 'inv_use_item') {
                     const useInfoContainer = new ContainerBuilder()
-                        .setAccentColor(0x3B82F6)
                         .addTextDisplayComponents(
                             new TextDisplayBuilder().setContent('Use `/use [item]` to consume items from your inventory!')
                         );
@@ -257,7 +252,6 @@ module.exports = {
 
                     if (!price) {
                         const errContainer = new ContainerBuilder()
-                            .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
                                 new TextDisplayBuilder().setContent(`**${itemName}** cannot be sold.`)
                             );
@@ -269,7 +263,6 @@ module.exports = {
 
                     if (owned === 0) {
                         const errContainer = new ContainerBuilder()
-                            .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
                                 new TextDisplayBuilder().setContent(`You don't have **${itemName}** in your inventory.`)
                             );
@@ -278,7 +271,6 @@ module.exports = {
 
                     // Display confirmation screen with quantity buttons
                     const confirmContainer = new ContainerBuilder()
-                        .setAccentColor(0xFF8C00)
                         .addSectionComponents(
                             new SectionBuilder()
                                 .addTextDisplayComponents(
@@ -339,7 +331,6 @@ module.exports = {
 
                     if (!price) {
                         const errContainer = new ContainerBuilder()
-                            .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
                                 new TextDisplayBuilder().setContent(`**${itemName}** cannot be sold.`)
                             );
@@ -356,7 +347,6 @@ module.exports = {
 
                     if (ownedCount < sellQty || sellQty <= 0) {
                         const errContainer = new ContainerBuilder()
-                            .setAccentColor(0xEF4444)
                             .addTextDisplayComponents(
                                 new TextDisplayBuilder().setContent(`You do not have enough **${itemName}** to sell!`)
                             );

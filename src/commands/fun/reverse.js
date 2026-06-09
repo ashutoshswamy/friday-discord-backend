@@ -19,7 +19,6 @@ module.exports = {
   const reversed = [...text].reverse().join('');
 
   const container = new ContainerBuilder()
-   .setAccentColor(0x00E5FF)
    .addTextDisplayComponents(
     new TextDisplayBuilder().setContent(`## Reversed Text\n${reversed}`)
    )

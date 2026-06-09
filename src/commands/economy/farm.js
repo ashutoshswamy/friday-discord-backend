@@ -177,7 +177,6 @@ module.exports = {
     const progressBar = '█'.repeat(filledBlocks) + '░'.repeat(10 - filledBlocks);
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x2ECC71)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -245,7 +244,6 @@ module.exports = {
     await db.addFarmingXp(guild.id, user.id, 20);
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x2ECC71)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -299,7 +297,6 @@ module.exports = {
     const timeText = remainingMs <= 0 ? ' **Ready to Harvest!**' : ` Ready in: **${formatRemainingTime(remainingMs)}**`;
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x3498DB)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -366,7 +363,6 @@ module.exports = {
     else if (fertType === 'yield') effectDesc = 'Soil enriched! Harvest yield amount will be **doubled**!';
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x9B59B6)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -421,7 +417,6 @@ module.exports = {
     await db.addFarmingXp(guild.id, user.id, 15);
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x27AE60)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -513,7 +508,6 @@ module.exports = {
     }
 
     const container = new ContainerBuilder()
-     .setAccentColor(qualityColor)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -545,7 +539,6 @@ module.exports = {
     }
 
     const container = new ContainerBuilder()
-     .setAccentColor(0xF1C40F)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(

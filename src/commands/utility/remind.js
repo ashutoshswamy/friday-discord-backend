@@ -51,7 +51,6 @@ module.exports = {
  const alertTimeUnix = Math.floor((Date.now() + durationMs) / 1000);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x8b5cf6)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -72,7 +71,6 @@ module.exports = {
 
  setTimeout(async () => {
  const dmContainer = new ContainerBuilder()
- .setAccentColor(0x8b5cf6)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

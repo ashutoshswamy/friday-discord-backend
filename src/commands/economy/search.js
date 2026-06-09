@@ -55,7 +55,6 @@ module.exports = {
  });
 
  const lobbyContainer = new ContainerBuilder()
- .setAccentColor(0x00E5FF)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -112,7 +111,6 @@ module.exports = {
  }
 
  const resultContainer = new ContainerBuilder()
- .setAccentColor(accentColor)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -127,7 +125,6 @@ module.exports = {
  collector.on('end', async (collected, reason) => {
  if (reason === 'time') {
  const timeoutContainer = new ContainerBuilder()
- .setAccentColor(0x9CA3AF)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent('## Search Cancelled\n You took too long to choose a location. The search opportunity expired.')
  );

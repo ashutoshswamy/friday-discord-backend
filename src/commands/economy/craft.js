@@ -147,7 +147,6 @@ module.exports = {
      }
 
      const container = new ContainerBuilder()
-      .setAccentColor(0x964B00)
       .addSectionComponents(
        new SectionBuilder()
         .addTextDisplayComponents(
@@ -246,7 +245,6 @@ module.exports = {
     await db.addItemToInventory(guild.id, user.id, recipe.result);
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x2ECC71)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(

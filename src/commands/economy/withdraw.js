@@ -43,7 +43,6 @@ module.exports = {
  const result = await db.withdrawCoins(guild.id, user.id, amount);
 
  const container = new ContainerBuilder()
- .setAccentColor(0xF5A623)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

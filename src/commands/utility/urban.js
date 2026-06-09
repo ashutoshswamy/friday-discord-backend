@@ -55,7 +55,6 @@ module.exports = {
  .setURL(topDef.permalink);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x1D2439)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Urban Dictionary: ${topDef.word}\n*Definition by **${topDef.author}***`

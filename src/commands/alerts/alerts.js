@@ -89,7 +89,6 @@ module.exports = {
  ).join('\n\n');
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF0000)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## YouTube Alert Subscriptions`)
  )
@@ -141,7 +140,6 @@ module.exports = {
  ).join('\n\n');
 
  const container = new ContainerBuilder()
- .setAccentColor(0x9146FF)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Twitch Live Alert Subscriptions`)
  )

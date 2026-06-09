@@ -72,7 +72,6 @@ module.exports = {
    const finalProfile = await db.getProfile(guild.id, user.id);
 
    const container = new ContainerBuilder()
-    .setAccentColor(color)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(

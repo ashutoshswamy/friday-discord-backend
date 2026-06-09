@@ -23,7 +23,6 @@ module.exports = {
   const mocked = mockText(text);
 
   const container = new ContainerBuilder()
-   .setAccentColor(0xFFD700)
    .addTextDisplayComponents(
     new TextDisplayBuilder().setContent(`## Mock Text\n${mocked}`)
    )

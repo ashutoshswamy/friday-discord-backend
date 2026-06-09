@@ -42,7 +42,6 @@ module.exports = {
  const accentInt = parseInt(roleColor.replace('#', ''), 16);
 
  const container = new ContainerBuilder()
- .setAccentColor(accentInt)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

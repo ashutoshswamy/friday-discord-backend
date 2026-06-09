@@ -26,7 +26,6 @@ module.exports = {
  const totalActions = stats.WARN + stats.TIMEOUT + stats.KICK + stats.BAN;
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF9900)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

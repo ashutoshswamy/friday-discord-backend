@@ -93,7 +93,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF007F)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Global Financial Markets Exchange Portal\nStateless, 24/7 deterministic real-time global asset streams.\n\n *Use \`/stock list market:[Market]\` to see all listed assets.*`
@@ -119,7 +118,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF007F)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## ${flag} ${mkt} Market Assets Directory\nShowing all active real-time listings on the ${mkt} exchange.`
@@ -189,7 +187,6 @@ module.exports = {
  } catch { /* chart optional */ }
 
  const container = new ContainerBuilder()
- .setAccentColor(accentColor)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Market Feed: ${quote.symbol}\n**${quote.name}** — ${getFlag(quote.market)} ${quote.market}`
@@ -227,7 +224,6 @@ module.exports = {
  const result = await db.buyStock(guild.id, user.id, symbol, shares);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -259,7 +255,6 @@ module.exports = {
  const result = await db.sellStock(guild.id, user.id, symbol, shares);
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFFCC00)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

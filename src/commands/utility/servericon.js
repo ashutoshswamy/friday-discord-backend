@@ -30,7 +30,6 @@ module.exports = {
  .setURL(downloadUrl);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x8b5cf6)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

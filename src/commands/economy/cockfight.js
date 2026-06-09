@@ -76,7 +76,6 @@ module.exports = {
       const arenaTitle = 'Cockfight Arena';
 
       const container = new ContainerBuilder()
-        .setAccentColor(isWin ? 0x00FF66 : 0xFF3333)
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(

@@ -121,7 +121,6 @@ module.exports = {
  const listText = commands.map(c => `• \`!${c.name}\` — ${c.isEmbed ? ' Rich Embed' : ' Plain Text'}`).join('\n');
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Custom Triggers Catalog`)
  )

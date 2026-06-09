@@ -36,7 +36,6 @@ module.exports = {
  await voiceChannel.permissionOverwrites.edit(guild.roles.everyone.id, { Connect: false });
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF3333)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Voice Channel Locked\nThe voice channel **${voiceChannel.name}** has been locked. Only whitelisted users can connect now.`
@@ -50,7 +49,6 @@ module.exports = {
  await voiceChannel.permissionOverwrites.edit(guild.roles.everyone.id, { Connect: null });
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Voice Channel Unlocked\nThe voice channel **${voiceChannel.name}** has been unlocked. Anyone can connect now.`
@@ -67,7 +65,6 @@ module.exports = {
  });
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFFD700)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Voice Channel Claimed\nYou have successfully claimed channel management rights over **${voiceChannel.name}**! You can now move members and configure settings.`

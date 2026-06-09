@@ -68,7 +68,6 @@ module.exports = {
       const slotTitle = 'Slot Machine';
 
       const container = new ContainerBuilder()
-        .setAccentColor(isWin ? 0xFFD700 : 0xFF3333)
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(

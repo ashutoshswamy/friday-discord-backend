@@ -100,7 +100,6 @@ module.exports = {
 
    const buildPanel = (disabled = false, selectedIdx = -1, reveal = false) => {
     const container = new ContainerBuilder()
-     .setAccentColor(0x8B5CF6)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -156,7 +155,6 @@ module.exports = {
     }
 
     const resultContainer = new ContainerBuilder()
-     .setAccentColor(isCorrect ? 0x00FF66 : 0xFF3333)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -181,7 +179,6 @@ module.exports = {
    collector.on('end', async (collected, reason) => {
     if (reason === 'time' && collected.size === 0) {
      const timeoutContainer = new ContainerBuilder()
-      .setAccentColor(0x6B7280)
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
         `## Time's Up!\n**${question}**\n\n**Correct answer:** ${BUTTON_LABELS[correctIndex]}: **${correct}**`

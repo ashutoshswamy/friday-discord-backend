@@ -123,7 +123,6 @@ module.exports = {
  await db.closePoll(messageId, results);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x71717a)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Poll Closed\n**${poll.question}**`)
  )

@@ -28,7 +28,6 @@ module.exports = {
  const createdUnix = Math.floor(guild.createdTimestamp / 1000);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

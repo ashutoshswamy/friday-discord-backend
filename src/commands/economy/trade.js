@@ -43,7 +43,6 @@ module.exports = {
    const receiverStatus = state.receiver.confirmed ? 'Confirmed' : 'Pending';
 
    const container = new ContainerBuilder()
-    .setAccentColor(0x8B5CF6)
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(`## Trade Session\n<@${user.id}>  <@${targetUser.id}>`)
     )
@@ -112,7 +111,6 @@ module.exports = {
      flags: MessageFlags.IsComponentsV2,
      components: [
       new ContainerBuilder()
-       .setAccentColor(0xFF4444)
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
          `## Trade Cancelled\n<@${i.user.id}> has cancelled this trade session.`
@@ -143,7 +141,6 @@ module.exports = {
      return i.update({
       flags: MessageFlags.IsComponentsV2,
       components: [
-       new ContainerBuilder().setAccentColor(0xFF4444)
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
          `## Trade Failed\n<@${user.id}> no longer has enough coins to fulfil their offer.`
         ))
@@ -154,7 +151,6 @@ module.exports = {
      return i.update({
       flags: MessageFlags.IsComponentsV2,
       components: [
-       new ContainerBuilder().setAccentColor(0xFF4444)
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(
          `## Trade Failed\n<@${targetUser.id}> no longer has enough coins to fulfil their offer.`
         ))
@@ -166,7 +162,6 @@ module.exports = {
       return i.update({
        flags: MessageFlags.IsComponentsV2,
        components: [
-        new ContainerBuilder().setAccentColor(0xFF4444)
          .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           `## Trade Failed\n<@${user.id}> no longer has **${item}** in their inventory.`
          ))
@@ -179,7 +174,6 @@ module.exports = {
       return i.update({
        flags: MessageFlags.IsComponentsV2,
        components: [
-        new ContainerBuilder().setAccentColor(0xFF4444)
          .addTextDisplayComponents(new TextDisplayBuilder().setContent(
           `## Trade Failed\n<@${targetUser.id}> no longer has **${item}** in their inventory.`
          ))
@@ -219,7 +213,6 @@ module.exports = {
      flags: MessageFlags.IsComponentsV2,
      components: [
       new ContainerBuilder()
-       .setAccentColor(0x00FF99)
        .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(`## Trade Executed`)
        )

@@ -101,7 +101,6 @@ module.exports = {
     : `**${winner.name}** won the race. You lost ${EMOJIS.coin} **${bet.toLocaleString()}** coins.`;
 
    const container = new ContainerBuilder()
-    .setAccentColor(color)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(

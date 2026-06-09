@@ -37,7 +37,6 @@ module.exports = {
    const row = new ActionRowBuilder().addComponents(lowBtn, medBtn, highBtn);
 
    const initialContainer = new ContainerBuilder()
-    .setAccentColor(0x00FF00) // Terminal Green
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
@@ -102,7 +101,6 @@ module.exports = {
      await db.incrementQuestProgress(guild.id, user.id, 'hack', null, 1);
 
      const successContainer = new ContainerBuilder()
-      .setAccentColor(0x00FF66)
       .addSectionComponents(
        new SectionBuilder()
         .addTextDisplayComponents(
@@ -128,7 +126,6 @@ module.exports = {
      await db.updateCoins(guild.id, user.id, -actualFine);
 
      const failContainer = new ContainerBuilder()
-      .setAccentColor(0xFF0033)
       .addSectionComponents(
        new SectionBuilder()
         .addTextDisplayComponents(
@@ -152,7 +149,6 @@ module.exports = {
    collector.on('end', async (collected, reason) => {
     if (reason === 'time') {
      const expiredContainer = new ContainerBuilder()
-      .setAccentColor(0x7F8C8D)
       .addSectionComponents(
        new SectionBuilder()
         .addTextDisplayComponents(

@@ -74,7 +74,6 @@ module.exports = {
     }
 
     const container = new ContainerBuilder()
-     .setAccentColor(0xFFD700) // Gold
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -110,7 +109,6 @@ module.exports = {
     }
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x2ECC71) // Success Green
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -136,7 +134,6 @@ module.exports = {
 
     if (drawResult.rolledOver) {
      const container = new ContainerBuilder()
-      .setAccentColor(0x34495E) // Dark blue/gray
       .addTextDisplayComponents(
        new TextDisplayBuilder().setContent(
         `## ️ Lottery Draw Results\n` +
@@ -147,7 +144,6 @@ module.exports = {
     }
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x00FF66)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(

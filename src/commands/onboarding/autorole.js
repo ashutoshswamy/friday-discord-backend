@@ -34,7 +34,6 @@ module.exports = {
  if (action === 'add') {
   if (!role) {
   const container = new ContainerBuilder()
-    .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent('You must specify a `role` to allocate automatically!')
     );
@@ -48,7 +47,6 @@ module.exports = {
  await db.updateGuildConfig(guild.id, { autoRoleId: role.id });
 
   const container = new ContainerBuilder()
-    .setAccentColor(0x10B981)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`Successfully set **${role.name}** as the server AutoRole! All joining members will automatically receive this role.`)
     );
@@ -63,7 +61,6 @@ module.exports = {
  await db.updateGuildConfig(guild.id, { autoRoleId: null });
 
   const container = new ContainerBuilder()
-    .setAccentColor(0x10B981)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent('Successfully disabled the server join AutoRole system.')
     );
@@ -76,7 +73,6 @@ module.exports = {
  } catch (err) {
   console.error('[AUTOROLE CONFIG ERROR] Failed to save configs:', err);
   const errContainer = new ContainerBuilder()
-    .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent('Failed to save AutoRole onboarding settings. Check database connection.')
     );

@@ -83,7 +83,6 @@ module.exports = {
   }
 
   const container = new ContainerBuilder()
-   .setAccentColor(0xA855F7)
    .addTextDisplayComponents(
     new TextDisplayBuilder().setContent(`## ASCII Art\n${rendered}`)
    )

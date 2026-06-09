@@ -87,7 +87,6 @@ module.exports = {
     const row = new ActionRowBuilder().addComponents(buttons);
 
     const container = new ContainerBuilder()
-     .setAccentColor(0xF1C40F) // Bright golden yellow
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -116,7 +115,6 @@ module.exports = {
      }
 
      const successContainer = new ContainerBuilder()
-      .setAccentColor(0x2ECC71)
       .addSectionComponents(
        new SectionBuilder()
         .addTextDisplayComponents(
@@ -144,7 +142,6 @@ module.exports = {
     }
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x2ECC71)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(

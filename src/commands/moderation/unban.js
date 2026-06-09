@@ -36,7 +36,6 @@ module.exports = {
  await db.logInfraction(guild.id, targetId, user.id, 'UNBAN', reason);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

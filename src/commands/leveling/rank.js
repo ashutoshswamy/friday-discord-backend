@@ -28,7 +28,6 @@ module.exports = {
 
   if (targetUser.bot) {
     const botErrContainer = new ContainerBuilder()
-      .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent('Bots do not accumulate XP or levels!')
       );
@@ -45,7 +44,6 @@ module.exports = {
   const profile = await db.getProfile(guild.id, targetUser.id);
   if (!profile) {
     const noProfileContainer = new ContainerBuilder()
-      .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent('Failed to load level profile.')
       );
@@ -72,7 +70,6 @@ module.exports = {
   const attachment = new AttachmentBuilder(buffer, { name: `rank-${targetUser.id}.png` });
 
   const container = new ContainerBuilder()
-    .setAccentColor(0x8B5CF6)
     .addMediaGalleryComponents(
       new MediaGalleryBuilder().addItems(
         new MediaGalleryItemBuilder()
@@ -89,7 +86,6 @@ module.exports = {
   } catch (err) {
   console.error('[ERROR] Rank command failed:', err);
   const errContainer = new ContainerBuilder()
-    .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent('An error occurred while retrieving rank statistics.')
     );

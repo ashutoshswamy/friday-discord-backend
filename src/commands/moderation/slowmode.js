@@ -26,7 +26,6 @@ module.exports = {
 
  if (seconds === 0) {
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF00)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Slowmode Disabled\nSlowmode has been successfully disabled for this channel.`)
  );
@@ -47,7 +46,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFFFF00)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Slowmode Enabled\nSlowmode for this channel has been set to **${readableTime}**.`)
  )

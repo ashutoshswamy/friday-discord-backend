@@ -54,7 +54,6 @@ module.exports = {
    }).join('\n');
 
    const container = new ContainerBuilder()
-    .setAccentColor(0x8B5CF6)
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(`## Your Active Cooldowns`)
     )

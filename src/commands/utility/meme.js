@@ -36,7 +36,6 @@ module.exports = {
  .setURL(data.postLink);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x8b5cf6)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

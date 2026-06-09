@@ -65,7 +65,6 @@ module.exports = {
  const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
  const confirmContainer = new ContainerBuilder()
- .setAccentColor(0xFFCC00)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -106,7 +105,6 @@ module.exports = {
  await db.logInfraction(guild.id, targetUser.id, user.id, 'TIMEOUT', reason);
 
  const timedOutContainer = new ContainerBuilder()
- .setAccentColor(0xFFCC00)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

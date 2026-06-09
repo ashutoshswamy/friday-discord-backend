@@ -38,7 +38,6 @@ module.exports = {
  const iconUrl = guild.iconURL({ forceStatic: true });
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFFCC00)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -68,7 +67,6 @@ module.exports = {
  const msg = await channel.send({ flags: MessageFlags.IsComponentsV2, components: [container] });
 
  const realContainer = new ContainerBuilder()
- .setAccentColor(0xFFCC00)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

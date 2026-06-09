@@ -55,7 +55,6 @@ module.exports = {
  else if (lowerDesc.includes('wind')) weatherIcon = '';
 
  const container = new ContainerBuilder()
- .setAccentColor(0x0ea5e9)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## ${weatherIcon} Weather Report: ${locationDisplay}\nCurrently experiencing: **${desc}**`

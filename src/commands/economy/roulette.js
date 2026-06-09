@@ -59,7 +59,6 @@ module.exports = {
  const buildResultContainer = (rolled, betLabel, winnings, isWin, finalCoins) => {
  const colorSquare = rolled.color === 'red' ? '' : rolled.color === 'black' ? '' : '';
  return new ContainerBuilder()
- .setAccentColor(isWin ? 0x00FF66 : 0xFF3333)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -144,7 +143,6 @@ module.exports = {
  ));
 
  const promptContainer = new ContainerBuilder()
- .setAccentColor(0x8b5cf6)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

@@ -104,7 +104,6 @@ module.exports = {
  await db.adoptPet(guild.id, user.id, petName, petType);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -150,7 +149,6 @@ module.exports = {
  const xpNeeded = pet.level * 200;
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00E5FF)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -217,7 +215,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -290,7 +287,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF8C00)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -318,7 +314,6 @@ module.exports = {
  return interaction.editReply({
   flags: MessageFlags.IsComponentsV2,
   components: [new ContainerBuilder()
-   .setAccentColor(0x00E5FF)
    .addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `## Pet Renamed!\n**${oldName}** is now known as **${newName}**.`
    ))]
@@ -327,7 +322,6 @@ module.exports = {
 
  if (subcommand === 'release') {
  const confirmContainer = new ContainerBuilder()
-  .setAccentColor(0xFF4444)
   .addTextDisplayComponents(new TextDisplayBuilder().setContent(
    `## Release ${pet.name}?\nThis is **permanent** — you will lose your pet and their progress.\n\nAre you sure?`
   ))
@@ -345,13 +339,11 @@ module.exports = {
   if (i.customId === 'release_confirm') {
    await db.releasePet(guild.id, user.id);
    await i.update({ flags: MessageFlags.IsComponentsV2, components: [new ContainerBuilder()
-    .setAccentColor(0x6B7280)
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(
      `## Pet Released\n**${pet.name}** has been released into the wild.`
     ))] });
   } else {
    await i.update({ flags: MessageFlags.IsComponentsV2, components: [new ContainerBuilder()
-    .setAccentColor(0x00FF66)
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Cancelled\n**${pet.name}** stays with you.`))] });
   }
  });
@@ -359,7 +351,6 @@ module.exports = {
  collector.on('end', async (collected, reason) => {
   if (reason === 'time' && collected.size === 0) {
    await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [new ContainerBuilder()
-    .setAccentColor(0x6B7280)
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Timed Out\nRelease cancelled.`))] }).catch(() => {});
   }
  });
@@ -402,7 +393,6 @@ module.exports = {
  return interaction.editReply({
   flags: MessageFlags.IsComponentsV2,
   components: [new ContainerBuilder()
-   .setAccentColor(myWon ? 0x00FF66 : tied ? 0xFFD700 : 0xFF4444)
    .addSectionComponents(
     new SectionBuilder()
      .addTextDisplayComponents(new TextDisplayBuilder().setContent(

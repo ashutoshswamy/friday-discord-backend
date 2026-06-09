@@ -24,7 +24,6 @@ module.exports = {
    if (!text) {
     const social = await db.getUserSocial(guild.id, user.id);
     const container = new ContainerBuilder()
-     .setAccentColor(0x8B5CF6)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -44,7 +43,6 @@ module.exports = {
    await db.setBio(guild.id, user.id, text);
 
    const container = new ContainerBuilder()
-    .setAccentColor(0x00FF99)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(

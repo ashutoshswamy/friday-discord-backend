@@ -47,7 +47,6 @@ module.exports = {
    const bonus = await rollBonusDrop(guild.id, user.id);
 
    const container = new ContainerBuilder()
-    .setAccentColor(0x8B5A2B) // Brownish wood color
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(

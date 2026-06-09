@@ -76,7 +76,6 @@ module.exports = {
   ).join('\n\n');
 
   const container = new ContainerBuilder()
-   .setAccentColor(0x00E5FF)
    .addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
      `## Player-Driven Market\nWelcome to the server bazaar! Buy items from other players or list your own collectibles.\n\nUse \`/market buy [id]\` to purchase · \`/market cancel [id]\` to cancel your listings.`
@@ -155,7 +154,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00E5FF)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -189,7 +187,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -223,7 +220,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0x9CA3AF)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Market Listing Cancelled\nListing **#${listingId}** has been removed from the bazaar.\nThe item has been safely returned to your inventory.`
@@ -268,7 +264,6 @@ module.exports = {
   }
 
   const container = new ContainerBuilder()
-   .setAccentColor(0x3498DB)
    .addSectionComponents(
     new SectionBuilder()
      .addTextDisplayComponents(

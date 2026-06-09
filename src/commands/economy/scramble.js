@@ -80,7 +80,6 @@ module.exports = {
  if (speedLabel) rewardText += `\n*${speedLabel}*`;
 
  const container = new ContainerBuilder()
- .setAccentColor(0x4ade80)
  .addSectionComponents(
   new SectionBuilder()
   .addTextDisplayComponents(
@@ -116,7 +115,6 @@ module.exports = {
  const timeoutId = setTimeout(async () => {
  activeGames.delete(channel.id);
  const container = new ContainerBuilder()
- .setAccentColor(0xf87171)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Time's Up!\nNobody got it. The word was **${word}**`
@@ -130,7 +128,6 @@ module.exports = {
  const maxCoins = baseCoins + Math.floor(baseCoins * 0.75);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x8b5cf6)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

@@ -28,7 +28,6 @@ module.exports = {
 
  const buildContainer = (rt, wsMs, status, color, footerText) =>
  new ContainerBuilder()
- .setAccentColor(color)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

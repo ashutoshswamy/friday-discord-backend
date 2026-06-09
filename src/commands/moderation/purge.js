@@ -67,7 +67,6 @@ module.exports = {
 
   if (messageCount === 0) {
     const container = new ContainerBuilder()
-      .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent('No messages matched the selected filter in the latest channel scan.')
       );
@@ -91,7 +90,6 @@ module.exports = {
 
   if (deleted.size === 0) {
     const container = new ContainerBuilder()
-      .setAccentColor(0xEF4444)
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent('Failed to delete messages. They may be older than 14 days, which Discord restricts from bulk deletion.')
       );
@@ -102,7 +100,6 @@ module.exports = {
   }
 
   const container = new ContainerBuilder()
-    .setAccentColor(0x10B981)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`Successfully deleted **${deleted.size}** message(s)${filterLabel} from this channel.`)
     );
@@ -113,7 +110,6 @@ module.exports = {
  } catch (err) {
  console.error('[ERROR] Purge failed:', err);
   const container = new ContainerBuilder()
-    .setAccentColor(0xEF4444)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent('Failed to delete messages due to an internal error.')
     );

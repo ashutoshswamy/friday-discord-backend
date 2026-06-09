@@ -49,7 +49,6 @@ module.exports = {
  const actionIcon = action === 'add' ? '' : '';
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFFD700)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

@@ -82,7 +82,6 @@ module.exports = {
  ).then(() => true).catch(() => false);
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF8C00)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

@@ -68,7 +68,6 @@ module.exports = {
  const quote = FRIDAY_QUOTES[Math.floor(Math.random() * FRIDAY_QUOTES.length)];
 
  const container = new ContainerBuilder()
- .setAccentColor(0x8B5CF6)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Friday Core Protocol\n*"${quote}"*`)
  );
@@ -86,7 +85,6 @@ module.exports = {
  const memoryUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00E5FF)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -133,7 +131,6 @@ module.exports = {
  if (responseText.length > 1900) responseText = responseText.substring(0, 1850) + '\n\n*(Truncated due to length limits)*';
 
  const container = new ContainerBuilder()
- .setAccentColor(0x8B5CF6)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Friday Protocol: AI Query Response`)
  )
@@ -175,7 +172,6 @@ module.exports = {
  const originalDisplay = text.length > 1000 ? text.substring(0, 950) + '...' : text;
 
  const container = new ContainerBuilder()
- .setAccentColor(0x10B981)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Friday Protocol: Persona Rewrite\n**Style Persona:** **${style}**`)
  )
@@ -238,7 +234,6 @@ module.exports = {
  if (responseText.length > 1900) responseText = responseText.substring(0, 1850) + '\n\n*(Truncated due to length limits)*';
 
  const container = new ContainerBuilder()
- .setAccentColor(0x06B6D4)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Friday Protocol: Channel Briefing\n### Recent Chat Activity Summary:`)
  )

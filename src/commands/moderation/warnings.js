@@ -19,7 +19,6 @@ function buildWarningsContainer(targetUser, warnings, page, totalPages) {
  }).join('\n\n');
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF4500)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -57,7 +56,6 @@ module.exports = {
 
  if (warnings.length === 0) {
  const cleanContainer = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

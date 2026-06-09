@@ -85,7 +85,6 @@ module.exports = {
       const finalBalance = await db.getProfile(guild.id, user.id);
 
       const container = new ContainerBuilder()
-        .setAccentColor(accentColor)
         .addSectionComponents(
           new SectionBuilder()
             .addTextDisplayComponents(

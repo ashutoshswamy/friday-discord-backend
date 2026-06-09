@@ -85,7 +85,6 @@ module.exports = {
   const pageLabel = totalPages > 1 ? ` — Page ${page + 1}/${totalPages}` : '';
 
   const c = new ContainerBuilder()
-   .setAccentColor(0x00FFCC)
    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Level Role Rewards${pageLabel}`))
    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
    .addTextDisplayComponents(new TextDisplayBuilder().setContent(list))

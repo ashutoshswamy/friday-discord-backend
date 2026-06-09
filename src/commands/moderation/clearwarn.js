@@ -43,7 +43,6 @@ module.exports = {
  await db.logInfraction(guild.id, targetUser.id, user.id, 'CLEAR_ALL_WARNS', `Cleared all (${countDeleted}) warnings`);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -77,7 +76,6 @@ module.exports = {
  await db.logInfraction(guild.id, targetUser.id, user.id, 'CLEAR_WARN', `Cleared warning ID ${targetWarnId}`);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FF66)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

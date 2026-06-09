@@ -19,7 +19,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
  await db.addXp(guild.id, user.id, 150);
  return {
  container: new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -36,7 +35,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
  await db.updateCoins(guild.id, user.id, 300);
  return {
  container: new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -75,7 +73,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
 
  return {
  container: new ContainerBuilder()
- .setAccentColor(0xFF00AA)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -90,7 +87,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
   await db.addXp(guild.id, user.id, 300);
   return {
    container: new ContainerBuilder()
-    .setAccentColor(0x00FFCC)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
@@ -108,7 +104,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
   await db.updateCoins(guild.id, user.id, coinGain);
   return {
    container: new ContainerBuilder()
-    .setAccentColor(0xFFD700)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
@@ -126,7 +121,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
   await db.updateCoins(guild.id, user.id, coinGain);
   return {
    container: new ContainerBuilder()
-    .setAccentColor(0xF59E0B)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
@@ -169,7 +163,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
 
   return {
    container: new ContainerBuilder()
-    .setAccentColor(0xFF00FF)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(
@@ -189,7 +182,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
  await db.addXp(guild.id, user.id, actionValue);
  return {
  container: new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -204,7 +196,6 @@ async function processItem(guild, user, matchedItem, shopItems) {
  await db.updateCoins(guild.id, user.id, actionValue);
  return {
  container: new ContainerBuilder()
- .setAccentColor(0xFFD700)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -298,7 +289,6 @@ module.exports = {
  .addOptions(selectOptions);
 
  const promptContainer = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -351,7 +341,6 @@ module.exports = {
  .addOptions({ label: 'Expired', value: 'expired' });
 
  const expiredContainer = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

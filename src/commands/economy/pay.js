@@ -32,7 +32,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00E6FF)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

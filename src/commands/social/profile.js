@@ -46,7 +46,6 @@ module.exports = {
    const bioDisplay = social.bio || '*No bio set*';
 
    const container = new ContainerBuilder()
-    .setAccentColor(0x8B5CF6)
     .addSectionComponents(
      new SectionBuilder()
       .addTextDisplayComponents(

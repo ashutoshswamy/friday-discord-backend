@@ -49,7 +49,6 @@ async function buildBalanceContainer(guild, targetUser) {
  const netWorth = profile.coins + (profile.bank || 0) + totalStockAssets + inventoryValue;
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

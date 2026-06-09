@@ -46,7 +46,6 @@ module.exports = {
  const header = targetUser ? `## Chat Activity Logs — ${targetUser.username}` : `## Chat Activity Logs — ${guild.name}`;
 
  const container = new ContainerBuilder()
- .setAccentColor(0xFF9900)
  .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(new TextDisplayBuilder().setContent(logsText))
@@ -74,7 +73,6 @@ module.exports = {
  const header = targetUser ? `## Voice Connection Logs — ${targetUser.username}` : `## Voice Connection Logs — ${guild.name}`;
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00CCFF)
  .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
  .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
  .addTextDisplayComponents(new TextDisplayBuilder().setContent(logsText))

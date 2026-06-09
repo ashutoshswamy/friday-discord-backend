@@ -40,7 +40,6 @@ module.exports = {
      : 'No data yet.';
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x8B5CF6)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(
@@ -80,7 +79,6 @@ module.exports = {
     ).join('\n');
 
     const container = new ContainerBuilder()
-     .setAccentColor(0xFFD700)
      .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`## Top 10 Wealthiest Members`)
      )
@@ -107,7 +105,6 @@ module.exports = {
     const dailyReady = !profile.dailyCooldown || (now - profile.dailyCooldown >= 86400000);
 
     const container = new ContainerBuilder()
-     .setAccentColor(0x00E5FF)
      .addSectionComponents(
       new SectionBuilder()
        .addTextDisplayComponents(

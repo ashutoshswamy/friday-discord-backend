@@ -113,7 +113,6 @@ module.exports = {
  await db.updateGuildConfig(guild.id, updates);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## AutoMod Settings Updated\nSuccessfully ${enable ? 'enabled ' : 'disabled '} the **${MODULE_LABELS[moduleName]}** module.`
@@ -155,7 +154,6 @@ module.exports = {
   const slice = words.slice(page * BL_PAGE_SIZE, (page + 1) * BL_PAGE_SIZE);
   const pageLabel = totalPages > 1 ? ` — Page ${page + 1}/${totalPages}` : '';
   const c = new ContainerBuilder()
-   .setAccentColor(0x00FFCC)
    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`## Custom Blocklist Patterns${pageLabel}`))
    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
    .addTextDisplayComponents(new TextDisplayBuilder().setContent(slice.map((w, idx) => `${page * BL_PAGE_SIZE + idx + 1}. \`${w}\``).join('\n')))
@@ -227,7 +225,6 @@ module.exports = {
  ).join('\n');
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## AutoMod Whitelist Exemptions`)
  )
@@ -248,7 +245,6 @@ module.exports = {
  if (optOuts.length === 0) return interaction.editReply({ content: 'No per-filter channel opt-outs are configured for this server.' });
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## AutoMod Channel Opt-Outs`)
  )
@@ -274,7 +270,6 @@ module.exports = {
  if (!success) return interaction.editReply({ content: `Failed to add opt-out. It may already exist.`, ephemeral: true });
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Filter Opt-Out Added\n${channelOption} will now bypass the **${MODULE_LABELS[filter]}**.\nAll other AutoMod filters still apply in that channel.`
@@ -309,7 +304,6 @@ module.exports = {
  }).join('\n');
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Punishment Escalation Rules`)
  )
@@ -335,7 +329,6 @@ module.exports = {
  const punishmentLabels = { TIMEOUT: `Timeout (${duration} mins)`, KICK: 'Kick', BAN: 'Ban' };
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Punishment Rule Added\nEscalation rule configured successfully.`)
  )

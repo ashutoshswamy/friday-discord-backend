@@ -96,7 +96,6 @@ module.exports = {
  `• Unrealized PnL: **${overallPnL >= 0 ? '' : ''} ${pnlSign}${overallPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pnlSign}${overallPnLPercent.toFixed(2)}%)**`;
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00E5FF)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -137,7 +136,6 @@ module.exports = {
  const result = await db.openIntradayPosition(guild.id, user.id, symbol, type, margin, 5);
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00E5FF)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -180,7 +178,6 @@ module.exports = {
  const accentColor = result.pnl >= 0 ? 0x00FF66 : 0xFF3333;
 
  const container = new ContainerBuilder()
- .setAccentColor(accentColor)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

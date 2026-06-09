@@ -21,7 +21,6 @@ function buildTierContainer(tier) {
  ).join('\n\n');
 
  return new ContainerBuilder()
- .setAccentColor(accentColor)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Job Board — ${TIER_LABELS[tier]} (Tier ${tier})\n` +
@@ -161,7 +160,6 @@ module.exports = {
  const accentColor = parseInt(TIER_COLORS[job.tier].replace('#', ''), 16);
 
  const container = new ContainerBuilder()
- .setAccentColor(accentColor)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(
@@ -210,7 +208,6 @@ module.exports = {
  const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
  const confirmContainer = new ContainerBuilder()
- .setAccentColor(0xFF4500)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Confirm Resignation\nAre you sure you want to resign from ${prevJob ? `**${prevJob.name}**` : 'your current job'}?\n\n` +
@@ -233,7 +230,6 @@ module.exports = {
  await db.quitJob(guild.id, user.id);
 
  const resignedContainer = new ContainerBuilder()
- .setAccentColor(0xFF4500)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Resigned\nYou have resigned from ${prevJob ? `**${prevJob.name}**` : 'your job'}.\nUse \`/job apply\` to start a new career.`
@@ -280,7 +276,6 @@ module.exports = {
  }
 
  const container = new ContainerBuilder()
- .setAccentColor(accentColor)
  .addSectionComponents(
  new SectionBuilder()
  .addTextDisplayComponents(

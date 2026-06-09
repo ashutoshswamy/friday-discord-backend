@@ -33,7 +33,6 @@ module.exports = {
  });
 
  const container = new ContainerBuilder()
- .setAccentColor(0x00FFCC)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(
  `## Welcome System Enabled\nOnboarding greeting cards successfully directed to ${channel}.`

@@ -32,7 +32,6 @@ module.exports = {
  await targetChannel.permissionOverwrites.edit(everyoneRole, { SendMessages: null }, { reason: `Channel unlocked by ${interaction.user.tag}` });
 
  const unlockContainer = new ContainerBuilder()
- .setAccentColor(0x00FF00)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Channel Unlocked\nThis channel has been unlocked. Users can now resume sending messages.`)
  );
@@ -49,7 +48,6 @@ module.exports = {
  await targetChannel.permissionOverwrites.edit(everyoneRole, { SendMessages: false }, { reason: `Channel locked down by ${interaction.user.tag}` });
 
  const lockContainer = new ContainerBuilder()
- .setAccentColor(0xFF0000)
  .addTextDisplayComponents(
  new TextDisplayBuilder().setContent(`## Channel Lockdown\nThis channel is now locked. Sending messages has been disabled for standard members.`)
  );
