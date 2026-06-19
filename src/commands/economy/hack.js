@@ -17,7 +17,7 @@ module.exports = {
   if (!guild) return;
 
   // 10-minute cooldown
-  const cd = checkCooldown('hack', user.id, 600);
+  const cd = await checkCooldown('hack', user.id, 600);
   if (cd.onCooldown) {
    return interaction.editReply({ content: `Mainframe firewall is alert! Wait **${cd.remaining}s** before launching another intrusion.`, ephemeral: true });
   }

@@ -23,7 +23,7 @@ module.exports = {
 
     const bet = options.getInteger('bet');
 
-    const cd = checkCooldown('cockfight', user.id, 8);
+    const cd = await checkCooldown('cockfight', user.id, 8);
     if (cd.onCooldown) {
       return interaction.editReply({ content: `Cockfight is on cooldown. Try again in **${cd.remaining}s**.`, ephemeral: true });
     }

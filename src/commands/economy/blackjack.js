@@ -56,7 +56,7 @@ module.exports = {
 
     const bet = options.getInteger('bet');
 
-    const cd = checkCooldown('blackjack', user.id, 10);
+    const cd = await checkCooldown('blackjack', user.id, 10);
     if (cd.onCooldown) {
       return interaction.editReply({ content: `Blackjack is on cooldown. Try again in **${cd.remaining}s**.`, ephemeral: true });
     }

@@ -66,7 +66,7 @@ module.exports = {
   const horseId = options.getInteger('horse');
   const bet = options.getInteger('bet');
 
-  const cd = checkCooldown('horse', user.id, 10);
+  const cd = await checkCooldown('horse', user.id, 10);
   if (cd.onCooldown) {
    return interaction.editReply({ content: `The next race hasn't started yet. Try again in **${cd.remaining}s**.`, ephemeral: true });
   }

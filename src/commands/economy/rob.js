@@ -23,7 +23,7 @@ module.exports = {
     if (targetUser.id === user.id) return interaction.editReply({ content: 'You cannot rob yourself!', ephemeral: true });
     if (targetUser.bot) return interaction.editReply({ content: 'You cannot rob bot accounts!', ephemeral: true });
 
-    const cd = checkCooldown('rob', user.id, 60);
+    const cd = await checkCooldown('rob', user.id, 60);
     if (cd.onCooldown) {
       return interaction.editReply({ content: `Rob is on cooldown. Try again in **${cd.remaining}s**.`, ephemeral: true });
     }

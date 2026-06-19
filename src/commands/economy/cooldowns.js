@@ -5,7 +5,7 @@ const {
 const db = require('../../utils/db');
 const { getCooldownRemaining } = require('../../utils/cooldowns');
 
-const UTILITY_COMMANDS = ['slots', 'blackjack', 'roulette', 'dice', 'highlow', 'horse', 'cockfight', 'scramble', 'beg', 'trivia'];
+const UTILITY_COMMANDS = ['slots', 'blackjack', 'roulette', 'dice', 'highlow', 'horse', 'cockfight', 'scramble', 'beg', 'trivia', 'hunt', 'fish', 'dig', 'mine', 'search'];
 
 function formatMs(ms) {
  if (ms <= 0) return null;
@@ -48,10 +48,10 @@ module.exports = {
     cooldownLine('Work', workRemaining),
    ].join('\n');
 
-   const utilityLines = UTILITY_COMMANDS.map(cmd => {
-    const remaining = getCooldownRemaining(cmd, user.id);
+   const utilityLines = (await Promise.all(UTILITY_COMMANDS.map(async cmd => {
+    const remaining = await getCooldownRemaining(cmd, user.id);
     return cooldownLine(`/${cmd}`, remaining);
-   }).join('\n');
+   }))).join('\n');
 
    const container = new ContainerBuilder()
     .addTextDisplayComponents(
@@ -64,9 +64,6 @@ module.exports = {
     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
     .addTextDisplayComponents(
      new TextDisplayBuilder().setContent(`**Games & Activities**\n${utilityLines}`)
-    )
-    .addTextDisplayComponents(
-     new TextDisplayBuilder().setContent('-# Activity cooldowns (hunt, fish, dig, mine) show on the command itself')
     );
 
    await interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });

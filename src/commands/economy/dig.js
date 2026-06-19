@@ -6,8 +6,7 @@ const {
 const db = require('../../utils/db');
 const { getEmoji } = require('../../utils/emojis');
 const { rollBonusDrop } = require('../../utils/drops');
-
-const cooldowns = new Map();
+const { checkCooldown } = require('../../utils/cooldowns');
 
 const DIG_CHANCES = [
  { name: "Common Worm",    chance: 0.28, msg: " You dug in the mud and found a wriggling **Common Worm**." },
@@ -30,13 +29,9 @@ module.exports = {
  const { guild, user } = interaction;
  if (!guild) return;
 
- const now = Date.now();
- const cooldownMs = 45 * 1000;
- const userCooldown = cooldowns.get(user.id);
-
- if (userCooldown && (now - userCooldown < cooldownMs)) {
- const timeLeft = Math.ceil((cooldownMs - (now - userCooldown)) / 1000);
- return interaction.editReply({ content: `Rest your back! Wait **${timeLeft}s** before digging again.`, ephemeral: true });
+ const cd = await checkCooldown('dig', user.id, 45);
+ if (cd.onCooldown) {
+ return interaction.editReply({ content: `Rest your back! Wait **${cd.remaining}s** before digging again.`, ephemeral: true });
  }
 
  try {
@@ -46,8 +41,6 @@ module.exports = {
  if (!hasShovel) {
  return interaction.editReply({ content: 'You do not possess a **Shovel**! Purchase one from the virtual shop first using `/buy`.', ephemeral: true });
  }
-
- cooldowns.set(user.id, now);
 
  const roll = Math.random();
  const reward = DIG_CHANCES.find(loot => roll <= loot.chance);

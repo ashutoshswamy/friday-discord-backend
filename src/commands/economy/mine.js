@@ -6,8 +6,7 @@ const {
 const db = require('../../utils/db');
 const { getEmoji } = require('../../utils/emojis');
 const { rollBonusDrop } = require('../../utils/drops');
-
-const cooldowns = new Map();
+const { checkCooldown } = require('../../utils/cooldowns');
 
 const LOOT_CHANCES = [
  { name: 'Coal',          chance: 0.30, msg: 'You chipped away at the cave wall and extracted a rough chunk of **Coal**.' },
@@ -30,13 +29,9 @@ module.exports = {
   const { guild, user } = interaction;
   if (!guild) return;
 
-  const now = Date.now();
-  const cooldownMs = 60 * 1000;
-  const userCooldown = cooldowns.get(user.id);
-
-  if (userCooldown && (now - userCooldown < cooldownMs)) {
-   const timeLeft = Math.ceil((cooldownMs - (now - userCooldown)) / 1000);
-   return interaction.editReply({ content: `Your arms are tired from swinging! Wait **${timeLeft}s** before mining again.`, ephemeral: true });
+  const cd = await checkCooldown('mine', user.id, 60);
+  if (cd.onCooldown) {
+   return interaction.editReply({ content: `Your arms are tired from swinging! Wait **${cd.remaining}s** before mining again.`, ephemeral: true });
   }
 
   try {
@@ -46,8 +41,6 @@ module.exports = {
    if (!hasPickaxe) {
     return interaction.editReply({ content: 'You do not own a **Pickaxe**! Purchase one from the shop using `/buy`.', ephemeral: true });
    }
-
-   cooldowns.set(user.id, now);
 
    const roll = Math.random();
    const reward = LOOT_CHANCES.find(loot => roll <= loot.chance);

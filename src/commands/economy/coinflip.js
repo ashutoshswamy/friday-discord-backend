@@ -23,7 +23,7 @@ module.exports = {
  const bet = options.getInteger('bet') ?? 0;
 
  if (bet > 0) {
- const cd = checkCooldown('coinflip', user.id, 5);
+ const cd = await checkCooldown('coinflip', user.id, 5);
  if (cd.onCooldown) {
  return interaction.editReply({ content: `Coinflip is on cooldown. Try again in **${cd.remaining}s**.`, ephemeral: true });
  }

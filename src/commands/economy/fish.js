@@ -6,8 +6,7 @@ const {
 const db = require('../../utils/db');
 const { getEmoji } = require('../../utils/emojis');
 const { rollBonusDrop } = require('../../utils/drops');
-
-const cooldowns = new Map();
+const { checkCooldown } = require('../../utils/cooldowns');
 
 const FISH_CHANCES = [
  { name: "Junk Seaweed",      chance: 0.04, msg: " You reeled in... some slimy **Junk Seaweed**. Yuck." },
@@ -33,13 +32,9 @@ module.exports = {
  const { guild, user } = interaction;
  if (!guild) return;
 
- const now = Date.now();
- const cooldownMs = 45 * 1000;
- const userCooldown = cooldowns.get(user.id);
-
- if (userCooldown && (now - userCooldown < cooldownMs)) {
- const timeLeft = Math.ceil((cooldownMs - (now - userCooldown)) / 1000);
- return interaction.editReply({ content: `Do not scare the fish! Wait **${timeLeft}s** before casting again.`, ephemeral: true });
+ const cd = await checkCooldown('fish', user.id, 45);
+ if (cd.onCooldown) {
+ return interaction.editReply({ content: `Do not scare the fish! Wait **${cd.remaining}s** before casting again.`, ephemeral: true });
  }
 
  try {
@@ -49,8 +44,6 @@ module.exports = {
  if (!hasPole) {
  return interaction.editReply({ content: 'You do not possess a **Fishing Pole**! Purchase one from the virtual shop first using `/buy`.', ephemeral: true });
  }
-
- cooldowns.set(user.id, now);
 
  const roll = Math.random();
  const reward = FISH_CHANCES.find(loot => roll <= loot.chance);

@@ -157,7 +157,7 @@ module.exports = {
   }
 
   // Check cooldown
-  const cd = checkCooldown(`crime_${type}`, user.id, scenario.cooldown);
+  const cd = await checkCooldown(`crime_${type}`, user.id, scenario.cooldown);
   if (cd.onCooldown) {
    return interaction.editReply({
     content: `You need to lay low before attempting another **${scenario.label}**. Try again in **${cd.remaining}s**.`,

@@ -50,7 +50,7 @@ module.exports = {
       return interaction.editReply({ content: 'You cannot rob bot accounts!', ephemeral: true });
     }
 
-    const cd = checkCooldown('bankrob', user.id, 120);
+    const cd = await checkCooldown('bankrob', user.id, 120);
     if (cd.onCooldown) {
       return interaction.editReply({ content: `Bank heist is on cooldown. Try again in **${cd.remaining}s**.`, ephemeral: true });
     }

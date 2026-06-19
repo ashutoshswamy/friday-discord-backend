@@ -1,45 +1,63 @@
-const cooldowns = new Map(); // commandName -> Map<userId, expiryTimestamp>
+const { createClient } = require('@supabase/supabase-js');
 
-// Cleanup expired entries every 10 minutes
-setInterval(() => {
+let supabase = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
+    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+}
+
+// ponytail: in-memory fallback for when supabase is not configured
+const memMap = new Map();
+
+async function checkCooldown(commandName, userId, seconds) {
     const now = Date.now();
-    for (const [cmd, userMap] of cooldowns) {
-        for (const [userId, expiry] of userMap) {
-            if (expiry < now) userMap.delete(userId);
+    const expiresAt = now + seconds * 1000;
+
+    if (supabase) {
+        const { data } = await supabase
+            .from('command_cooldowns')
+            .select('expires_at')
+            .eq('user_id', userId)
+            .eq('command', commandName)
+            .maybeSingle();
+
+        if (data && data.expires_at > now) {
+            const remaining = ((data.expires_at - now) / 1000).toFixed(1);
+            return { onCooldown: true, remaining };
         }
-        if (userMap.size === 0) cooldowns.delete(cmd);
+
+        await supabase.from('command_cooldowns').upsert(
+            { user_id: userId, command: commandName, expires_at: expiresAt },
+            { onConflict: 'user_id,command' }
+        );
+        return { onCooldown: false };
     }
-}, 10 * 60 * 1000);
 
-/**
- * Check and set a cooldown for a user on a command.
- * @param {string} commandName
- * @param {string} userId
- * @param {number} seconds
- * @returns {{ onCooldown: boolean, remaining?: string }}
- */
-function checkCooldown(commandName, userId, seconds) {
-    if (!cooldowns.has(commandName)) cooldowns.set(commandName, new Map());
-    const cmdMap = cooldowns.get(commandName);
-    const now = Date.now();
-    const cooldownMs = seconds * 1000;
-
-    const expiry = cmdMap.get(userId);
+    const key = `${commandName}:${userId}`;
+    const expiry = memMap.get(key);
     if (expiry && now < expiry) {
-        const remaining = ((expiry - now) / 1000).toFixed(1);
-        return { onCooldown: true, remaining };
+        return { onCooldown: true, remaining: ((expiry - now) / 1000).toFixed(1) };
     }
-
-    cmdMap.set(userId, now + cooldownMs);
+    memMap.set(key, expiresAt);
     return { onCooldown: false };
 }
 
-function getCooldownRemaining(commandName, userId) {
-    if (!cooldowns.has(commandName)) return 0;
-    const expiry = cooldowns.get(commandName).get(userId);
-    if (!expiry) return 0;
-    const remaining = expiry - Date.now();
-    return remaining > 0 ? remaining : 0;
+async function getCooldownRemaining(commandName, userId) {
+    const now = Date.now();
+
+    if (supabase) {
+        const { data } = await supabase
+            .from('command_cooldowns')
+            .select('expires_at')
+            .eq('user_id', userId)
+            .eq('command', commandName)
+            .maybeSingle();
+
+        return data ? Math.max(0, data.expires_at - now) : 0;
+    }
+
+    const key = `${commandName}:${userId}`;
+    const expiry = memMap.get(key);
+    return expiry ? Math.max(0, expiry - now) : 0;
 }
 
-module.exports = { checkCooldown, getCooldownRemaining, cooldowns };
+module.exports = { checkCooldown, getCooldownRemaining };

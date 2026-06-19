@@ -6,8 +6,7 @@ const {
 const db = require('../../utils/db');
 const { getEmoji } = require('../../utils/emojis');
 const { rollBonusDrop } = require('../../utils/drops');
-
-const cooldowns = new Map();
+const { checkCooldown } = require('../../utils/cooldowns');
 
 const LOOT_CHANCES = [
  { name: "Rabbit",       chance: 0.28, msg: " You tracked a swift **Rabbit** and took a clean shot!" },
@@ -30,13 +29,9 @@ module.exports = {
  const { guild, user } = interaction;
  if (!guild) return;
 
- const now = Date.now();
- const cooldownMs = 60 * 1000;
- const userCooldown = cooldowns.get(user.id);
-
- if (userCooldown && (now - userCooldown < cooldownMs)) {
- const timeLeft = Math.ceil((cooldownMs - (now - userCooldown)) / 1000);
- return interaction.editReply({ content: `You are too tired to trek! Wait **${timeLeft}s** before hunting again.`, ephemeral: true });
+ const cd = await checkCooldown('hunt', user.id, 60);
+ if (cd.onCooldown) {
+ return interaction.editReply({ content: `You are too tired to trek! Wait **${cd.remaining}s** before hunting again.`, ephemeral: true });
  }
 
  try {
@@ -46,8 +41,6 @@ module.exports = {
  if (!hasRifle) {
  return interaction.editReply({ content: 'You do not possess a **Hunting Rifle**! Purchase one from the virtual shop first using `/buy`.', ephemeral: true });
  }
-
- cooldowns.set(user.id, now);
 
  const roll = Math.random();
  const reward = LOOT_CHANCES.find(loot => roll <= loot.chance);

@@ -6,8 +6,7 @@ const {
 } = require('discord.js');
 const { EMOJIS } = require('../../utils/emojis');
 const db = require('../../utils/db');
-
-const cooldowns = new Map();
+const { checkCooldown } = require('../../utils/cooldowns');
 
 const LOCATIONS_POOL = [
  { name: "Couch Cushions", icon: "" },
@@ -29,18 +28,12 @@ module.exports = {
  const { guild, user } = interaction;
  if (!guild) return;
 
- const now = Date.now();
- const cooldownMs = 60 * 1000;
- const userCooldown = cooldowns.get(user.id);
-
- if (userCooldown && (now - userCooldown < cooldownMs)) {
- const timeLeft = Math.ceil((cooldownMs - (now - userCooldown)) / 1000);
- return interaction.editReply({ content: `Be patient! Wait **${timeLeft}s** before searching again.`, ephemeral: true });
+ const cd = await checkCooldown('search', user.id, 60);
+ if (cd.onCooldown) {
+ return interaction.editReply({ content: `Be patient! Wait **${cd.remaining}s** before searching again.`, ephemeral: true });
  }
 
  try {
- cooldowns.set(user.id, now);
-
  const shuffled = [...LOCATIONS_POOL].sort(() => 0.5 - Math.random());
  const selected = shuffled.slice(0, 3);
 

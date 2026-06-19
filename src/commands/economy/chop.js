@@ -27,7 +27,7 @@ module.exports = {
   const { guild, user } = interaction;
   if (!guild) return;
 
-  const cd = checkCooldown('chop', user.id, 45);
+  const cd = await checkCooldown('chop', user.id, 45);
   if (cd.onCooldown) {
    return interaction.editReply({ content: `Your arms are sore from chopping! Wait **${cd.remaining}s** before swinging again.`, ephemeral: true });
   }

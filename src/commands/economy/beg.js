@@ -5,8 +5,7 @@ const {
 } = require('discord.js');
 const db = require('../../utils/db');
 const { EMOJIS } = require('../../utils/emojis');
-
-const cooldowns = new Map();
+const { checkCooldown } = require('../../utils/cooldowns');
 
 // Note: {coin} placeholder will be dynamically replaced with EMOJIS.coin
 const BEG_RESPONSES = [
@@ -30,21 +29,15 @@ module.exports = {
     const { guild, user } = interaction;
     if (!guild) return;
 
-    const now = Date.now();
-    const cooldownMs = 45 * 1000;
-    const userCooldown = cooldowns.get(user.id);
-
-    if (userCooldown && (now - userCooldown < cooldownMs)) {
-      const timeLeft = Math.ceil((cooldownMs - (now - userCooldown)) / 1000);
+    const cd = await checkCooldown('beg', user.id, 45);
+    if (cd.onCooldown) {
       return interaction.editReply({
-        content: `Keep your dignity! You must wait **${timeLeft}s** before begging again.`,
+        content: `Keep your dignity! You must wait **${cd.remaining}s** before begging again.`,
         ephemeral: true
       });
     }
 
     try {
-      cooldowns.set(user.id, now);
-
       const payout = Math.floor(Math.random() * 101) + 20;
       await db.updateCoins(guild.id, user.id, payout);
 
