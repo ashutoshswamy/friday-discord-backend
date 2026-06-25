@@ -12,7 +12,7 @@ module.exports = {
  .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement).setRequired(false))
  .addBooleanOption(option =>
  option.setName('unlock').setDescription('Set to True to unlock the channel').setRequired(false))
- .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+ .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
 
  async execute(interaction) {
  const targetChannel = interaction.options.getChannel('channel') || interaction.channel;
@@ -63,7 +63,7 @@ module.exports = {
  }
  } catch (err) {
  console.error('[ERROR] Lockdown command failed:', err);
- const _errMsg = { content: 'Failed to update channel permissions. Verify my role has the Manage Channels permission.', ephemeral: true };
+ const _errMsg = { content: 'Failed to update channel permissions. Verify my role has the Manage Roles permission.', ephemeral: true };
  if (interaction.replied || interaction.deferred) {
  await interaction.followUp(_errMsg).catch(() => null);
  } else {
